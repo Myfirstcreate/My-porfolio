@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>AK Garage | Vehicles</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<script src="https://unpkg.com/lucide@latest"></script>
+	<style>
+		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --amber:#ffad62; --blue:#79b9ff; }
+		* { box-sizing:border-box; }
+		body { margin:0; min-height:100vh; color:var(--text); background:radial-gradient(circle at 89% 0,#172016 0,transparent 24%),var(--black); font-family:'Space Grotesk',sans-serif; }
+		a { color:inherit; text-decoration:none; }
+		.shell { max-width:1360px; margin:auto; padding:31px 42px 50px; }
+		.topbar { display:flex; justify-content:space-between; align-items:center; padding-bottom:25px; border-bottom:1px solid var(--line); }
+		.brand { display:flex; align-items:center; gap:11px; }
+		.mark { width:30px; height:30px; display:grid; place-items:center; border-radius:50%; color:var(--black); background:var(--lime); font-size:12px; font-weight:700; }
+		.brand strong { display:block; font-size:14px; letter-spacing:.08em; }
+		.brand small { display:block; margin-top:3px; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.08em; }
+		.back { display:flex; align-items:center; gap:8px; color:var(--muted); font:11px 'DM Mono',monospace; text-transform:uppercase; }
+		.back:hover { color:var(--lime); } .back svg { width:15px; }
+		.intro { display:flex; justify-content:space-between; align-items:end; gap:20px; padding:40px 0 29px; }
+		.eyebrow { margin:0 0 8px; color:var(--lime); font:11px 'DM Mono',monospace; letter-spacing:.16em; text-transform:uppercase; }
+		h1 { margin:0; font-size:clamp(30px,4vw,47px); letter-spacing:-.06em; line-height:1; }
+		.intro p { max-width:340px; margin:0; color:var(--muted); font-size:13px; line-height:1.5; }
+		.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:22px; }
+		.stat { padding:17px 18px; border:1px solid var(--line); border-radius:6px; background:var(--panel); }
+		.stat label { color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
+		.stat strong { display:block; margin-top:11px; font-size:26px; letter-spacing:-.05em; }
+		.stat span { display:block; margin-top:5px; color:var(--lime); font:10px 'DM Mono',monospace; }
+		.toolbar { display:flex; justify-content:space-between; align-items:center; gap:15px; margin:20px 0 14px; }
+		.filters { display:flex; gap:6px; }
+		.filter { padding:9px 12px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; }
+		.filter:hover,.filter.active { color:var(--black); background:var(--lime); border-color:var(--lime); }
+		.search { display:flex; align-items:center; gap:8px; min-width:205px; padding:9px 11px; border:1px solid var(--line); border-radius:4px; color:var(--muted); }
+		.search svg { width:14px; } .search input { width:100%; border:0; outline:0; color:var(--text); background:transparent; font:11px 'DM Mono',monospace; }
+		.vehicles { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
+		.empty-vehicles { grid-column:1/-1; padding:58px 25px; border:1px dashed #3c4439; border-radius:6px; color:var(--muted); background:rgba(16,18,16,.72); text-align:center; }
+		.empty-vehicles svg { width:28px; height:28px; margin-bottom:13px; color:var(--lime); }
+		.empty-vehicles h2 { margin:0 0 8px; color:var(--text); font-size:18px; }
+		.empty-vehicles p { margin:0; font-size:12px; }
+		.card { overflow:hidden; border:1px solid var(--line); border-radius:6px; background:rgba(16,18,16,.92); }
+		.card:hover { border-color:#56634d; }
+		.cover { height:155px; background-position:center; background-size:cover; filter:saturate(.72); }
+		.cover.has-photo { filter:none; }
+		.e30 { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
+		.porsche { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
+		.nissan { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
+		.card-body { padding:17px 18px 19px; }
+		.card-title { display:flex; justify-content:space-between; align-items:start; gap:12px; }
+		h2 { margin:0; font-size:19px; letter-spacing:-.04em; } .card-title small { color:var(--muted); font:10px 'DM Mono',monospace; }
+		.status { padding:5px 7px; border:1px solid #4f6230; border-radius:3px; color:var(--lime); font:9px 'DM Mono',monospace; text-transform:uppercase; white-space:nowrap; }
+		.status.amber { color:var(--amber); border-color:#68472d; } .status.blue { color:var(--blue); border-color:#34516e; }
+		.details { width:100%; margin:17px 0; border-collapse:collapse; border-top:1px solid #20241f; border-bottom:1px solid #20241f; }
+		.details th, .details td { padding:8px 0; border-bottom:1px solid #20241f; text-align:left; font-size:12px; }
+		.details tr:last-child th, .details tr:last-child td { border-bottom:0; }
+		.details th { width:42%; color:var(--muted); font:9px 'DM Mono',monospace; text-transform:uppercase; }
+		.card-footer { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font:9px 'DM Mono',monospace; }
+		.view { display:flex; align-items:center; gap:5px; color:var(--lime); } .view svg { width:13px; }
+		.view-button { display:flex; align-items:center; gap:5px; padding:0; border:0; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; }
+		.view-button:hover { color:var(--text); } .view-button svg { width:13px; }
+		.detail-modal { position:fixed; inset:0; z-index:10; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.72); }
+		.detail-modal[hidden] { display:none; }
+		.detail-panel { width:min(620px,100%); max-height:90vh; overflow:auto; padding:24px; border:1px solid #46503f; border-radius:7px; background:#101210; box-shadow:0 18px 55px rgba(0,0,0,.5); }
+		.detail-head { display:flex; justify-content:space-between; align-items:start; gap:15px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+		.detail-head h2 { margin:0 0 6px; } .detail-head p { margin:0; color:var(--muted); font:10px 'DM Mono',monospace; }
+		.close-detail { width:32px; height:32px; display:grid; place-items:center; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; cursor:pointer; }
+		.close-detail:hover { color:var(--text); border-color:var(--lime); }
+		.detail-info { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:18px 0; }
+		.detail-info div { padding:11px; border:1px solid var(--line); border-radius:4px; background:#080a08; }
+		.detail-info label { display:block; margin-bottom:5px; color:var(--muted); font:9px 'DM Mono',monospace; text-transform:uppercase; }
+		.detail-info span { font-size:12px; }
+		.maintenance-label { display:block; margin-bottom:8px; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
+		.maintenance-input { width:100%; min-height:145px; resize:vertical; padding:12px; border:1px solid var(--line); border-radius:4px; outline:0; color:var(--text); background:#080a08; font:12px 'DM Mono',monospace; line-height:1.5; }
+		.maintenance-input:focus { border-color:var(--lime); }
+		.detail-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+		.detail-actions button { padding:10px 14px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
+		.detail-actions .save-detail { color:var(--black); border-color:var(--lime); background:var(--lime); }
+		@media(max-width:560px) { .detail-panel { padding:18px; } .detail-info { grid-template-columns:1fr 1fr; } }
+		@media(max-width:850px) { .shell { padding:25px 20px 40px; } .vehicles { grid-template-columns:repeat(2,1fr); } .stats { grid-template-columns:repeat(2,1fr); } }
+		@media(max-width:560px) { .intro,.toolbar { align-items:start; flex-direction:column; } .intro p { max-width:none; } .vehicles { grid-template-columns:1fr; } .search { width:100%; } .filters { flex-wrap:wrap; } }
+	</style>
+</head>
+<body>
+	<div class="shell">
+		<header class="topbar">
+			<a class="brand" href="index.html"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></span></a>
+			<a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a>
+		</header>
+		<section class="intro">
+			<div><p class="eyebrow">Workspace / Vehicles</p><h1>Vehicle</h1></div>
+			<p>The complete garage lineup, from first inspection to final delivery.</p>
+		</section>
+		<section class="stats" aria-label="Vehicle statistics">
+			<div class="stat"><label>Total vehicles</label><strong>00</strong><span>READY FOR FUTURE ENTRIES</span></div>
+			<div class="stat"><label>In the garage</label><strong>00</strong><span>NO ACTIVE VEHICLES</span></div>
+			<div class="stat"><label>Awaiting pickup</label><strong>00</strong><span>NO VEHICLES READY</span></div>
+			<div class="stat"><label>Avg. build value</label><strong>--</strong><span>NO VEHICLE DATA</span></div>
+		</section>
+		<div class="toolbar"><div class="filters"><button class="filter active">ALL VEHICLES</button><button class="filter">IN GARAGE</button><button class="filter">DELIVERED</button></div><label class="search"><i data-lucide="search"></i><input id="vehicle-search" type="search" placeholder="Search vehicles"></label></div>
+		<section class="vehicles" aria-label="Vehicle registry">
+			<div id="vehicle-empty-state" class="empty-vehicles"><i data-lucide="car-front"></i><h2>No vehicles yet</h2><p>Future vehicles will appear here when they are added.</p></div>
+		</section>
+	</div>
+	<div class="detail-modal" id="detail-modal" hidden>
+		<section class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+			<div class="detail-head"><div><h2 id="detail-title">Vehicle details</h2><p id="detail-subtitle"></p></div><button class="close-detail" id="close-detail" type="button" aria-label="Close details"><i data-lucide="x"></i></button></div>
+			<div class="detail-info"><div><label>Code</label><span id="detail-code"></span></div><div><label>Plate No.</label><span id="detail-plate"></span></div><div><label>Year</label><span id="detail-year"></span></div><div><label>Chassis</label><span id="detail-chassis"></span></div><div><label>Expiry date</label><span id="detail-expiry"></span></div></div>
+			<label class="maintenance-label" for="maintenance-input">Maintenance / What was done</label>
+			<textarea class="maintenance-input" id="maintenance-input" placeholder="Write maintenance details, repairs, parts replaced, or next service notes..."></textarea>
+			<div class="detail-actions"><button id="cancel-detail" type="button">Cancel</button><button class="save-detail" id="save-detail" type="button">Save notes</button></div>
+		</section>
+	</div>
+	<script>
+		lucide.createIcons();
+		const STORAGE_KEY = 'akgarage_registration_records';
+		const vehicleSection = document.querySelector('.vehicles');
+		const vehicleStats = document.querySelectorAll('.stat strong');
+		const detailModal = document.getElementById('detail-modal');
+		const detailTitle = document.getElementById('detail-title');
+		const detailSubtitle = document.getElementById('detail-subtitle');
+		const detailCode = document.getElementById('detail-code');
+		const detailPlate = document.getElementById('detail-plate');
+		const detailYear = document.getElementById('detail-year');
+		const detailChassis = document.getElementById('detail-chassis');
+		const detailExpiry = document.getElementById('detail-expiry');
+		const maintenanceInput = document.getElementById('maintenance-input');
+		const vehicleSearch = document.getElementById('vehicle-search');
+		let selectedRecordIndex = -1;
+		function getStoredRecords() {
+			try {
+				return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+			} catch (error) {
+				return [];
+			}
+		}
+		function getCoverClass(brand = '') {
+			const lower = brand.toLowerCase();
+			if (lower.includes('porsche')) return 'porsche';
+			if (lower.includes('nissan')) return 'nissan';
+			return 'e30';
+		}
+		function openDetails(index) {
+			const item = getStoredRecords()[index];
+			if (!item) return;
+			selectedRecordIndex = index;
+			detailTitle.textContent = item.brand || 'Vehicle details';
+			detailSubtitle.textContent = item.expiry ? `Registration expiry: ${item.expiry}` : 'Registration record';
+			detailCode.textContent = item.code || '--';
+			detailPlate.textContent = item.plate || '--';
+			detailYear.textContent = item.year || '--';
+			detailChassis.textContent = item.chassis || '--';
+			detailExpiry.textContent = item.expiry || '--';
+			maintenanceInput.value = item.maintenance || '';
+			detailModal.hidden = false;
+			maintenanceInput.focus();
+		}
+		function closeDetails() {
+			detailModal.hidden = true;
+			selectedRecordIndex = -1;
+		}
+		function renderVehicles() {
+			const items = getStoredRecords();
+			const query = vehicleSearch.value.trim().toLowerCase();
+			const filteredItems = items.map((item, index) => ({ item, index })).filter(({ item }) => {
+				return !query || [item.brand, item.code, item.plate, item.chassis, item.year, item.expiry].some((value) => String(value || '').toLowerCase().includes(query));
+			});
+			const visibleItems = filteredItems;
+			const emptyState = document.getElementById('vehicle-empty-state');
+			vehicleSection.innerHTML = '';
+			if (!items.length) {
+				vehicleSection.appendChild(emptyState);
+				emptyState.style.display = 'block';
+				vehicleStats[0].textContent = '00';
+				vehicleStats[1].textContent = '00';
+				vehicleStats[2].textContent = '00';
+				vehicleStats[3].textContent = '--';
+				return;
+			}
+			if (!filteredItems.length) {
+				vehicleSection.appendChild(emptyState);
+				emptyState.style.display = 'block';
+				emptyState.querySelector('h2').textContent = 'No matching vehicles';
+				emptyState.querySelector('p').textContent = 'Try a different search term.';
+				return;
+			}
+			emptyState.style.display = 'none';
+			visibleItems.forEach(({ item, index }) => {
+				const article = document.createElement('article');
+				article.className = 'card';
+				article.innerHTML = `
+					<div class="cover ${getCoverClass(item.brand)}${item.photo ? ' has-photo' : ''}"${item.photo ? ` style="background-image:url('${item.photo}')"` : ''}></div>
+					<div class="card-body">
+						<div class="card-title">
+							<div>
+								<h2>${item.brand}</h2>
+								<small>Registration record</small>
+							</div>
+							<span class="status">IN GARAGE</span>
+						</div>
+						<table class="details">
+							<tr><th>Code</th><td>${item.code || '--'}</td></tr>
+							<tr><th>Plate No.</th><td>${item.plate || '--'}</td></tr>
+							<tr><th>Chassis</th><td>${item.chassis || '--'}</td></tr>
+							<tr><th>Expiry</th><td>${item.expiry || '--'}</td></tr>
+						</table>
+						<div class="card-footer"><span>YEAR ${item.year || '--'}</span><button class="view-button" type="button" data-record-index="${index}">View details <i data-lucide="arrow-right"></i></button></div>
+					</div>
+				`;
+				vehicleSection.appendChild(article);
+			});
+			vehicleStats[0].textContent = String(items.length).padStart(2,'0');
+			vehicleStats[1].textContent = String(items.length).padStart(2,'0');
+			vehicleStats[2].textContent = '00';
+			vehicleStats[3].textContent = '--';
+			lucide.createIcons();
+		}
+		vehicleSection.addEventListener('click', (event) => {
+			const button = event.target.closest('.view-button');
+			if (button) openDetails(Number(button.dataset.recordIndex));
+		});
+		vehicleSearch.addEventListener('input', () => {
+			renderVehicles();
+		});
+		document.getElementById('close-detail').addEventListener('click', closeDetails);
+		document.getElementById('cancel-detail').addEventListener('click', closeDetails);
+		document.getElementById('save-detail').addEventListener('click', () => {
+			const items = getStoredRecords();
+			if (selectedRecordIndex < 0 || !items[selectedRecordIndex]) return;
+			items[selectedRecordIndex].maintenance = maintenanceInput.value.trim();
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+			closeDetails();
+			renderVehicles();
+		});
+		detailModal.addEventListener('click', (event) => {
+			if (event.target === detailModal) closeDetails();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && !detailModal.hidden) closeDetails();
+		});
+		window.addEventListener('storage', (event) => {
+			if (event.key === STORAGE_KEY) {
+				renderVehicles();
+			}
+		});
+		renderVehicles();
+	</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AK Garage | Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --black: #070807;
+            --panel: #101210;
+            --panel-soft: #151815;
+            --line: #292d29;
+            --text: #f0f3ec;
+            --muted: #8b9388;
+            --lime: #c4f04e;
+            --amber: #ffad62;
+            --blue: #79b9ff;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            background: var(--black);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        button { font: inherit; }
+        .app { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 236px;
+            flex: 0 0 236px;
+            padding: 27px 17px;
+            border-right: 1px solid var(--line);
+            background: #090a09;
+            display: flex;
+            flex-direction: column;
+        }
+        .brand { display: flex; align-items: center; gap: 11px; padding: 0 11px 38px; }
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+            color: var(--black); background: var(--lime); font-size: 12px; font-weight: 700;
+        }
+        .brand strong { font-size: 14px; letter-spacing: .08em; }
+        .brand small { display: block; margin-top: 3px; color: var(--muted); font: 10px 'DM Mono', monospace; letter-spacing: .08em; }
+        .section-label { padding: 0 12px 10px; color: #5d655b; font: 10px 'DM Mono', monospace; letter-spacing: .13em; text-transform: uppercase; }
+        .nav { display: grid; gap: 4px; }
+        .nav button, .nav a {
+            display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px;
+            border: 0; border-radius: 5px; color: var(--muted); background: transparent; text-align: left; cursor: pointer; text-decoration: none;
+        }
+        .nav button:hover, .nav button.active, .nav a:hover { color: var(--text); background: #1d221d; }
+        .nav button.active { box-shadow: inset 3px 0 var(--lime); }
+        .settings-button { color: #fff !important; background: #000 !important; }
+        .nav svg { width: 16px; height: 16px; }
+        .sidebar-spacer { flex: 1; }
+        .status-box { margin: 20px 5px 0; padding: 14px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); }
+        .status-line { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 11px var(--lime); }
+        .status-box p { margin: 10px 0 0; color: var(--muted); font: 10px 'DM Mono', monospace; line-height: 1.5; }
+
+        main { width: 100%; min-width: 0; padding: 32px 42px 38px; background: radial-gradient(circle at 89% 4%, #172016 0, transparent 23%), var(--black); }
+        .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; }
+        .eyebrow { margin: 0 0 7px; color: var(--lime); font: 11px 'DM Mono', monospace; letter-spacing: .16em; text-transform: uppercase; }
+        h1 { margin: 0; font-size: clamp(26px, 3vw, 38px); letter-spacing: -.045em; line-height: 1.05; }
+        .top-actions { display: flex; align-items: center; gap: 19px; }
+        .date { color: var(--muted); font: 11px 'DM Mono', monospace; }
+        .icon-button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: transparent; cursor: pointer; }
+        .icon-button:hover { color: var(--text); border-color: #697163; }
+        .avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--black); background: var(--amber); font-weight: 700; font-size: 12px; }
+        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; margin-bottom: 18px; }
+        .metric { position: relative; padding: 18px 18px 16px; min-height: 119px; border: 1px solid var(--line); border-radius: 6px; background: rgba(16,18,16,.86); overflow: hidden; }
+        .metric::after { content: ''; position: absolute; width: 70px; height: 70px; right: -21px; bottom: -32px; border: 1px solid #343c31; border-radius: 50%; }
+        .metric-label { color: var(--muted); font: 10px 'DM Mono', monospace; letter-spacing: .09em; text-transform: uppercase; }
+        .metric strong { display: block; margin: 15px 0 7px; font-size: 29px; letter-spacing: -.05em; }
+        .metric-change { color: var(--lime); font: 10px 'DM Mono', monospace; }
+        .metric-change.neutral { color: var(--amber); }
+        .workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+            .record-metrics { grid-template-columns: repeat(3, 1fr); }
+        .card { border: 1px solid var(--line); border-radius: 6px; background: rgba(16,18,16,.9); }
+        .card-head { display: flex; align-items: center; justify-content: space-between; padding: 19px 20px; border-bottom: 1px solid var(--line); }
+        .card-head h2 { margin: 0; font-size: 14px; font-weight: 600; }
+        .card-head span, .mono { color: var(--muted); font: 10px 'DM Mono', monospace; }
+        .chart-card { min-height: 365px; }
+        .chart-wrap { padding: 18px 20px 19px; }
+        .chart-meta { display: flex; align-items: end; gap: 10px; margin-bottom: 13px; }
+        .chart-meta strong { font-size: 31px; letter-spacing: -.06em; }
+        .chart-meta span { color: var(--lime); font: 10px 'DM Mono', monospace; padding-bottom: 5px; }
+        .chart { position: relative; height: 202px; border-bottom: 1px solid #343a33; background: repeating-linear-gradient(to bottom, transparent 0, transparent 49px, #222721 50px, transparent 51px); }
+        .chart svg { width: 100%; height: 100%; overflow: visible; }
+        .chart-labels { display: flex; justify-content: space-between; padding-top: 9px; color: #596057; font: 9px 'DM Mono', monospace; }
+        .bottom-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; margin-top: 18px; }
+        .task-list { padding: 5px 20px 14px; }
+        .task { display: flex; gap: 11px; align-items: center; padding: 13px 0; border-bottom: 1px solid #20241f; }
+        .task:last-child { border: 0; }
+        .check { width: 17px; height: 17px; border: 1px solid #505950; border-radius: 3px; flex: 0 0 auto; }
+        .check.done { display: grid; place-items: center; border-color: var(--lime); color: var(--black); background: var(--lime); }
+        .check svg { width: 11px; }
+        .task-text { flex: 1; font-size: 12px; }
+        .task small { color: var(--muted); font: 9px 'DM Mono', monospace; }
+        .activity { padding: 5px 20px 16px; }
+        .activity-item { display: flex; gap: 12px; padding: 13px 0; border-bottom: 1px solid #20241f; }
+        .activity-item:last-child { border: 0; }
+        .activity-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 4px; color: var(--blue); background: #172331; }
+        .activity-icon.orange { color: var(--amber); background: #2c2119; }
+        .activity-text { font-size: 11px; line-height: 1.35; }
+        .activity-text span { display: block; margin-top: 4px; color: var(--muted); font: 9px 'DM Mono', monospace; }
+        .data-table-wrap { overflow-x: auto; padding: 0 20px 12px; }
+        .data-table { width: 100%; min-width: 300px; border-collapse: collapse; }
+        .data-table th { padding: 13px 8px; color: #697268; border-bottom: 1px solid var(--line); font: 9px 'DM Mono', monospace; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
+        .data-table td { padding: 13px 8px; border-bottom: 1px solid #20241f; color: #dfe5da; font-size: 11px; white-space: nowrap; }
+        .data-table tr:last-child td { border-bottom: 0; }
+        .data-table .code { color: var(--lime); font: 10px 'DM Mono', monospace; }
+        .empty-row { color: var(--muted) !important; text-align: center; font: 10px 'DM Mono', monospace !important; text-transform: uppercase; }
+        .table-link { color: var(--lime); font: 9px 'DM Mono', monospace; text-transform: uppercase; }
+        .table-link:hover { text-decoration: underline; }
+        @media (max-width: 900px) { .sidebar { width: 72px; flex-basis: 72px; padding: 22px 10px; } .brand { padding: 0 11px 35px; } .brand > div:last-child, .section-label, .nav button span, .status-box { display: none; } main { padding: 28px 22px; } .brand-mark { flex-shrink: 0; } .nav button { justify-content: center; } }
+        @media (max-width: 680px) { .topbar { gap: 20px; } .date { display: none; } .metrics { grid-template-columns: repeat(2, 1fr); } .workspace, .bottom-grid { grid-template-columns: 1fr; } main { padding: 24px 15px 30px; } .top-actions { gap: 8px; } }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand"><div class="brand-mark">AK</div><div><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></div></div>
+            <div class="section-label">Workspace</div>
+            <nav class="nav" aria-label="Main navigation">
+                <button class="active"><i data-lucide="layout-dashboard"></i><span>Overview</span></button>
+                <a href="project.html"><i data-lucide="wrench"></i><span>Projects</span></a>
+                <a href="vehicles.html"><i data-lucide="car-front"></i><span>Vehicles</span></a>
+                <a href="mrakcars.html"><i data-lucide="file-text"></i><span>Mr AK Cars</span></a>
+                <a href="vipnumbers.html"><i data-lucide="award"></i><span>VIP Numbers</span></a>
+                <a href="bosscarsuaq.html"><i data-lucide="car-front"></i><span>Boss Car's UAQ</span></a>
+                <button><i data-lucide="bar-chart-3"></i><span>Analytics</span></button>
+            </nav>
+            <div class="sidebar-spacer"></div>
+            <button class="nav settings-button"><span><i data-lucide="settings"></i> Settings</span></button>
+            <div class="status-box"><div class="status-line"><span>Garage status</span><span class="dot"></span></div><p>ALL SYSTEMS<br>OPERATIONAL</p></div>
+        </aside>
+        <main>
+            <header class="topbar">
+                <div><p class="eyebrow" id="current-date">Loading date...</p><h1>Good day, Boss AK</h1></div>
+                <div class="top-actions"><span class="date" id="last-sync">LAST SYNC --:--:--</span><button class="icon-button" aria-label="Notifications"><i data-lucide="bell"></i></button><div class="avatar">AS</div></div>
+            </header>
+            <section class="metrics" aria-label="Garage metrics">
+                <article class="metric"><span class="metric-label">Active projects</span><strong>00</strong><span class="metric-change">READY FOR FUTURE BUILDS</span></article>
+                <article class="metric"><span class="metric-label">Parts in inventory</span><strong>142</strong><span class="metric-change">+18 THIS WEEK</span></article>
+                <article class="metric"><span class="metric-label">Monthly revenue</span><strong>$24.8k</strong><span class="metric-change">+12.6% VS LAST</span></article>
+                <article class="metric"><span class="metric-label">Hours logged</span><strong>186.5</strong><span class="metric-change neutral">ON TARGET</span></article>
+            </section>
+            <section class="metrics record-metrics" aria-label="Car record metrics">
+                <article class="metric"><span class="metric-label">Mr AK car records</span><strong id="mr-ak-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
+                <article class="metric"><span class="metric-label">VIP Plates</span><strong id="vip-plates-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
+                <article class="metric"><span class="metric-label">Boss UAQ records</span><strong id="boss-uaq-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
+            </section>
+            <section class="workspace">
+                <article class="card chart-card">
+                    <div class="card-head"><h2>Revenue overview</h2><span>LAST 30 DAYS <i data-lucide="chevron-down" style="width:12px;vertical-align:middle"></i></span></div>
+                    <div class="chart-wrap"><div class="chart-meta"><strong>$24,860</strong><span>+12.6%</span></div><div class="chart"><svg viewBox="0 0 700 190" preserveAspectRatio="none" aria-label="Revenue chart"><defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c4f04e" stop-opacity=".25"/><stop offset="1" stop-color="#c4f04e" stop-opacity="0"/></linearGradient></defs><path d="M0 155 C35 154 42 129 72 137 S114 139 139 111 S184 122 210 99 S252 106 278 117 S312 78 345 87 S379 101 403 67 S451 94 475 72 S508 82 537 48 S577 73 600 45 S647 59 700 19 L700 190 L0 190Z" fill="url(#fill)"/><path d="M0 155 C35 154 42 129 72 137 S114 139 139 111 S184 122 210 99 S252 106 278 117 S312 78 345 87 S379 101 403 67 S451 94 475 72 S508 82 537 48 S577 73 600 45 S647 59 700 19" fill="none" stroke="#c4f04e" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg></div><div class="chart-labels"><span>AUG 06</span><span>AUG 13</span><span>AUG 20</span><span>AUG 27</span><span>SEP 04</span></div></div>
+                </article>
+            </section>
+            <section class="bottom-grid">
+                <article class="card"><div class="card-head"><h2>Mr AK Car's</h2><a class="table-link" href="mrakcars.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Year</th><th>Status</th></tr></thead><tbody id="registration-summary"><tr><td colspan="4" class="empty-row">No registrations added</td></tr></tbody></table></div></article>
+                <article class="card"><div class="card-head"><h2>VIP numbers</h2><a class="table-link" href="vipnumbers.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Emirates</th><th>Plate No.</th></tr></thead><tbody id="vip-summary"><tr><td colspan="3" class="empty-row">No VIP numbers added</td></tr></tbody></table></div></article>
+            </section>
+        </main>
+    </div>
+    <script>
+        lucide.createIcons();
+        const currentDate = document.getElementById('current-date');
+        const lastSync = document.getElementById('last-sync');
+        const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+        const timeFormatter = new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        function updateDateAndTime() {
+            const now = new Date();
+            currentDate.textContent = dateFormatter.format(now).replace(',', ' /');
+            lastSync.textContent = `LAST SYNC ${timeFormatter.format(now)}`;
+        }
+
+        updateDateAndTime();
+        setInterval(updateDateAndTime, 1000);
+        const registrationSummary = document.getElementById('registration-summary');
+        const vipSummary = document.getElementById('vip-summary');
+        const mrAkTotal = document.getElementById('mr-ak-total');
+        const vipPlatesTotal = document.getElementById('vip-plates-total');
+        const bossUaqTotal = document.getElementById('boss-uaq-total');
+
+        function getStoredRecords(key) {
+            try {
+                return JSON.parse(localStorage.getItem(key) || '[]');
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function renderSummaries() {
+            const registrationRecords = getStoredRecords('akgarage_registration_records');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            registrationSummary.innerHTML = registrationRecords.length ? registrationRecords.slice(-4).reverse().map((record) => {
+                const daysUntilExpiry = Math.round((new Date(`${record.expiry}T00:00:00`) - today) / 86400000);
+                const status = daysUntilExpiry < 0 ? 'Expired' : daysUntilExpiry <= 30 ? 'Expiring soon' : 'Active';
+                return `<tr><td class="code">${record.code}</td><td>${record.plate}</td><td>${record.year || '--'}</td><td>${status}</td></tr>`;
+            }).join('') : '<tr><td colspan="4" class="empty-row">No registrations added</td></tr>';
+
+            const vipRecords = getStoredRecords('akgarage_vip_number_records');
+            vipSummary.innerHTML = vipRecords.length ? vipRecords.slice(-4).reverse().map((record) => {
+                return `<tr><td class="code">${record.code}</td><td>${record.emirates}</td><td>${record.plate}</td></tr>`;
+            }).join('') : '<tr><td colspan="3" class="empty-row">No VIP numbers added</td></tr>';
+
+            const bossRecords = getStoredRecords('akgarage_bosscars');
+            mrAkTotal.textContent = String(registrationRecords.length).padStart(2, '0');
+            vipPlatesTotal.textContent = String(vipRecords.length).padStart(2, '0');
+            bossUaqTotal.textContent = String(bossRecords.length).padStart(2, '0');
+        }
+
+        renderSummaries();
+        window.addEventListener('storage', renderSummaries);
+        document.querySelectorAll('.nav button').forEach((button) => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.nav button').forEach((item) => item.classList.remove('active'));
+                button.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
