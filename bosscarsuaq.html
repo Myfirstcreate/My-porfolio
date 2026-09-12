@@ -105,7 +105,7 @@
 				const status = daysToExpiry < 0 ? 'EXPIRED' : daysToExpiry < 30 ? 'WARNING' : 'ACTIVE';
 				const statusClass = status.toLowerCase();
 				row.dataset.id = item.id || '';
-				row.innerHTML = `<td>${item.brand}</td><td>${item.model}</td><td class="code">${item.code}</td><td class="plate">${item.plate}</td><td>${item.emirates}</td><td class="code">${item.chassis}</td><td class="expiry">${new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(expiryDate)}</td><td class="days-left">${daysToExpiry < 0 ? `${Math.abs(daysToExpiry)} days ago` : `${daysToExpiry} days`}</td><td><span class="expiry-status ${statusClass}">${status}</span><button class="edit" type="button">Edit</button><button class="erase" type="button">Erase</button></td>`;
+				row.innerHTML = `<td>${escapeHtml(item.brand)}</td><td>${escapeHtml(item.model)}</td><td class="code">${escapeHtml(item.code)}</td><td class="plate">${escapeHtml(item.plate)}</td><td>${escapeHtml(item.emirates)}</td><td class="code">${escapeHtml(item.chassis)}</td><td class="expiry">${new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(expiryDate)}</td><td class="days-left">${daysToExpiry < 0 ? `${Math.abs(daysToExpiry)} days ago` : `${daysToExpiry} days`}</td><td><span class="expiry-status ${statusClass}">${status}</span><button class="edit" type="button">Edit</button><button class="erase" type="button">Erase</button></td>`;
 				row.querySelector('.edit').addEventListener('click', () => {
 					editingIndex = index;
 					editingId = item.id || null;
