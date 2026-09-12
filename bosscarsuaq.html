@@ -8,6 +8,8 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<script src="https://unpkg.com/lucide@latest"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="supabase-client.js"></script>
 	<style>
 		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --red:#ff7670; }
 		* { box-sizing:border-box; }
@@ -59,7 +61,7 @@
 	</div>
 	<script>
 		lucide.createIcons();
-		const STORAGE_KEY = 'akgarage_bosscars';
+		const TABLE = 'boss_cars_uaq';
 		const form = document.getElementById('boss-car-form');
 		const records = document.getElementById('boss-car-records-body');
 		const totalCount = document.getElementById('total-count');
@@ -69,23 +71,18 @@
 		const emptyNote = document.getElementById('empty-note');
 		const formTitle = document.getElementById('form-title');
 		const submitRecord = document.getElementById('submit-record');
-		const recordsChannel = 'BroadcastChannel' in window ? new BroadcastChannel('akgarage_bosscars_sync') : null;
 		let editingIndex = -1;
+		let editingId = null;
+		let storedRecords = [];
 		form.querySelectorAll('input[type="text"]').forEach((input) => {
 			input.addEventListener('input', () => {
 				input.value = input.value.toUpperCase();
 			});
 		});
-		function getStoredRecords() {
-			try {
-				return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-			} catch (error) {
-				return [];
-			}
-		}
-		function saveStoredRecords(items) {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-			recordsChannel?.postMessage('records-updated');
+		async function loadRecords() {
+			const { data, error } = await window.sb.from(TABLE).select('*');
+			if (error) throw error;
+			storedRecords = data || [];
 		}
 		function getStatusRank(expiry) {
 			const expiryDate = new Date(`${expiry}T00:00:00`);
@@ -96,7 +93,7 @@
 		}
 		function renderStoredRecords() {
 			records.innerHTML = '';
-			const items = getStoredRecords();
+			const items = storedRecords;
 			items.map((item, index) => ({ item, index }))
 				.sort((left, right) => getStatusRank(left.item.expiry) - getStatusRank(right.item.expiry) || left.index - right.index)
 				.forEach(({ item, index }) => {
@@ -107,10 +104,11 @@
 				const daysToExpiry = Math.round((expiryDate - today) / 86400000);
 				const status = daysToExpiry < 0 ? 'EXPIRED' : daysToExpiry < 30 ? 'WARNING' : 'ACTIVE';
 				const statusClass = status.toLowerCase();
-				row.dataset.index = String(index);
+				row.dataset.id = item.id || '';
 				row.innerHTML = `<td>${item.brand}</td><td>${item.model}</td><td class="code">${item.code}</td><td class="plate">${item.plate}</td><td>${item.emirates}</td><td class="code">${item.chassis}</td><td class="expiry">${new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(expiryDate)}</td><td class="days-left">${daysToExpiry < 0 ? `${Math.abs(daysToExpiry)} days ago` : `${daysToExpiry} days`}</td><td><span class="expiry-status ${statusClass}">${status}</span><button class="edit" type="button">Edit</button><button class="erase" type="button">Erase</button></td>`;
 				row.querySelector('.edit').addEventListener('click', () => {
 					editingIndex = index;
+					editingId = item.id || null;
 					form.elements['car-brand'].value = item.brand || '';
 					form.elements['car-model'].value = item.model || '';
 					form.elements.code.value = item.code || '';
@@ -124,32 +122,41 @@
 					form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 				});
 				row.querySelector('.erase').addEventListener('click', () => {
-					const nextItems = getStoredRecords();
-					nextItems.splice(index, 1);
-					saveStoredRecords(nextItems);
-					renderStoredRecords();
+					window.sb.from(TABLE).delete().eq('id', item.id).then(({ error }) => {
+						if (error) {
+							console.error('Unable to delete Boss Car record:', error);
+							return;
+						}
+						storedRecords = storedRecords.filter((record) => record.id !== item.id);
+						renderStoredRecords();
+					});
 				});
 				records.appendChild(row);
 			});
 			updateCounts();
 		}
+		function escapeHtml(value) {
+			return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+		}
 		function updateCounts() {
 			const count = records.children.length;
+			const uaqTotal = storedRecords.filter((item) => String(item.emirates || '').toUpperCase().includes('UAQ') || String(item.emirates || '').toUpperCase().includes('UMM AL QUWAIN')).length;
 			totalCount.textContent = String(count).padStart(2, '0');
-			uaqCount.textContent = String(count).padStart(2, '0');
+			uaqCount.textContent = String(uaqTotal).padStart(2, '0');
 			recordCount.textContent = String(count).padStart(2, '0');
 			recordsLabel.textContent = `${String(count).padStart(2, '0')} RECORDS`;
 			emptyNote.textContent = count ? `${count} RECORD${count === 1 ? '' : 'S'} ADDED` : 'NO RECORDS ADDED';
 		}
 		function resetFormMode() {
 			editingIndex = -1;
+			editingId = null;
 			formTitle.textContent = "Add Boss Car's UAQ record";
 			submitRecord.innerHTML = '<i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add record';
 			form.reset();
 			document.getElementById('emirates').value = 'Umm Al Quwain';
 			lucide.createIcons();
 		}
-		form.addEventListener('submit', (event) => {
+		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
 			form.querySelectorAll('input[type="text"]').forEach((input) => { input.value = input.value.toUpperCase(); });
 			const data = new FormData(form);
@@ -162,19 +169,29 @@
 				chassis: data.get('chassis'),
 				expiry: data.get('expiry')
 			};
-			const items = getStoredRecords();
-			if (editingIndex >= 0 && items[editingIndex]) items[editingIndex] = record;
-			else items.push(record);
-			saveStoredRecords(items);
-			renderStoredRecords();
-			resetFormMode();
-		});
-		window.addEventListener('storage', (event) => {
-			if (event.key === STORAGE_KEY) {
+			try {
+				const query = editingId
+					? window.sb.from(TABLE).update(record).eq('id', editingId)
+					: window.sb.from(TABLE).insert(record);
+				const { error } = await query;
+				if (error) throw error;
+				await loadRecords();
 				renderStoredRecords();
+				resetFormMode();
+			} catch (error) {
+				console.error('Unable to save Boss Car record:', error);
 			}
 		});
-		renderStoredRecords();
+		async function initialize() {
+			try {
+				await loadRecords();
+				renderStoredRecords();
+			} catch (error) {
+				console.error('Unable to load Boss Car records from Supabase:', error);
+				emptyNote.textContent = 'UNABLE TO LOAD RECORDS';
+			}
+		}
+		initialize();
 	</script>
 </body>
 </html>

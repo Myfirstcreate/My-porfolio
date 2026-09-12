@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <style>
         :root {
             --black: #070807;
@@ -165,8 +167,9 @@
                 </article>
             </section>
             <section class="bottom-grid">
-                <article class="card"><div class="card-head"><h2>Mr AK Car's</h2><a class="table-link" href="mrakcars.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Year</th><th>Status</th></tr></thead><tbody id="registration-summary"><tr><td colspan="4" class="empty-row">No registrations added</td></tr></tbody></table></div></article>
-                <article class="card"><div class="card-head"><h2>VIP numbers</h2><a class="table-link" href="vipnumbers.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Emirates</th><th>Plate No.</th></tr></thead><tbody id="vip-summary"><tr><td colspan="3" class="empty-row">No VIP numbers added</td></tr></tbody></table></div></article>
+                <article class="card"><div class="card-head"><h2>Mr AK Car's</h2><span class="mono" id="registration-summary-count">00 RECORDS</span><a class="table-link" href="mrakcars.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Year</th><th>Status</th></tr></thead><tbody id="registration-summary"><tr><td colspan="4" class="empty-row">No registrations added</td></tr></tbody></table></div></article>
+                <article class="card"><div class="card-head"><h2>VIP numbers</h2><span class="mono" id="vip-summary-count">00 RECORDS</span><a class="table-link" href="vipnumbers.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Emirates</th><th>Plate No.</th></tr></thead><tbody id="vip-summary"><tr><td colspan="3" class="empty-row">No VIP numbers added</td></tr></tbody></table></div></article>
+                <article class="card"><div class="card-head"><h2>Boss UAQ records</h2><span class="mono" id="boss-summary-count">00 RECORDS</span><a class="table-link" href="bosscarsuaq.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Car</th><th>Expiry</th></tr></thead><tbody id="boss-summary"><tr><td colspan="4" class="empty-row">No Boss UAQ records added</td></tr></tbody></table></div></article>
             </section>
         </main>
     </div>
@@ -196,42 +199,73 @@
         updateDateAndTime();
         setInterval(updateDateAndTime, 1000);
         const registrationSummary = document.getElementById('registration-summary');
+        const registrationSummaryCount = document.getElementById('registration-summary-count');
         const vipSummary = document.getElementById('vip-summary');
+        const vipSummaryCount = document.getElementById('vip-summary-count');
+        const bossSummary = document.getElementById('boss-summary');
+        const bossSummaryCount = document.getElementById('boss-summary-count');
         const mrAkTotal = document.getElementById('mr-ak-total');
         const vipPlatesTotal = document.getElementById('vip-plates-total');
         const bossUaqTotal = document.getElementById('boss-uaq-total');
 
-        function getStoredRecords(key) {
+        function getStoredRegistrationRecords() {
             try {
-                return JSON.parse(localStorage.getItem(key) || '[]');
+                return JSON.parse(localStorage.getItem('akgarage_registration_records') || '[]');
             } catch (error) {
                 return [];
             }
         }
 
-        function renderSummaries() {
-            const registrationRecords = getStoredRecords('akgarage_registration_records');
+        async function renderVipSummary() {
+            const { data, error } = await window.sb.from('vip_numbers').select('code, emirates, plate').order('code');
+            if (error) throw error;
+            const vipRecords = data || [];
+            vipPlatesTotal.textContent = String(vipRecords.length).padStart(2, '0');
+            vipSummaryCount.textContent = `${String(vipRecords.length).padStart(2, '0')} RECORDS`;
+            vipSummary.innerHTML = vipRecords.length ? vipRecords.slice(-4).reverse().map((record) => {
+                return `<tr><td class="code">${record.code || '--'}</td><td>${record.emirates || '--'}</td><td>${record.plate || '--'}</td></tr>`;
+            }).join('') : '<tr><td colspan="3" class="empty-row">No VIP numbers added</td></tr>';
+        }
+
+        async function renderBossSummary() {
+            const { data, error } = await window.sb.from('boss_cars_uaq').select('brand, model, code, plate, expiry').order('code');
+            if (error) throw error;
+            const bossRecords = data || [];
+            bossUaqTotal.textContent = String(bossRecords.length).padStart(2, '0');
+            bossSummaryCount.textContent = `${String(bossRecords.length).padStart(2, '0')} RECORDS`;
+            bossSummary.innerHTML = bossRecords.length ? bossRecords.slice(-4).reverse().map((record) => {
+                return `<tr><td class="code">${record.code || '--'}</td><td>${record.plate || '--'}</td><td>${[record.brand, record.model].filter(Boolean).join(' ') || '--'}</td><td>${record.expiry || '--'}</td></tr>`;
+            }).join('') : '<tr><td colspan="4" class="empty-row">No Boss UAQ records added</td></tr>';
+        }
+
+        async function renderRegistrationSummary() {
+            const registrationRecords = getStoredRegistrationRecords();
+            mrAkTotal.textContent = String(registrationRecords.length).padStart(2, '0');
+            registrationSummaryCount.textContent = `${String(registrationRecords.length).padStart(2, '0')} RECORDS`;
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             registrationSummary.innerHTML = registrationRecords.length ? registrationRecords.slice(-4).reverse().map((record) => {
                 const daysUntilExpiry = Math.round((new Date(`${record.expiry}T00:00:00`) - today) / 86400000);
                 const status = daysUntilExpiry < 0 ? 'Expired' : daysUntilExpiry <= 30 ? 'Expiring soon' : 'Active';
-                return `<tr><td class="code">${record.code}</td><td>${record.plate}</td><td>${record.year || '--'}</td><td>${status}</td></tr>`;
+                return `<tr><td class="code">${record.code || '--'}</td><td>${record.plate || '--'}</td><td>${record.year || '--'}</td><td>${status}</td></tr>`;
             }).join('') : '<tr><td colspan="4" class="empty-row">No registrations added</td></tr>';
-
-            const vipRecords = getStoredRecords('akgarage_vip_number_records');
-            vipSummary.innerHTML = vipRecords.length ? vipRecords.slice(-4).reverse().map((record) => {
-                return `<tr><td class="code">${record.code}</td><td>${record.emirates}</td><td>${record.plate}</td></tr>`;
-            }).join('') : '<tr><td colspan="3" class="empty-row">No VIP numbers added</td></tr>';
-
-            const bossRecords = getStoredRecords('akgarage_bosscars');
-            mrAkTotal.textContent = String(registrationRecords.length).padStart(2, '0');
-            vipPlatesTotal.textContent = String(vipRecords.length).padStart(2, '0');
-            bossUaqTotal.textContent = String(bossRecords.length).padStart(2, '0');
         }
 
-        renderSummaries();
-        window.addEventListener('storage', renderSummaries);
+        async function renderSummaries() {
+            await Promise.all([renderRegistrationSummary(), renderVipSummary(), renderBossSummary()]);
+        }
+
+        renderSummaries().catch((error) => {
+            console.error('Unable to load dashboard records:', error);
+        });
+        setInterval(() => {
+            if (!document.hidden) renderSummaries().catch((error) => console.error('Unable to refresh dashboard records:', error));
+        }, 5000);
+        window.addEventListener('pageshow', () => renderSummaries().catch((error) => console.error('Unable to refresh dashboard records:', error)));
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) renderSummaries().catch((error) => console.error('Unable to refresh dashboard records:', error));
+        });
+        window.addEventListener('storage', () => renderRegistrationSummary());
         document.querySelectorAll('.nav button').forEach((button) => {
             button.addEventListener('click', () => {
                 document.querySelectorAll('.nav button').forEach((item) => item.classList.remove('active'));

@@ -123,7 +123,6 @@
 		const submitRecord = document.getElementById('submit-record');
 		const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 		let editingRow = null;
-
 		function getStoredRecords() {
 			try {
 				return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -250,17 +249,17 @@
 			updateLabels();
 		}
 
-		syncRecordsFromStorage();
-		window.addEventListener('pageshow', syncRecordsFromStorage);
-		window.addEventListener('storage', (event) => {
-			if (event.key === STORAGE_KEY) syncRecordsFromStorage();
-		});
-
 		function updateSummary() {
 			registeredCount.textContent = String(records.children.length).padStart(2, '0');
 			expiringCount.textContent = String(records.querySelectorAll('.status.soon').length).padStart(2, '0');
 			expiredCount.textContent = String(records.querySelectorAll('.status.expired').length).padStart(2, '0');
 		}
+
+		syncRecordsFromStorage();
+		window.addEventListener('pageshow', syncRecordsFromStorage);
+		window.addEventListener('storage', (event) => {
+			if (event.key === STORAGE_KEY) syncRecordsFromStorage();
+		});
 
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();

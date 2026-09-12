@@ -8,6 +8,8 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<script src="https://unpkg.com/lucide@latest"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="supabase-client.js"></script>
 	<style>
 		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --amber:#ffad62; }
 		* { box-sizing:border-box; }
@@ -109,7 +111,7 @@
 	</div>
 	<script>
 		lucide.createIcons();
-		const STORAGE_KEY = 'akgarage_vip_number_records';
+		const TABLE = 'vip_numbers';
 		const form = document.getElementById('vip-form');
 		const records = document.getElementById('vip-records');
 		const recordCount = document.getElementById('record-count');
@@ -127,21 +129,12 @@
 			input.value = input.value.toUpperCase();
 		}));
 
-		function getStoredRecords() {
-			try {
-				return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-			} catch (error) {
-				return [];
-			}
-		}
+		let storedRecords = [];
 
-		function saveStoredRecords() {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify([...records.querySelectorAll('tr')].map((row) => ({
-				code: row.dataset.code,
-				emirates: row.dataset.emirates,
-				plate: row.dataset.plate,
-				status: row.dataset.status
-			}))));
+		async function loadRecords() {
+			const { data, error } = await window.sb.from(TABLE).select('*').order('code');
+			if (error) throw error;
+			storedRecords = data || [];
 		}
 
 		function sortRecordsByCode() {
@@ -176,6 +169,7 @@
 		function addRecord(record) {
 			const row = document.createElement('tr');
 			const status = ['Available', 'Registered'].includes(record.status) ? record.status : 'Available';
+			row.dataset.id = record.id || '';
 			row.dataset.code = record.code;
 			row.dataset.emirates = record.emirates;
 			row.dataset.plate = record.plate;
@@ -188,21 +182,38 @@
 			statusSelect.addEventListener('change', () => {
 				row.dataset.status = statusSelect.value;
 				statusSelect.className = `status-select ${statusSelect.value.toLowerCase()}`;
-				saveStoredRecords();
+				window.sb.from(TABLE).update({ status: statusSelect.value }).eq('id', record.id).then(({ error }) => {
+					if (error) console.error('Unable to update VIP status:', error);
+				});
 				updateRecords();
 				if (searchPanel.classList.contains('open')) updateSearchResults();
 			});
 			row.querySelector('.erase').addEventListener('click', () => {
-				row.remove();
-				saveStoredRecords();
-				updateRecords();
-				if (searchPanel.classList.contains('open')) updateSearchResults();
+				window.sb.from(TABLE).delete().eq('id', record.id).then(({ error }) => {
+					if (error) {
+						console.error('Unable to delete VIP record:', error);
+						return;
+					}
+					storedRecords = storedRecords.filter((item) => item.id !== record.id);
+					row.remove();
+					updateRecords();
+					if (searchPanel.classList.contains('open')) updateSearchResults();
+				});
 			});
 		}
 
-		getStoredRecords().forEach(addRecord);
-		sortRecordsByCode();
-		updateRecords();
+		async function initialize() {
+			try {
+				await loadRecords();
+				storedRecords.forEach(addRecord);
+				sortRecordsByCode();
+				updateRecords();
+			} catch (error) {
+				console.error('Unable to load VIP numbers from Supabase:', error);
+				emptyState.textContent = 'Unable to load VIP numbers';
+			}
+		}
+		initialize();
 
 		viewAllButton.addEventListener('click', () => {
 			showAllRecords = !showAllRecords;
@@ -218,16 +229,23 @@
 		});
 		searchInput.addEventListener('input', updateSearchResults);
 
-		form.addEventListener('submit', (event) => {
+		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
 			const data = new FormData(form);
-			addRecord({
+			const record = {
 				code: data.get('code'),
 				emirates: data.get('emirates'),
-				plate: data.get('plate')
-			});
+				plate: data.get('plate'),
+				status: 'Available'
+			};
+			const { data: inserted, error } = await window.sb.from(TABLE).insert(record).select().single();
+			if (error) {
+				console.error('Unable to add VIP number:', error);
+				return;
+			}
+			storedRecords.push(inserted);
+			addRecord(inserted);
 			sortRecordsByCode();
-			saveStoredRecords();
 			form.reset();
 			updateRecords();
 				if (searchPanel.classList.contains('open')) updateSearchResults();
