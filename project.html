@@ -3,13 +3,15 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>AK Garage | Projects</title>
+	<title>AK Garage | Modifications</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<script src="https://unpkg.com/lucide@latest"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="supabase-client.js"></script>
 	<style>
-		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --amber:#ffad62; --blue:#79b9ff; }
+		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --amber:#ffad62; --blue:#79b9ff; --red:#ff7670; }
 		* { box-sizing:border-box; }
 		body { margin:0; min-height:100vh; color:var(--text); background:radial-gradient(circle at 90% 0,#172016 0,transparent 24%),var(--black); font-family:'Space Grotesk',sans-serif; }
 		a { color:inherit; text-decoration:none; }
@@ -31,6 +33,24 @@
 		.stat label { color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
 		.stat strong { display:block; margin-top:11px; font-size:26px; letter-spacing:-.05em; }
 		.stat span { display:block; margin-top:5px; color:var(--lime); font:10px 'DM Mono',monospace; }
+		/* Add / edit form (admin only — auth-gate hides .form-card for viewers) */
+		.form-card { margin-bottom:24px; padding:19px 20px; border:1px solid var(--line); border-radius:6px; background:var(--panel); }
+		.form-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+		.form-head h2 { margin:0; font-size:14px; letter-spacing:.02em; }
+		.cancel { padding:7px 11px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; text-transform:uppercase; cursor:pointer; }
+		.cancel:hover { color:var(--text); border-color:var(--muted); }
+		.form-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+		.field { display:flex; flex-direction:column; gap:6px; }
+		.field-wide { margin-top:12px; }
+		.field label { color:var(--muted); font:9px 'DM Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
+		.field input,.field select,.field textarea { padding:10px 11px; border:1px solid var(--line); border-radius:4px; color:var(--text); background:#080a08; font:12px 'Space Grotesk',sans-serif; outline:0; }
+		.field input:focus,.field select:focus,.field textarea:focus { border-color:var(--lime); }
+		.field textarea { resize:vertical; min-height:38px; }
+		.submit-row { display:flex; justify-content:flex-end; align-items:center; margin-top:14px; }
+		.submit { padding:10px 16px; border:1px solid var(--lime); border-radius:4px; color:var(--black); background:var(--lime); font:600 11px 'Space Grotesk',sans-serif; letter-spacing:.05em; text-transform:uppercase; cursor:pointer; }
+		.submit:hover { filter:brightness(1.08); }
+		.form-error { margin:0 14px 0 0; color:var(--red); font:10px 'DM Mono',monospace; text-transform:uppercase; }
+		.proj-banner { margin-bottom:18px; padding:11px 14px; border:1px solid #6b5200; border-radius:6px; background:rgba(255,173,98,.08); color:var(--amber); font:12px 'Space Grotesk',sans-serif; }
 		.toolbar { display:flex; justify-content:space-between; align-items:center; gap:15px; margin:20px 0 14px; }
 		.filters { display:flex; gap:6px; }
 		.filter { padding:9px 12px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; }
@@ -38,30 +58,61 @@
 		.search { display:flex; align-items:center; gap:8px; min-width:205px; padding:9px 11px; border:1px solid var(--line); border-radius:4px; color:var(--muted); }
 		.search svg { width:14px; }
 		.search input { width:100%; border:0; outline:0; color:var(--text); background:transparent; font:11px 'DM Mono',monospace; }
-		.projects { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
-		.empty-projects { grid-column:1/-1; padding:58px 25px; border:1px dashed #3c4439; border-radius:6px; color:var(--muted); background:rgba(16,18,16,.72); text-align:center; }
+		.projects { display:grid; grid-template-columns:1fr; gap:18px; }
+		.empty-projects { padding:58px 25px; border:1px dashed #3c4439; border-radius:6px; color:var(--muted); background:rgba(16,18,16,.72); text-align:center; }
 		.empty-projects svg { width:28px; height:28px; margin-bottom:13px; color:var(--lime); }
 		.empty-projects h2 { margin:0 0 8px; color:var(--text); font-size:18px; }
 		.empty-projects p { margin:0; font-size:12px; }
+		/* ===== Build card (Car Expenses.xlsx format) ===== */
 		.card { overflow:hidden; border:1px solid var(--line); border-radius:6px; background:rgba(16,18,16,.92); }
 		.card:hover { border-color:#56634d; }
-		.cover { height:145px; background-position:center; background-size:cover; filter:saturate(.72); }
-		.e30 { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
-		.porsche { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
-		.nissan { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
-		.card-body { padding:17px 18px 19px; }
-		.card-title { display:flex; justify-content:space-between; align-items:start; gap:12px; }
-		h2 { margin:0; font-size:19px; letter-spacing:-.04em; }
-		.status { padding:5px 7px; border:1px solid #4f6230; border-radius:3px; color:var(--lime); font:9px 'DM Mono',monospace; text-transform:uppercase; white-space:nowrap; }
-		.status.amber { color:var(--amber); border-color:#68472d; }
-		.status.blue { color:var(--blue); border-color:#34516e; }
-		.card-body p { height:38px; margin:9px 0 16px; color:var(--muted); font-size:12px; line-height:1.5; }
-		.progress-row { display:flex; justify-content:space-between; margin-bottom:7px; color:var(--muted); font:10px 'DM Mono',monospace; }
+		.card-top { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--line); background:linear-gradient(90deg,rgba(196,240,78,.06),transparent 55%); }
+		.card-top h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+		.chassis { margin:4px 0 0; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.06em; }
+		.top-right { display:flex; align-items:center; gap:10px; }
+		.status { padding:5px 7px; border:1px solid #68472d; border-radius:3px; color:var(--amber); font:9px 'DM Mono',monospace; text-transform:uppercase; white-space:nowrap; }
+		.status.done { color:var(--lime); border-color:#4f6230; }
+		.mini-progress { width:130px; }
+		.mini-progress .progress-row { display:flex; justify-content:space-between; margin-bottom:4px; color:var(--muted); font:9px 'DM Mono',monospace; }
 		.progress { height:5px; overflow:hidden; border-radius:5px; background:#292e28; }
-		.progress i { display:block; height:100%; border-radius:inherit; background:var(--lime); }
-		.meta { display:flex; justify-content:space-between; margin-top:15px; padding-top:13px; border-top:1px solid #20241f; color:var(--muted); font:9px 'DM Mono',monospace; }
-		@media(max-width:850px) { .shell { padding:25px 20px 40px; } .projects { grid-template-columns:repeat(2,1fr); } .stats { grid-template-columns:repeat(2,1fr); } }
-		@media(max-width:560px) { .intro,.toolbar { align-items:start; flex-direction:column; } .intro p { max-width:none; } .projects { grid-template-columns:1fr; } .search { width:100%; } .filters { flex-wrap:wrap; } }
+		.progress i { display:block; height:100%; border-radius:inherit; background:var(--lime); transition:width .3s; }
+		.money-row { display:grid; grid-template-columns:repeat(3,1fr); border-bottom:1px solid var(--line); }
+		.money { padding:13px 18px; border-right:1px solid var(--line); }
+		.money:last-child { border-right:0; }
+		.money label { display:block; color:var(--muted); font:9px 'DM Mono',monospace; letter-spacing:.12em; text-transform:uppercase; }
+		.money strong { display:block; margin-top:6px; font-size:20px; letter-spacing:-.04em; }
+		.money.pnl-pos strong { color:var(--lime); }
+		.money.pnl-neg strong { color:var(--red); }
+		.exp-wrap { padding:0 18px 14px; }
+		.exp-head { display:flex; justify-content:space-between; align-items:center; padding:11px 0 8px; }
+		.exp-head h3 { margin:0; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.14em; text-transform:uppercase; }
+		.exp-actions { display:flex; gap:6px; }
+		.exp-actions button { padding:6px 10px; border:1px solid var(--line); border-radius:3px; color:var(--muted); background:transparent; font:9px 'DM Mono',monospace; text-transform:uppercase; cursor:pointer; }
+		.exp-actions button:hover { color:var(--text); border-color:var(--muted); }
+		.exp-actions .add-exp { color:var(--lime); border-color:#4f6230; }
+		.exp-actions .add-exp:hover { color:var(--black); background:var(--lime); border-color:var(--lime); }
+		.exp-table { width:100%; border-collapse:collapse; }
+		.exp-table th { padding:7px 8px; border-bottom:1px solid var(--line); color:var(--muted); font:9px 'DM Mono',monospace; letter-spacing:.08em; text-transform:uppercase; text-align:left; }
+		.exp-table td { padding:7px 8px; border-bottom:1px solid #1c201b; font-size:11.5px; }
+		.exp-table .num { text-align:right; font:11px 'DM Mono',monospace; }
+		.exp-table .cat { color:var(--blue); font:10px 'DM Mono',monospace; text-transform:uppercase; }
+		.exp-table .del { padding:2px 7px; border:1px solid var(--line); border-radius:3px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; }
+		.exp-table .del:hover { color:var(--red); border-color:var(--red); }
+		.exp-total-row td { border-bottom:0; color:var(--text); font-weight:600; }
+		.exp-empty { padding:10px 8px; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
+		.exp-form { display:grid; grid-template-columns:repeat(9,1fr); gap:8px; margin-top:10px; padding:12px; border:1px dashed #3c4439; border-radius:4px; background:rgba(8,10,8,.6); }
+		.exp-form .field label { font-size:8px; }
+		.exp-form input,.exp-form select { width:100%; padding:7px 8px; border:1px solid var(--line); border-radius:3px; color:var(--text); background:#080a08; font:11px 'Space Grotesk',sans-serif; outline:0; }
+		.exp-form .ef-actions { display:flex; align-items:end; gap:6px; }
+		.exp-form .ef-save { padding:8px 10px; border:1px solid var(--lime); border-radius:3px; color:var(--black); background:var(--lime); font:600 10px 'Space Grotesk',sans-serif; cursor:pointer; white-space:nowrap; }
+		.exp-form .ef-cancel { padding:8px 8px; border:1px solid var(--line); border-radius:3px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; }
+		.cat-summary { display:flex; flex-wrap:wrap; gap:8px; padding:12px 18px 16px; border-top:1px solid #1c201b; }
+		.cat-chip { padding:6px 9px; border:1px solid var(--line); border-radius:3px; color:var(--muted); font:9px 'DM Mono',monospace; letter-spacing:.05em; text-transform:uppercase; }
+		.cat-chip b { color:var(--text); margin-left:5px; }
+		.cat-chip small { display:block; margin-top:3px; color:#697268; }
+		@media(max-width:1100px) { .exp-form { grid-template-columns:repeat(3,1fr); } }
+		@media(max-width:850px) { .shell { padding:25px 20px 40px; } .stats { grid-template-columns:repeat(2,1fr); } .form-grid { grid-template-columns:repeat(2,1fr); } .money-row { grid-template-columns:1fr; } .money { border-right:0; border-bottom:1px solid var(--line); } .money:last-child { border-bottom:0; } .card-top { flex-direction:column; align-items:start; } .exp-table .hide-sm { display:none; } }
+		@media(max-width:560px) { .intro,.toolbar { align-items:start; flex-direction:column; } .intro p { max-width:none; } .search { width:100%; } .filters { flex-wrap:wrap; } .form-grid { grid-template-columns:1fr; } .exp-form { grid-template-columns:1fr 1fr; } }
 	</style>
 </head>
 <body>
@@ -73,20 +124,378 @@
 			<a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a>
 		</header>
 		<section class="intro">
-			<div><p class="eyebrow">Workspace / Projects</p><h1>Build queue.</h1></div>
-			<p>Every transformation in one place. Track the work, the parts, and the road ahead.</p>
+			<div><p class="eyebrow">Workspace / Modifications</p><h1>Build queue.</h1></div>
+			<p>Car modification cards with full expense tracking — sold price, parts, and profit per build. Saved live for the whole team.</p>
 		</section>
 		<section class="stats" aria-label="Project statistics">
-			<div class="stat"><label>Total projects</label><strong>00</strong><span>READY FOR FUTURE BUILDS</span></div>
-			<div class="stat"><label>In progress</label><strong>00</strong><span>NO ACTIVE BUILDS</span></div>
-			<div class="stat"><label>Completed</label><strong>00</strong><span>NO COMPLETED BUILDS</span></div>
-			<div class="stat"><label>Avg. completion</label><strong>--</strong><span>NO PROJECT DATA</span></div>
+			<div class="stat"><label>Total projects</label><strong id="stat-total">00</strong><span id="stat-total-sub">NO PROJECTS YET</span></div>
+			<div class="stat"><label>In progress</label><strong id="stat-active">00</strong><span id="stat-active-sub">NO ACTIVE BUILDS</span></div>
+			<div class="stat"><label>Completed</label><strong id="stat-done">00</strong><span id="stat-done-sub">NO COMPLETED BUILDS</span></div>
+			<div class="stat"><label>Total PnL</label><strong id="stat-pnl">--</strong><span id="stat-pnl-sub">NO PROJECT DATA</span></div>
 		</section>
-		<div class="toolbar"><div class="filters"><button class="filter active">ALL PROJECTS</button><button class="filter">IN PROGRESS</button><button class="filter">COMPLETED</button></div><label class="search"><i data-lucide="search"></i><input type="search" placeholder="Search projects"></label></div>
-        <section class="projects" aria-label="Projects">
-            <div class="empty-projects"><i data-lucide="folder-plus"></i><h2>No projects yet</h2><p>Future project cars will appear here when they are added.</p></div>
+		<div class="proj-banner" id="proj-banner" hidden></div>
+		<section class="form-card" aria-label="Add or edit modification project">
+			<div class="form-head"><h2 id="form-title">Add modification project</h2><button type="button" class="cancel" id="cancel-edit" hidden>Cancel edit</button></div>
+			<form id="project-form">
+				<div class="form-grid">
+					<div class="field"><label for="proj-title">Car model *</label><input id="proj-title" name="title" type="text" required placeholder="e.g. MERCEDES BENZ 2010"></div>
+					<div class="field"><label for="proj-chassis">Chassis no.</label><input id="proj-chassis" name="chassis" type="text" placeholder="e.g. DSF5421VDFV1554D"></div>
+					<div class="field"><label for="proj-status">Status</label><select id="proj-status" name="status"><option>In progress</option><option>Completed</option></select></div>
+					<div class="field"><label for="proj-progress">Progress %</label><input id="proj-progress" name="progress" type="number" min="0" max="100" step="5" value="0"></div>
+					<div class="field"><label for="proj-due">Date</label><input id="proj-due" name="due_date" type="date"></div>
+					<div class="field"><label for="proj-sold">Sold price (AED)</label><input id="proj-sold" name="sold_price" type="number" min="0" step="100" placeholder="0"></div>
+				</div>
+				<div class="field field-wide"><label for="proj-desc">Notes</label><textarea id="proj-desc" name="description" rows="2" placeholder="Build notes..."></textarea></div>
+				<div class="submit-row"><span class="form-error" id="form-error"></span><button class="submit" id="submit-project" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add project</button></div>
+			</form>
+		</section>
+		<div class="toolbar"><div class="filters"><button class="filter active" data-filter="all">ALL PROJECTS</button><button class="filter" data-filter="active">IN PROGRESS</button><button class="filter" data-filter="done">COMPLETED</button></div><label class="search"><i data-lucide="search"></i><input type="search" id="proj-search" placeholder="Search model or chassis"></label></div>
+		<section class="projects" aria-label="Modifications">
+			<div class="empty-projects" id="empty-projects"><i data-lucide="folder-plus"></i><h2 id="empty-title">No projects yet</h2><p id="empty-text">Modification projects will appear here when they are added.</p></div>
 		</section>
 	</div>
-	<script>lucide.createIcons();</script>
+	<script>
+		(function () {
+			const TABLE = 'modifications';
+			const CATEGORIES = ['Exhaust', 'Engine', 'Wheels', 'Exterior', 'Interior', 'Suspension', 'Electronics', 'Labor', 'Oil', 'Other'];
+			const PAYMENTS = ['Cash', 'Card', 'Bank transfer', 'Other'];
+			const projectsEl = document.querySelector('.projects');
+			const emptyEl = document.getElementById('empty-projects');
+			const bannerEl = document.getElementById('proj-banner');
+			const form = document.getElementById('project-form');
+			const formTitle = document.getElementById('form-title');
+			const submitBtn = document.getElementById('submit-project');
+			const cancelBtn = document.getElementById('cancel-edit');
+			const formError = document.getElementById('form-error');
+			const searchInput = document.getElementById('proj-search');
+			const filterButtons = [...document.querySelectorAll('.filter')];
+			let records = [];
+			let editingId = null;
+			let filter = 'all';
+			let query = '';
+			let expFormFor = null; // project id whose expense mini-form is open
+
+			const aed = (value) => 'AED ' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(value) || 0);
+			function escapeHtml(value) {
+				return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+			}
+			function pad(value) { return String(value).padStart(2, '0'); }
+			function isActive(job) { return String(job.status || '').toLowerCase() !== 'completed'; }
+			function progressOf(job) { return Math.max(0, Math.min(100, Number(job.progress) || 0)); }
+			function expensesOf(job) { return Array.isArray(job.expenses) ? job.expenses : []; }
+			function expenseTotal(line) { return (Number(line.qty) || 0) * (Number(line.unit_price) || 0); }
+			function grandTotalOf(job) { return expensesOf(job).reduce((sum, line) => sum + expenseTotal(line), 0); }
+			function pnlOf(job) { return (Number(job.sold_price) || 0) - grandTotalOf(job); }
+			function dateText(value) {
+				if (!value) return '';
+				const d = new Date(`${value}T00:00:00`);
+				return Number.isFinite(d.getTime()) ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(d) : value;
+			}
+
+			function showBanner(message) { bannerEl.textContent = message; bannerEl.hidden = false; }
+
+			function saveErrorMessage(error) {
+				const code = error?.code || '';
+				const message = error?.message || 'unknown error';
+				if (code === '42703' || /column .* does not exist/i.test(message)) return 'Missing columns — run the ALTER TABLE block (section 5) in the Supabase SQL Editor, then refresh.';
+				if (code === '42501' || /row-level security/i.test(message)) return 'Blocked by the database — log in as admin (badge, bottom-left) and try again.';
+				return 'Save failed: ' + message;
+			}
+
+			async function loadRecords() {
+				const { data, error } = await window.sb.from(TABLE).select('*').order('created_at', { ascending: false });
+				if (error) {
+					if (error.code === 'PGRST205' || /could not find the table/i.test(error.message || '')) {
+						showBanner('⚠️ Missing table/columns: run sections 5 of supabase-migrations.sql in the Supabase SQL Editor, then refresh.');
+					} else {
+						showBanner('Unable to load projects from the cloud: ' + (error.message || 'unknown error'));
+					}
+					records = [];
+					return;
+				}
+				bannerEl.hidden = true;
+				records = data || [];
+			}
+
+			async function persistExpenses(job, expenses) {
+				const grand_total = expenses.reduce((sum, line) => sum + expenseTotal(line), 0);
+				const pnl = (Number(job.sold_price) || 0) - grand_total;
+				const { data, error } = await window.sb.from(TABLE).update({ expenses, grand_total, pnl }).eq('id', job.id).select();
+				if (error) { showBanner(saveErrorMessage(error)); return null; }
+				const updated = (data || [])[0];
+				if (updated) records = records.map((item) => (item.id === updated.id ? updated : item));
+				return updated;
+			}
+
+			function updateStats() {
+				const total = records.length;
+				const active = records.filter(isActive).length;
+				const done = total - active;
+				const pnl = records.reduce((sum, job) => sum + pnlOf(job), 0);
+				document.getElementById('stat-total').textContent = pad(total);
+				document.getElementById('stat-active').textContent = pad(active);
+				document.getElementById('stat-done').textContent = pad(done);
+			const pnlEl = document.getElementById('stat-pnl');
+				if (!total) { pnlEl.textContent = '--'; pnlEl.style.color = ''; }
+				else { pnlEl.textContent = (pnl < 0 ? '-' : '+') + 'AED ' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Math.abs(pnl)); pnlEl.style.color = pnl < 0 ? 'var(--red)' : 'var(--lime)'; }
+				document.getElementById('stat-total-sub').textContent = total ? `${active} ACTIVE NOW` : 'NO PROJECTS YET';
+				document.getElementById('stat-active-sub').textContent = active ? 'IN THE BUILD QUEUE' : 'NO ACTIVE BUILDS';
+				document.getElementById('stat-done-sub').textContent = done ? 'READY FOR HANDOVER' : 'NO COMPLETED BUILDS';
+				document.getElementById('stat-pnl-sub').textContent = total ? 'ACROSS ALL PROJECTS' : 'NO PROJECT DATA';
+			}
+
+			function visibleJobs() {
+				return records
+					.filter((job) => (filter === 'all' ? true : filter === 'active' ? isActive(job) : !isActive(job)))
+					.filter((job) => {
+						if (!query) return true;
+						const hay = `${job.title || ''} ${job.car || ''} ${job.chassis || ''} ${job.description || ''}`.toLowerCase();
+						return hay.includes(query);
+					});
+			}
+
+			function categorySummary(job) {
+				const expenses = expensesOf(job);
+				const grand = grandTotalOf(job);
+				if (!expenses.length) return '';
+				const byCat = new Map();
+				expenses.forEach((line) => {
+					const cat = line.category || 'Other';
+					byCat.set(cat, (byCat.get(cat) || 0) + expenseTotal(line));
+				});
+				return '<div class="cat-summary">' + [...byCat.entries()].sort((a, b) => b[1] - a[1]).map(([cat, amount]) => {
+					const pct = grand ? Math.round((amount / grand) * 100) : 0;
+					return `<span class="cat-chip">${escapeHtml(cat)}<b>${aed(amount)}</b><small>${pct}% OF TOTAL</small></span>`;
+				}).join('') + '</div>';
+			}
+
+			function expenseRows(job) {
+				const expenses = expensesOf(job);
+				if (!expenses.length) return '<tr><td colspan="9" class="exp-empty">No expenses yet — add parts, labor, oil changes...</td></tr>';
+				const rows = expenses.map((line, index) => {
+					const total = expenseTotal(line);
+					return `<tr>
+						<td class="hide-sm">${dateText(line.date)}</td>
+						<td class="cat">${escapeHtml(line.category || '--')}</td>
+						<td>${escapeHtml(line.item || '--')}</td>
+						<td class="hide-sm">${escapeHtml(line.shop || '--')}</td>
+						<td class="num">${Number(line.qty) || 0}</td>
+						<td class="num">${aed(line.unit_price)}</td>
+						<td class="num"><b>${aed(total)}</b></td>
+						<td class="hide-sm">${escapeHtml(line.payment || '--')}</td>
+						<td>${window.akgarageCanEdit() ? `<button type="button" class="del" data-index="${index}">×</button>` : ''}</td>
+					</tr>`;
+				});
+				rows.push(`<tr class="exp-total-row"><td class="hide-sm"></td><td></td><td><b>GRAND TOTAL</b></td><td class="hide-sm"></td><td class="num">${expenses.length}</td><td class="num"></td><td class="num"><b>${aed(grandTotalOf(job))}</b></td><td class="hide-sm"></td><td></td></tr>`);
+				return rows.join('');
+			}
+
+			function expenseFormHtml(job) {
+				if (!window.akgarageCanEdit() || expFormFor !== job.id) return '';
+				const today = new Date().toISOString().slice(0, 10);
+				return `<div class="exp-form">
+					<div class="field"><label>Date</label><input type="date" id="ef-date" value="${today}"></div>
+					<div class="field"><label>Category</label><select id="ef-cat">${CATEGORIES.map((c) => `<option>${c}</option>`).join('')}</select></div>
+					<div class="field"><label>Item / part</label><input type="text" id="ef-item" placeholder="e.g. Akrapovic exhaust"></div>
+					<div class="field"><label>Shop / supplier</label><input type="text" id="ef-shop" placeholder="Shop name"></div>
+					<div class="field"><label>Qty</label><input type="number" id="ef-qty" min="1" step="1" value="1"></div>
+					<div class="field"><label>Unit price (AED)</label><input type="number" id="ef-unit" min="0" step="1" placeholder="0"></div>
+					<div class="field"><label>Payment</label><select id="ef-pay">${PAYMENTS.map((p) => `<option>${p}</option>`).join('')}</select></div>
+					<div class="field"><label>Notes</label><input type="text" id="ef-notes" placeholder="Optional"></div>
+					<div class="ef-actions"><button type="button" class="ef-save" data-id="${job.id}">Add expense</button><button type="button" class="ef-cancel">Cancel</button></div>
+				</div>`;
+			}
+
+			function cardHtml(job) {
+				const active = isActive(job);
+				const progress = progressOf(job);
+				const pnl = pnlOf(job);
+				const pnlClass = pnl > 0 ? 'pnl-pos' : pnl < 0 ? 'pnl-neg' : '';
+				return `
+					<div class="card-top">
+						<div><h2>${escapeHtml(job.title)}</h2><p class="chassis">CHASSIS ${escapeHtml(job.chassis || '--')}${job.due_date ? ' · ' + dateText(job.due_date).toUpperCase() : ''}</p></div>
+						<div class="top-right">
+							<div class="mini-progress"><div class="progress-row"><span>PROGRESS</span><span>${progress}%</span></div><div class="progress"><i style="width:${progress}%"></i></div></div>
+							<span class="status ${active ? '' : 'done'}">${escapeHtml(job.status || 'In progress')}</span>
+							${window.akgarageCanEdit() ? `<span class="card-actions" style="display:flex;gap:6px"><button type="button" class="edit" data-id="${job.id}" style="padding:5px 9px;border:1px solid var(--line);border-radius:3px;color:var(--muted);background:transparent;font:9px 'DM Mono',monospace;text-transform:uppercase;cursor:pointer">Edit</button><button type="button" class="erase" data-id="${job.id}" style="padding:5px 9px;border:1px solid var(--line);border-radius:3px;color:var(--muted);background:transparent;font:9px 'DM Mono',monospace;text-transform:uppercase;cursor:pointer">Erase</button></span>` : ''}
+						</div>
+					</div>
+					<div class="money-row">
+						<div class="money"><label>Sold price</label><strong>${job.sold_price == null ? '--' : aed(job.sold_price)}</strong></div>
+						<div class="money"><label>Grand total (parts + labor)</label><strong>${aed(grandTotalOf(job))}</strong></div>
+						<div class="money ${pnlClass}"><label>PnL</label><strong>${pnl > 0 ? '+' : ''}${aed(pnl)}</strong></div>
+					</div>
+					<div class="exp-wrap">
+						<div class="exp-head"><h3>Expenses — ${escapeHtml(job.title)}</h3><div class="exp-actions">${window.akgarageCanEdit() ? `<button type="button" class="add-exp" data-id="${job.id}">+ Add expense</button>` : ''}</div></div>
+						<div style="overflow-x:auto"><table class="exp-table"><thead><tr><th class="hide-sm">Date</th><th>Category</th><th>Item / part</th><th class="hide-sm">Shop</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit (AED)</th><th style="text-align:right">Total (AED)</th><th class="hide-sm">Payment</th><th></th></tr></thead><tbody data-exp-body="${job.id}">${expenseRows(job)}</tbody></table></div>
+						${expenseFormHtml(job)}
+					</div>
+					${job.description ? `<div style="padding:0 18px 12px;color:var(--muted);font-size:12px;line-height:1.5">${escapeHtml(job.description)}</div>` : ''}
+					${categorySummary(job)}`;
+			}
+
+			function render() {
+				const jobs = visibleJobs();
+				projectsEl.querySelectorAll('.card').forEach((card) => card.remove());
+				emptyEl.hidden = jobs.length > 0;
+				if (!records.length) {
+					document.getElementById('empty-title').textContent = 'No projects yet';
+					document.getElementById('empty-text').textContent = window.akgarageCanEdit()
+						? 'Add your first modification project with the form above — it saves to the cloud instantly.'
+						: 'Modification projects will appear here when they are added.';
+				} else if (!jobs.length) {
+					document.getElementById('empty-title').textContent = 'Nothing here';
+					document.getElementById('empty-text').textContent = 'No projects match the current filter or search.';
+				}
+				jobs.forEach((job) => {
+					const card = document.createElement('article');
+					card.className = 'card';
+					card.dataset.id = job.id;
+					card.innerHTML = cardHtml(job);
+					const editBtn = card.querySelector('.edit');
+					if (editBtn) editBtn.addEventListener('click', () => startEdit(job));
+					const eraseBtn = card.querySelector('.erase');
+					if (eraseBtn) eraseBtn.addEventListener('click', () => eraseJob(job));
+					const addExp = card.querySelector('.add-exp');
+					if (addExp) addExp.addEventListener('click', () => { expFormFor = expFormFor === job.id ? null : job.id; render(); });
+					const expBody = card.querySelector(`[data-exp-body="${job.id}"]`);
+					if (expBody) {
+						expBody.querySelectorAll('.del').forEach((button) => button.addEventListener('click', async () => {
+							const index = Number(button.dataset.index);
+							const expenses = expensesOf(job).filter((_, i) => i !== index);
+							const updated = await persistExpenses(job, expenses);
+							if (updated) render();
+						}));
+					}
+					const efSave = card.querySelector('.ef-save');
+					if (efSave) {
+						efSave.addEventListener('click', async () => {
+							const line = {
+								date: card.querySelector('#ef-date').value || null,
+								category: card.querySelector('#ef-cat').value,
+								item: card.querySelector('#ef-item').value.trim(),
+								shop: card.querySelector('#ef-shop').value.trim(),
+								qty: Number(card.querySelector('#ef-qty').value) || 1,
+								unit_price: Number(card.querySelector('#ef-unit').value) || 0,
+								payment: card.querySelector('#ef-pay').value,
+								notes: card.querySelector('#ef-notes').value.trim()
+							};
+							if (!line.item) { showBanner('Expense needs an item / part name.'); return; }
+							if (line.unit_price <= 0) { showBanner('Expense needs a unit price.'); return; }
+							bannerEl.hidden = true;
+							const expenses = expensesOf(job).concat([line]);
+							const updated = await persistExpenses(job, expenses);
+							if (updated) { expFormFor = null; render(); }
+						});
+						const efCancel = card.querySelector('.ef-cancel');
+						if (efCancel) efCancel.addEventListener('click', () => { expFormFor = null; render(); });
+					}
+					projectsEl.appendChild(card);
+				});
+				updateStats();
+				lucide.createIcons();
+			}
+
+			function resetFormMode() {
+				editingId = null;
+				form.reset();
+				document.getElementById('proj-progress').value = '0';
+				formTitle.textContent = 'Add modification project';
+				submitBtn.innerHTML = '<i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add project';
+				cancelBtn.hidden = true;
+				formError.textContent = '';
+				lucide.createIcons();
+			}
+
+			function startEdit(job) {
+				if (!window.akgarageCanEdit()) return;
+				editingId = job.id;
+				form.elements['title'].value = job.title || '';
+				form.elements['chassis'].value = job.chassis || '';
+				form.elements['status'].value = job.status || 'In progress';
+				form.elements['progress'].value = progressOf(job);
+				form.elements['due_date'].value = job.due_date || '';
+				form.elements['sold_price'].value = job.sold_price ?? '';
+				form.elements['description'].value = job.description || '';
+				formTitle.textContent = 'Edit modification project';
+				submitBtn.innerHTML = '<i data-lucide="save" style="width:13px;vertical-align:middle"></i> Update project';
+				cancelBtn.hidden = false;
+				form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				lucide.createIcons();
+			}
+
+			async function eraseJob(job) {
+				if (!window.akgarageCanEdit()) return;
+				if (!confirm(`Erase "${job.title}" and all its expenses? This cannot be undone.`)) return;
+				const { error } = await window.sb.from(TABLE).delete().eq('id', job.id);
+				if (error) { formError.textContent = 'Erase failed: ' + error.message; return; }
+				records = records.filter((item) => item.id !== job.id);
+				if (editingId === job.id) resetFormMode();
+				render();
+			}
+
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				if (!window.akgarageCanEdit()) return;
+				const title = form.elements['title'].value.trim();
+				if (!title) { formError.textContent = 'Car model is required.'; return; }
+				const soldRaw = form.elements['sold_price'].value;
+				const payload = {
+					title,
+					chassis: form.elements['chassis'].value.trim().toUpperCase(),
+					status: form.elements['status'].value,
+					progress: Math.max(0, Math.min(100, Number(form.elements['progress'].value) || 0)),
+					due_date: form.elements['due_date'].value || null,
+					sold_price: soldRaw === '' ? null : Number(soldRaw),
+					description: form.elements['description'].value.trim()
+				};
+				formError.textContent = '';
+				const request = editingId
+					? window.sb.from(TABLE).update(payload).eq('id', editingId)
+					: window.sb.from(TABLE).insert(payload);
+				const { data, error } = await request.select();
+				if (error) { formError.textContent = saveErrorMessage(error); return; }
+				const saved = (data || [])[0];
+				if (editingId) {
+					if (saved) records = records.map((item) => (item.id === saved.id ? saved : item));
+				} else if (saved) {
+					records.unshift(saved);
+				}
+				resetFormMode();
+				render();
+			});
+
+			cancelBtn.addEventListener('click', resetFormMode);
+			filterButtons.forEach((button) => button.addEventListener('click', () => {
+				filterButtons.forEach((item) => item.classList.remove('active'));
+				button.classList.add('active');
+				filter = button.dataset.filter;
+				render();
+			}));
+			searchInput.addEventListener('input', () => { query = searchInput.value.trim().toLowerCase(); render(); });
+
+			async function refresh() {
+				try {
+					const keepForm = expFormFor;
+					await loadRecords();
+					if (keepForm && records.some((job) => job.id === keepForm)) expFormFor = keepForm;
+					// Skip re-render when nothing changed so typing in the expense form is never interrupted.
+					const snapshot = JSON.stringify(records);
+					if (snapshot !== lastSnapshot || forcedRender) { lastSnapshot = snapshot; forcedRender = false; render(); }
+				} catch (error) {
+					console.error('Unable to load modification projects:', error);
+					showBanner('Unable to reach the cloud database. Check your connection and refresh.');
+				}
+			}
+			let lastSnapshot = null;
+			let forcedRender = true;
+			const rawRender = render;
+			render = (...args) => { lastSnapshot = JSON.stringify(records); return rawRender(...args); };
+			refresh();
+			setInterval(() => { if (!document.hidden) refresh(); }, 5000);
+			window.addEventListener('pageshow', () => refresh());
+			document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+		})();
+	</script>
 </body>
 </html>

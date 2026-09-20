@@ -1,0 +1,15 @@
+# Local tooling and logs
+.freebuff/
+*.log
+*.log.err
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (not used by the site itself, but keep installs out of git)
+node_modules/
+
+.vercel
+.env*

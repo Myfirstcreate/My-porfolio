@@ -8,6 +8,8 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<script src="https://unpkg.com/lucide@latest"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="supabase-client.js"></script>
 	<style>
 		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --amber:#ffad62; --blue:#79b9ff; }
 		* { box-sizing:border-box; }
@@ -58,6 +60,7 @@
 		.details tr:last-child th, .details tr:last-child td { border-bottom:0; }
 		.details th { width:42%; color:var(--muted); font:9px 'DM Mono',monospace; text-transform:uppercase; }
 		.card-footer { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font:9px 'DM Mono',monospace; }
+		.viewer-note { margin:12px 0 0; padding:9px 12px; border:1px dashed #3c4439; border-radius:4px; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
 		.view { display:flex; align-items:center; gap:5px; color:var(--lime); } .view svg { width:13px; }
 		.view-button { display:flex; align-items:center; gap:5px; padding:0; border:0; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; }
 		.view-button:hover { color:var(--text); } .view-button svg { width:13px; }
@@ -95,6 +98,7 @@
 			<div><p class="eyebrow">Workspace / Vehicles</p><h1>Vehicle</h1></div>
 			<p>The complete garage lineup, from first inspection to final delivery.</p>
 		</section>
+		<div class="viewer-note" hidden>View only — ask the admin to update maintenance notes.</div>
 		<section class="stats" aria-label="Vehicle statistics">
 			<div class="stat"><label>Total vehicles</label><strong>00</strong><span>READY FOR FUTURE ENTRIES</span></div>
 			<div class="stat"><label>In the garage</label><strong>00</strong><span>NO ACTIVE VEHICLES</span></div>
@@ -117,7 +121,7 @@
 	</div>
 	<script>
 		lucide.createIcons();
-		const STORAGE_KEY = 'akgarage_registration_records';
+		const TABLE = 'mr_ak_cars';
 		const vehicleSection = document.querySelector('.vehicles');
 		const vehicleStats = document.querySelectorAll('.stat strong');
 		const detailModal = document.getElementById('detail-modal');
@@ -130,13 +134,15 @@
 		const detailExpiry = document.getElementById('detail-expiry');
 		const maintenanceInput = document.getElementById('maintenance-input');
 		const vehicleSearch = document.getElementById('vehicle-search');
-		let selectedRecordIndex = -1;
-		function getStoredRecords() {
-			try {
-				return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-			} catch (error) {
-				return [];
-			}
+		let selectedRecordId = null;
+		let storedRecords = [];
+		async function loadRecords() {
+			const { data, error } = await window.sb.from(TABLE).select('*').order('code');
+			if (error) throw error;
+			storedRecords = data || [];
+		}
+		function escapeHtml(value) {
+			return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 		}
 		function getCoverClass(brand = '') {
 			const lower = brand.toLowerCase();
@@ -144,10 +150,10 @@
 			if (lower.includes('nissan')) return 'nissan';
 			return 'e30';
 		}
-		function openDetails(index) {
-			const item = getStoredRecords()[index];
+		function openDetails(id) {
+			const item = storedRecords.find((record) => String(record.id) === String(id));
 			if (!item) return;
-			selectedRecordIndex = index;
+			selectedRecordId = id;
 			detailTitle.textContent = item.brand || 'Vehicle details';
 			detailSubtitle.textContent = item.expiry ? `Registration expiry: ${item.expiry}` : 'Registration record';
 			detailCode.textContent = item.code || '--';
@@ -161,19 +167,33 @@
 		}
 		function closeDetails() {
 			detailModal.hidden = true;
-			selectedRecordIndex = -1;
+			selectedRecordId = null;
+		}
+		function ensureEmptyState() {
+			let emptyState = document.getElementById('vehicle-empty-state');
+			if (!emptyState) {
+				// A previous render wiped the section, taking the placeholder with it.
+				emptyState = document.createElement('div');
+				emptyState.id = 'vehicle-empty-state';
+				emptyState.className = 'empty-vehicles';
+				emptyState.innerHTML = '<i data-lucide="car-front"></i><h2>No vehicles yet</h2><p>Future vehicles will appear here when they are added.</p>';
+				lucide.createIcons();
+			}
+			return emptyState;
 		}
 		function renderVehicles() {
-			const items = getStoredRecords();
+			const items = storedRecords;
 			const query = vehicleSearch.value.trim().toLowerCase();
-			const filteredItems = items.map((item, index) => ({ item, index })).filter(({ item }) => {
+			const filteredItems = items.filter((item) => {
 				return !query || [item.brand, item.code, item.plate, item.chassis, item.year, item.expiry].some((value) => String(value || '').toLowerCase().includes(query));
 			});
-			const visibleItems = filteredItems;
-			const emptyState = document.getElementById('vehicle-empty-state');
+			const emptyState = ensureEmptyState();
+			emptyState.querySelector('h2').textContent = 'No vehicles yet';
+			emptyState.querySelector('p').textContent = 'Future vehicles will appear here when they are added.';
 			vehicleSection.innerHTML = '';
+			vehicleSection.appendChild(emptyState);
+			emptyState.style.display = 'none';
 			if (!items.length) {
-				vehicleSection.appendChild(emptyState);
 				emptyState.style.display = 'block';
 				vehicleStats[0].textContent = '00';
 				vehicleStats[1].textContent = '00';
@@ -182,22 +202,20 @@
 				return;
 			}
 			if (!filteredItems.length) {
-				vehicleSection.appendChild(emptyState);
 				emptyState.style.display = 'block';
 				emptyState.querySelector('h2').textContent = 'No matching vehicles';
 				emptyState.querySelector('p').textContent = 'Try a different search term.';
 				return;
 			}
-			emptyState.style.display = 'none';
-			visibleItems.forEach(({ item, index }) => {
+			filteredItems.forEach((item) => {
 				const article = document.createElement('article');
 				article.className = 'card';
 				article.innerHTML = `
-					<div class="cover ${getCoverClass(item.brand)}${item.photo ? ' has-photo' : ''}"${item.photo ? ` style="background-image:url('${item.photo}')"` : ''}></div>
+					<div class="cover ${getCoverClass(item.brand)}${item.photo ? ' has-photo' : ''}"${item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : ''}></div>
 					<div class="card-body">
 						<div class="card-title">
 							<div>
-								<h2>${item.brand}</h2>
+								<h2>${escapeHtml(item.brand)}</h2>
 								<small>Registration record</small>
 							</div>
 							<span class="status">IN GARAGE</span>
@@ -208,7 +226,7 @@
 							<tr><th>Chassis</th><td>${item.chassis || '--'}</td></tr>
 							<tr><th>Expiry</th><td>${item.expiry || '--'}</td></tr>
 						</table>
-						<div class="card-footer"><span>YEAR ${item.year || '--'}</span><button class="view-button" type="button" data-record-index="${index}">View details <i data-lucide="arrow-right"></i></button></div>
+						<div class="card-footer"><span>YEAR ${item.year || '--'}</span><button class="view-button" type="button" data-record-id="${item.id}">View details <i data-lucide="arrow-right"></i></button></div>
 					</div>
 				`;
 				vehicleSection.appendChild(article);
@@ -221,18 +239,22 @@
 		}
 		vehicleSection.addEventListener('click', (event) => {
 			const button = event.target.closest('.view-button');
-			if (button) openDetails(Number(button.dataset.recordIndex));
+			if (button) openDetails(button.dataset.recordId);
 		});
 		vehicleSearch.addEventListener('input', () => {
 			renderVehicles();
 		});
 		document.getElementById('close-detail').addEventListener('click', closeDetails);
 		document.getElementById('cancel-detail').addEventListener('click', closeDetails);
-		document.getElementById('save-detail').addEventListener('click', () => {
-			const items = getStoredRecords();
-			if (selectedRecordIndex < 0 || !items[selectedRecordIndex]) return;
-			items[selectedRecordIndex].maintenance = maintenanceInput.value.trim();
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+		document.getElementById('save-detail').addEventListener('click', async () => {
+			const item = storedRecords.find((record) => String(record.id) === String(selectedRecordId));
+			if (!item) return;
+			item.maintenance = maintenanceInput.value.trim();
+			const { error } = await window.sb.from(TABLE).update({ maintenance: item.maintenance }).eq('id', item.id);
+			if (error) {
+				console.error('Unable to save maintenance notes:', error);
+				return;
+			}
 			closeDetails();
 			renderVehicles();
 		});
@@ -242,12 +264,27 @@
 		document.addEventListener('keydown', (event) => {
 			if (event.key === 'Escape' && !detailModal.hidden) closeDetails();
 		});
-		window.addEventListener('storage', (event) => {
-			if (event.key === STORAGE_KEY) {
+		async function refreshVehicles() {
+			try {
+				await loadRecords();
 				renderVehicles();
+			} catch (error) {
+				console.error('Unable to load vehicles from Supabase:', error);
 			}
+		}
+		window.addEventListener('pageshow', refreshVehicles);
+		window.addEventListener('visibilitychange', () => {
+			if (!document.hidden) refreshVehicles();
 		});
-		renderVehicles();
+		refreshVehicles();
+
+		// Viewers (team password) cannot save maintenance notes — the admin token
+		// guards this in the database too, so hiding the controls is cosmetic.
+		(function applyViewerMode() {
+			const note = document.querySelector('.viewer-note');
+			if (window.akgarageIsAdmin()) return;
+			if (note) note.hidden = false;
+		})();
 	</script>
 </body>
 </html>

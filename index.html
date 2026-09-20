@@ -74,8 +74,20 @@
         .icon-button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: transparent; cursor: pointer; }
         .icon-button:hover { color: var(--text); border-color: #697163; }
         .avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--black); background: var(--amber); font-weight: 700; font-size: 12px; }
-        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; margin-bottom: 18px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 13px; margin-bottom: 18px; }
         .metric { position: relative; padding: 18px 18px 16px; min-height: 119px; border: 1px solid var(--line); border-radius: 6px; background: rgba(16,18,16,.86); overflow: hidden; }
+        /* Expiring registrations alert */
+        .expiry-alert { display:none; align-items:center; gap:14px; margin-bottom:22px; padding:15px 18px; border:1px solid #6b5200; border-radius:8px; background:linear-gradient(90deg,#241a00,#1a1608); }
+        .expiry-alert.show { display:flex; }
+        .expiry-alert.critical { border-color:#6b2a26; background:linear-gradient(90deg,#200a08,#1a0f0d); }
+        .expiry-alert .ea-icon { font-size:20px; }
+        .expiry-alert .ea-text { flex:1; font-size:13px; line-height:1.45; }
+        .expiry-alert .ea-text b { color:var(--amber); }
+        .expiry-alert.critical .ea-text b { color:#ff7670; }
+        .expiry-alert .ea-link { padding:8px 13px; border:1px solid var(--amber); border-radius:5px; color:#0b0b09; background:var(--amber); font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; }
+        .expiry-alert .ea-link:hover { filter:brightness(1.1); }
+        .notif-badge { position:absolute; top:6px; right:6px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:#ff7670; color:#0b0b09; font:700 9px/16px 'Space Grotesk',sans-serif; text-align:center; }
+        .icon-button { position:relative; }
         .metric::after { content: ''; position: absolute; width: 70px; height: 70px; right: -21px; bottom: -32px; border: 1px solid #343c31; border-radius: 50%; }
         .metric-label { color: var(--muted); font: 10px 'DM Mono', monospace; letter-spacing: .09em; text-transform: uppercase; }
         .metric strong { display: block; margin: 15px 0 7px; font-size: 29px; letter-spacing: -.05em; }
@@ -133,10 +145,12 @@
             <div class="section-label">Workspace</div>
             <nav class="nav" aria-label="Main navigation">
                 <button class="active"><i data-lucide="layout-dashboard"></i><span>Overview</span></button>
-                <a href="project.html"><i data-lucide="wrench"></i><span>Projects</span></a>
+                <a href="project.html"><i data-lucide="wrench"></i><span>Modifications</span></a>
                 <a href="vehicles.html"><i data-lucide="car-front"></i><span>Vehicles</span></a>
                 <a href="mrakcars.html"><i data-lucide="file-text"></i><span>Mr AK Cars</span></a>
                 <a href="vipnumbers.html"><i data-lucide="award"></i><span>VIP Numbers</span></a>
+                <a href="motorcycles.html"><i data-lucide="bike"></i><span>Motorcycle</span></a>
+                <a href="vipmoto.html"><i data-lucide="gem"></i><span>VIP Plates motorcycle</span></a>
                 <a href="bosscarsuaq.html"><i data-lucide="car-front"></i><span>Boss Car's UAQ</span></a>
                 <button><i data-lucide="bar-chart-3"></i><span>Analytics</span></button>
             </nav>
@@ -147,23 +161,31 @@
         <main>
             <header class="topbar">
                 <div><p class="eyebrow" id="current-date">Loading date...</p><h1>Good day, Boss AK</h1></div>
-                <div class="top-actions"><span class="date" id="last-sync">LAST SYNC --:--:--</span><button class="icon-button" aria-label="Notifications"><i data-lucide="bell"></i></button><div class="avatar">AS</div></div>
+                <div class="top-actions"><span class="date" id="last-sync">LAST SYNC --:--:--</span><button class="icon-button" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-badge" id="expiry-notif-badge" hidden></span></button><div class="avatar">AS</div></div>
             </header>
             <section class="metrics" aria-label="Garage metrics">
-                <article class="metric"><span class="metric-label">Active projects</span><strong>00</strong><span class="metric-change">READY FOR FUTURE BUILDS</span></article>
-                <article class="metric"><span class="metric-label">Parts in inventory</span><strong>142</strong><span class="metric-change">+18 THIS WEEK</span></article>
-                <article class="metric"><span class="metric-label">Monthly revenue</span><strong>$24.8k</strong><span class="metric-change">+12.6% VS LAST</span></article>
+                <article class="metric"><span class="metric-label">Active projects</span><strong id="projects-total">--</strong><span class="metric-change">READY FOR FUTURE BUILDS</span></article>
+                <article class="metric"><span class="metric-label">Parts in inventory</span><strong>00</strong><span class="metric-change">NO DATA YET</span></article>
+                <article class="metric"><span class="metric-label">Monthly revenue</span><strong>$0.00</strong><span class="metric-change neutral">NO SALES LOGGED YET</span></article>
                 <article class="metric"><span class="metric-label">Hours logged</span><strong>186.5</strong><span class="metric-change neutral">ON TARGET</span></article>
+                <article class="metric"><span class="metric-label">Expiring registrations</span><strong id="expiring-total">00</strong><span class="metric-change neutral" id="expiring-sub">WITHIN 30 DAYS</span></article>
             </section>
+            <div class="expiry-alert" id="expiry-alert" role="alert">
+                <span class="ea-icon" id="expiry-alert-icon">🔔</span>
+                <span class="ea-text" id="expiry-alert-text"></span>
+                <a class="ea-link" href="mrakcars.html">View records</a>
+            </div>
             <section class="metrics record-metrics" aria-label="Car record metrics">
                 <article class="metric"><span class="metric-label">Mr AK car records</span><strong id="mr-ak-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">VIP Plates</span><strong id="vip-plates-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">Boss UAQ records</span><strong id="boss-uaq-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
+                <article class="metric"><span class="metric-label">Motorcycle records</span><strong id="moto-total">--</strong><span class="metric-change">TOTAL RECORDS</span></article>
+                <article class="metric"><span class="metric-label">VIP moto plates</span><strong id="vipmoto-total">--</strong><span class="metric-change">TOTAL RECORDS</span></article>
             </section>
             <section class="workspace">
                 <article class="card chart-card">
-                    <div class="card-head"><h2>Revenue overview</h2><span>LAST 30 DAYS <i data-lucide="chevron-down" style="width:12px;vertical-align:middle"></i></span></div>
-                    <div class="chart-wrap"><div class="chart-meta"><strong>$24,860</strong><span>+12.6%</span></div><div class="chart"><svg viewBox="0 0 700 190" preserveAspectRatio="none" aria-label="Revenue chart"><defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c4f04e" stop-opacity=".25"/><stop offset="1" stop-color="#c4f04e" stop-opacity="0"/></linearGradient></defs><path d="M0 155 C35 154 42 129 72 137 S114 139 139 111 S184 122 210 99 S252 106 278 117 S312 78 345 87 S379 101 403 67 S451 94 475 72 S508 82 537 48 S577 73 600 45 S647 59 700 19 L700 190 L0 190Z" fill="url(#fill)"/><path d="M0 155 C35 154 42 129 72 137 S114 139 139 111 S184 122 210 99 S252 106 278 117 S312 78 345 87 S379 101 403 67 S451 94 475 72 S508 82 537 48 S577 73 600 45 S647 59 700 19" fill="none" stroke="#c4f04e" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg></div><div class="chart-labels"><span>AUG 06</span><span>AUG 13</span><span>AUG 20</span><span>AUG 27</span><span>SEP 04</span></div></div>
+                    <div class="card-head"><h2>Fleet overview</h2><span>CARS ADDED · LAST 30 DAYS <i data-lucide="chevron-down" style="width:12px;vertical-align:middle"></i></span></div>
+                    <div class="chart-wrap"><div class="chart-meta"><strong id="fleet-chart-total">--</strong><span id="fleet-chart-delta">TOTAL CARS ON FILE</span></div><div class="chart"><svg id="fleet-chart-svg" viewBox="0 0 700 190" preserveAspectRatio="none" aria-label="Cars added chart"><defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c4f04e" stop-opacity=".25"/><stop offset="1" stop-color="#c4f04e" stop-opacity="0"/></linearGradient></defs><path id="fleet-fill" d="M0 170 L700 170 L700 190 L0 190Z" fill="url(#fill)"/><path id="fleet-line" d="M0 170 L700 170" fill="none" stroke="#c4f04e" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg></div><div class="chart-labels"><span id="fleet-label-first"></span><span id="fleet-label-mid1"></span><span id="fleet-label-mid2"></span><span id="fleet-label-mid3"></span><span id="fleet-label-last"></span></div></div>
                 </article>
             </section>
             <section class="bottom-grid">
@@ -207,16 +229,68 @@
         const mrAkTotal = document.getElementById('mr-ak-total');
         const vipPlatesTotal = document.getElementById('vip-plates-total');
         const bossUaqTotal = document.getElementById('boss-uaq-total');
+        const motoTotal = document.getElementById('moto-total');
+        const vipmotoTotal = document.getElementById('vipmoto-total');
+        const projectsTotal = document.getElementById('projects-total');
 
-        function getStoredRegistrationRecords() {
-            try {
-                return JSON.parse(localStorage.getItem('akgarage_registration_records') || '[]');
-            } catch (error) {
-                return [];
+        async function fetchRegistrationRecords() {
+            const [mrak, boss] = await Promise.all([
+                window.sb.from('mr_ak_cars').select('code, plate, year, expiry').order('code'),
+                window.sb.from('boss_cars_uaq').select('code, plate, expiry')
+            ]);
+            if (mrak.error) throw mrak.error;
+            if (boss.error) throw boss.error;
+            return { mrakRecords: mrak.data || [], combined: [...(mrak.data || []), ...(boss.data || [])] };
+        }
+
+        function updateExpiryBadge() {
+            const cached = window.__expiryCounts;
+            if (!cached) return;
+            const bell = document.getElementById('expiry-notif-badge');
+            if (bell && cached.expiring > 0) { bell.hidden = false; bell.textContent = String(cached.expiring); }
+        }
+
+        function updateExpiryAlert(records) {
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            let expiring = 0, expired = 0;
+            const soonest = [];
+            (records || []).forEach((record) => {
+                if (!record.expiry) return;
+                const t = new Date(`${record.expiry}T00:00:00`).getTime();
+                if (!Number.isFinite(t)) return;
+                const days = Math.round((t - today.getTime()) / 86400000);
+                if (days < 0) { expired++; return; }
+                if (days <= 30) { expiring++; soonest.push({ days, code: record.code, plate: record.plate }); }
+            });
+            window.__expiryCounts = { expiring, expired };
+            const total = document.getElementById('expiring-total');
+            const sub = document.getElementById('expiring-sub');
+            const alertBox = document.getElementById('expiry-alert');
+            const icon = document.getElementById('expiry-alert-icon');
+            const text = document.getElementById('expiry-alert-text');
+            const bell = document.getElementById('expiry-notif-badge');
+            if (total) total.textContent = String(expiring).padStart(2, '0');
+            if (sub) sub.textContent = expired ? `${expired} EXPIRED` : 'WITHIN 30 DAYS';
+            if (bell) {
+                if (expiring > 0) { bell.hidden = false; bell.textContent = String(expiring); }
+                else bell.hidden = true;
             }
+            if (!alertBox || !text) return;
+            if (!expiring && !expired) { alertBox.classList.remove('show', 'critical'); return; }
+            soonest.sort((a, b) => a.days - b.days);
+            const next = soonest[0];
+            const parts = [];
+            if (expired) parts.push(`<b>${expired}</b> expired`);
+            if (expiring) parts.push(`<b>${expiring}</b> expiring within 30 days`);
+            const nextTxt = next ? ` Next: <b>${String(next.code || '').toUpperCase()} ${next.plate}</b> — ${next.days === 0 ? 'today' : `in ${next.days} day${next.days === 1 ? '' : 's'}`}.` : '.';
+            text.innerHTML = `🔔 <b>${parts.join(' · ')}</b> across Mr AK Cars and Boss UAQ registrations.${nextTxt}`;
+            alertBox.classList.add('show');
+            alertBox.classList.toggle('critical', expired > 0);
+            if (icon && expired > 0) icon.textContent = '⚠️';
         }
 
         async function renderVipSummary() {
+            updateExpiryBadge();
             const { data, error } = await window.sb.from('vip_numbers').select('code, emirates, plate').order('code');
             if (error) throw error;
             const vipRecords = data || [];
@@ -239,20 +313,85 @@
         }
 
         async function renderRegistrationSummary() {
-            const registrationRecords = getStoredRegistrationRecords();
-            mrAkTotal.textContent = String(registrationRecords.length).padStart(2, '0');
-            registrationSummaryCount.textContent = `${String(registrationRecords.length).padStart(2, '0')} RECORDS`;
+            const { mrakRecords, combined } = await fetchRegistrationRecords();
+            mrAkTotal.textContent = String(mrakRecords.length).padStart(2, '0');
+            registrationSummaryCount.textContent = `${String(mrakRecords.length).padStart(2, '0')} RECORDS`;
+            updateExpiryAlert(combined);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            registrationSummary.innerHTML = registrationRecords.length ? registrationRecords.slice(-4).reverse().map((record) => {
-                const daysUntilExpiry = Math.round((new Date(`${record.expiry}T00:00:00`) - today) / 86400000);
-                const status = daysUntilExpiry < 0 ? 'Expired' : daysUntilExpiry <= 30 ? 'Expiring soon' : 'Active';
+            registrationSummary.innerHTML = mrakRecords.length ? mrakRecords.slice(-4).reverse().map((record) => {
+                const expiryTime = record.expiry ? new Date(`${record.expiry}T00:00:00`).getTime() : NaN;
+                const daysUntilExpiry = Number.isFinite(expiryTime) ? Math.round((expiryTime - today.getTime()) / 86400000) : null;
+                const status = daysUntilExpiry === null ? 'Unknown' : daysUntilExpiry < 0 ? 'Expired' : daysUntilExpiry <= 30 ? 'Expiring soon' : 'Active';
                 return `<tr><td class="code">${record.code || '--'}</td><td>${record.plate || '--'}</td><td>${record.year || '--'}</td><td>${status}</td></tr>`;
             }).join('') : '<tr><td colspan="4" class="empty-row">No registrations added</td></tr>';
         }
 
+        async function renderFleetChart() {
+            const svg = document.getElementById('fleet-chart-svg');
+            if (!svg) return;
+            const [mrak, boss] = await Promise.all([
+                window.sb.from('mr_ak_cars').select('created_at'),
+                window.sb.from('boss_cars_uaq').select('created_at')
+            ]);
+            if (mrak.error) throw mrak.error;
+            if (boss.error) throw boss.error;
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const start = new Date(today); start.setDate(start.getDate() - 29);
+            const counts = new Array(30).fill(0);
+            let total = 0;
+            [...(mrak.data || []), ...(boss.data || [])].forEach((row) => {
+                if (!row.created_at) return;
+                total++;
+                const t = new Date(row.created_at); t.setHours(0, 0, 0, 0);
+                const idx = Math.round((t - start) / 86400000);
+                if (idx >= 0 && idx < 30) counts[idx]++;
+            });
+            // Cumulative curve: start from cars already on file before the window.
+            let run = total - counts.reduce((a, b) => a + b, 0);
+            const pts = counts.map((c, i) => { run += c; return { x: Math.round((i / 29) * 700), y: run }; });
+            const max = Math.max(run, 1);
+            const top = 8, bottom = 170;
+            const scale = (v) => bottom - (v / max) * (bottom - top);
+            const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${scale(p.y).toFixed(1)}`).join(' ');
+            svg.querySelector('#fleet-line').setAttribute('d', line);
+            svg.querySelector('#fleet-fill').setAttribute('d', `${line} L700 ${bottom} L0 ${bottom} Z`);
+            const meta = document.getElementById('fleet-chart-total');
+            const delta = document.getElementById('fleet-chart-delta');
+            const added = counts.reduce((a, b) => a + b, 0);
+            if (meta) meta.textContent = String(total).padStart(2, '0');
+            if (delta) delta.textContent = added ? `+${added} IN THE LAST 30 DAYS` : 'TOTAL CARS ON FILE';
+            const fmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' });
+            const labelDate = (daysAgo) => { const d = new Date(today); d.setDate(d.getDate() - daysAgo); return fmt.format(d).toUpperCase(); };
+            [['fleet-label-first', 29], ['fleet-label-mid1', 22], ['fleet-label-mid2', 15], ['fleet-label-mid3', 8], ['fleet-label-last', 0]].forEach(([id, ago]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = labelDate(ago);
+            });
+        }
+
+        async function renderMotoCount() {
+            const { count, error } = await window.sb.from('motorcycles').select('id', { count: 'exact', head: true });
+            if (!motoTotal) return;
+            if (error || !Number.isFinite(count)) { motoTotal.textContent = '--'; return; }
+            motoTotal.textContent = String(count).padStart(2, '0');
+        }
+
+        async function renderVipMotoCount() {
+            const { count, error } = await window.sb.from('vip_motorcycles').select('id', { count: 'exact', head: true });
+            if (!vipmotoTotal) return;
+            if (error || !Number.isFinite(count)) { vipmotoTotal.textContent = '--'; return; }
+            vipmotoTotal.textContent = String(count).padStart(2, '0');
+        }
+
         async function renderSummaries() {
-            await Promise.all([renderRegistrationSummary(), renderVipSummary(), renderBossSummary()]);
+            async function renderProjectsCount() {
+            const { count, error } = await window.sb.from('modifications').select('id', { count: 'exact', head: true }).eq('status', 'In progress');
+            if (error || !Number.isFinite(count) || !projectsTotal) return;
+            projectsTotal.textContent = String(count).padStart(2, '0');
+        }
+
+        // Each summary independently: one failing table must not blank the others.
+            await Promise.allSettled([renderRegistrationSummary(), renderVipSummary(), renderBossSummary(), renderProjectsCount(), renderFleetChart(), renderMotoCount(), renderVipMotoCount()]);
         }
 
         renderSummaries().catch((error) => {

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>AK Garage | Registration</title>
+	<title>AK Garage | Motorcycles</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
 		.brand strong { display:block; font-size:14px; letter-spacing:.08em; }
 		.brand small { display:block; margin-top:3px; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.08em; }
 		.top-actions { display:flex; align-items:center; gap:8px; }
-			.back { display:flex; align-items:center; gap:8px; padding:10px 13px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; font:11px 'DM Mono',monospace; text-transform:uppercase; }
+		.back { display:flex; align-items:center; gap:8px; padding:10px 13px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; font:11px 'DM Mono',monospace; text-transform:uppercase; }
 		.back:hover { color:var(--black); border-color:var(--lime); background:var(--lime); } .back svg { width:15px; }
 		.intro { display:flex; justify-content:space-between; align-items:end; gap:20px; padding:40px 0 29px; }
 		.eyebrow { margin:0 0 8px; color:var(--lime); font:11px 'DM Mono',monospace; letter-spacing:.16em; text-transform:uppercase; }
@@ -43,10 +43,9 @@
 		.form-head span { color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
 		.form-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
 		.field label { display:block; margin-bottom:7px; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
-		.field input, .field select { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:4px; outline:0; color:var(--text); background:#080a08; font:12px 'DM Mono',monospace; }
+		.field input { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:4px; outline:0; color:var(--text); background:#080a08; font:12px 'DM Mono',monospace; }
 		.field input[type="file"] { padding:6px; }
-		.field input:focus, .field select:focus { border-color:var(--lime); }
-		.field select { cursor:pointer; }
+		.field input:focus { border-color:var(--lime); }
 		.submit { align-self:end; padding:8px 12px; border:1px solid var(--lime); border-radius:4px; color:var(--black); background:var(--lime); font:10px 'DM Mono',monospace; font-weight:500; cursor:pointer; text-transform:uppercase; }
 		.submit:hover { background:#d8ff70; }
 		.records-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
@@ -71,13 +70,13 @@
 		.status { display:inline-flex; align-items:center; gap:7px; color:var(--lime); font:10px 'DM Mono',monospace; text-transform:uppercase; }
 		.status::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 8px currentColor; }
 		.status.soon { color:var(--amber); } .status.expired { color:var(--red); }
+		.action-buttons { display:flex; gap:6px; }
+		.edit { padding:6px 8px; border:1px solid #2f3a2b; border-radius:3px; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
+		.edit:hover { color:var(--black); border-color:var(--lime); background:var(--lime); }
 		.erase { padding:6px 8px; border:1px solid #49302d; border-radius:3px; color:var(--red); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
 		.erase:hover { color:var(--black); border-color:var(--red); background:var(--red); }
-		.edit { padding:6px 8px; border:1px solid #40552c; border-radius:3px; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
-		.edit:hover { color:var(--black); border-color:var(--lime); background:var(--lime); }
-		.action-buttons { display:flex; gap:6px; }
-		.footnote { display:flex; justify-content:space-between; gap:15px; margin-top:13px; color:var(--muted); font:10px 'DM Mono',monospace; }
 		.viewer-note { margin:12px 0 0; padding:9px 12px; border:1px dashed #3c4439; border-radius:4px; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
+		.moto-thumb { width:34px; height:26px; object-fit:cover; border-radius:3px; border:1px solid var(--line); vertical-align:middle; }
 		@media(max-width:850px) { .form-grid { grid-template-columns:repeat(2,1fr); } }
 		@media(max-width:650px) { .shell { padding:25px 15px 40px; } .intro { align-items:start; flex-direction:column; } .intro p { max-width:none; } .stats { grid-template-columns:1fr; gap:9px; } .form-grid { grid-template-columns:1fr; } .form-head { align-items:start; flex-direction:column; } .submit { width:100%; } }
 	</style>
@@ -88,57 +87,58 @@
 	<div class="shell">
 		<header class="topbar">
 			<div class="brand"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></span></div>
-			<div class="top-actions"><a class="back" href="serviceuaq.html?from=mrak"><i data-lucide="headphones"></i> Service</a><a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a></div>
+			<div class="top-actions"><a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a></div>
 		</header>
 		<div class="viewer-note" hidden>View only — ask the admin to add, edit, or erase records.</div>
 		<section class="intro">
-			<div><p class="eyebrow">Workspace / Registration</p><h1>Mr. AK Car's</h1></div>
-			<p>Keep every plate record current, visible, and ready for the road.</p>
+			<div><p class="eyebrow">Workspace / Garage</p><h1>Motorcycle</h1></div>
+			<p>Every bike on file — plates, chassis, and registration expiry, same as the cars.</p>
 		</section>
-		<section class="stats" aria-label="Registration statistics">
-			<a class="stat registered" href="#registration-records"><label>Registered vehicles</label><strong id="registered-count">00</strong><span>VIEW REGISTRATION RECORDS</span></a>
-			<a class="stat" href="#registration-records"><label>Expiring soon</label><strong id="expiring-count">00</strong><span>NEXT 30 DAYS</span></a>
-			<a class="stat" href="#registration-records"><label>Expired records</label><strong id="expired-count">00</strong><span>RENEWAL REQUIRED</span></a>
+		<section class="stats" aria-label="Motorcycle statistics">
+			<a class="stat registered" href="#motorcycle-records"><label>Registered motorcycles</label><strong id="registered-count">00</strong><span>VIEW RECORDS</span></a>
+			<a class="stat" href="#motorcycle-records"><label>Expiring soon</label><strong id="expiring-count">00</strong><span>NEXT 30 DAYS</span></a>
+			<a class="stat" href="#motorcycle-records"><label>Expired records</label><strong id="expired-count">00</strong><span>RENEWAL REQUIRED</span></a>
 		</section>
-		<form class="form-card" id="registration-form">
-			<div class="form-head"><h2 id="form-title">Add registration record</h2><span>All fields required</span></div>
+		<form class="form-card" id="motorcycle-form">
+			<div class="form-head"><h2 id="form-title">Add motorcycle record</h2><span>All fields required</span></div>
 			<div class="form-grid">
-				<div class="field"><label for="car-brand">Car brand</label><input id="car-brand" name="car-brand" type="text" placeholder="BMW" required></div>
+				<div class="field"><label for="moto-brand">Motorcycle brand</label><input id="moto-brand" name="moto-brand" type="text" placeholder="Yamaha" required></div>
 				<div class="field"><label for="year">Year</label><input id="year" name="year" type="number" min="1900" max="2099" placeholder="2024" required></div>
-				<div class="field"><label for="code">Code</label><input id="code" name="code" type="text" placeholder="AK-025" required></div>
-				<div class="field"><label for="plate">Plate No.</label><input id="plate" name="plate" type="text" placeholder="AK 025 GT" required></div>
-				<div class="field"><label for="chassis">Chassis</label><input id="chassis" name="chassis" type="text" placeholder="WBA123456789" required></div>
+				<div class="field"><label for="code">Code</label><input id="code" name="code" type="text" placeholder="M-001" required></div>
+				<div class="field"><label for="plate">Plate No.</label><input id="plate" name="plate" type="text" placeholder="M 12345" required></div>
+				<div class="field"><label for="chassis">Chassis</label><input id="chassis" name="chassis" type="text" placeholder="JYA5XB1234AB00123" required></div>
 				<div class="field"><label for="expiry">Expiry date</label><input id="expiry" name="expiry" type="date" required></div>
-				<div class="field"><label for="car-photo">Car picture</label><input id="car-photo" name="car-photo" type="file" accept="image/*"></div>
+				<div class="field"><label for="moto-photo">Motorcycle picture</label><input id="moto-photo" name="moto-photo" type="file" accept="image/*"></div>
 				<button class="submit" id="submit-record" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add record</button>
 			</div>
 		</form>
-		<div class="records-head" id="registration-records-heading"><h2>Registration records</h2><span class="mono" id="record-count">00 RECORDS</span></div>
+		<div class="records-head" id="motorcycle-records"><h2>Motorcycle records</h2><span class="mono" id="record-count">00 RECORDS</span></div>
 		<div class="expiry-banner" id="expiry-banner" hidden></div>
 		<div class="table-wrap">
 			<table>
-				<thead><tr><th>Car brand</th><th>Year</th><th>Code</th><th>Plate No.</th><th>Chassis</th><th>Expiry date</th><th>Days before ex.</th><th>Status</th><th>Action</th></tr></thead>
-				<tbody id="registration-records"></tbody>
+				<thead><tr><th></th><th>Brand</th><th>Year</th><th>Code</th><th>Plate No.</th><th>Chassis</th><th>Expiry date</th><th>Days before ex.</th><th>Status</th><th>Action</th></tr></thead>
+				<tbody id="motorcycle-records-body"></tbody>
 			</table>
 		</div>
 		<div class="footnote"><span>NO RECORDS ADDED</span><span>READY FOR NEW ENTRY</span></div>
 	</div>
 	<script>
 		lucide.createIcons();
-		const TABLE = 'mr_ak_cars';
-		const form = document.getElementById('registration-form');
-		const records = document.getElementById('registration-records');
+		const TABLE = 'motorcycles';
+		const form = document.getElementById('motorcycle-form');
+		const records = document.getElementById('motorcycle-records-body');
 		const recordCount = document.getElementById('record-count');
 		const footnote = document.querySelector('.footnote');
 		const registeredCount = document.getElementById('registered-count');
 		const expiringCount = document.getElementById('expiring-count');
 		const expiredCount = document.getElementById('expired-count');
-		const recordsHeading = document.getElementById('registration-records-heading');
+		const recordsHeading = document.getElementById('motorcycle-records');
 		const formTitle = document.getElementById('form-title');
 		const submitRecord = document.getElementById('submit-record');
 		const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 		let editingId = null;
 		let storedRecords = [];
+
 		async function loadRecords() {
 			const { data, error } = await window.sb.from(TABLE).select('*').order('code');
 			if (error) throw error;
@@ -167,16 +167,17 @@
 			});
 		}
 
+		function escapeHtml(value) {
+			return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+		}
+
 		function updateLabels() {
 			recordCount.textContent = `${String(records.children.length).padStart(2, '0')} RECORDS`;
 			footnote.firstElementChild.textContent = records.children.length ? `${records.children.length} RECORD${records.children.length === 1 ? '' : 'S'} ADDED` : 'NO RECORDS ADDED';
 			footnote.lastElementChild.textContent = 'READY FOR NEW ENTRY';
 		}
 
-		function escapeHtml(value) {
-			return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
-		}
-		function addRecord(record, targetRow = null) {
+		function addRecord(record) {
 			const expiryTime = record.expiry ? new Date(`${record.expiry}T00:00:00`).getTime() : NaN;
 			const hasExpiry = Number.isFinite(expiryTime);
 			const today = new Date();
@@ -190,6 +191,7 @@
 			row.dataset.id = record.id || '';
 			Object.entries(record).forEach(([key, value]) => { if (key !== 'id') row.dataset[key] = value ?? ''; });
 			row.innerHTML = `
+				<td class="photo-cell">${record.photo ? `<img class="moto-thumb" src="${record.photo}" alt="">` : ''}</td>
 				<td>${escapeHtml(record.brand)}</td>
 				<td>${escapeHtml(record.year || '--')}</td>
 				<td class="code">${escapeHtml(record.code)}</td>
@@ -199,27 +201,28 @@
 				<td class="days-left ${statusClass}">${!hasExpiry ? '--' : daysUntilExpiry < 0 ? `${Math.abs(daysUntilExpiry)} days ago` : `${daysUntilExpiry} days`}</td>
 				<td><span class="status ${statusClass}">${status}</span></td>
 				<td><div class="action-buttons"><button class="edit" type="button">Edit</button><button class="erase" type="button">Erase</button></div></td>`;
-			if (targetRow) targetRow.replaceWith(row);
-			else records.appendChild(row);
+			records.appendChild(row);
 			row.querySelector('.edit').addEventListener('click', () => {
 				editingId = record.id || null;
-				form.elements['car-brand'].value = row.dataset.brand || '';
+				form.elements['moto-brand'].value = row.dataset.brand || '';
 				form.elements.year.value = row.dataset.year || '';
 				form.elements.code.value = row.dataset.code || '';
 				form.elements.plate.value = row.dataset.plate || '';
 				form.elements.chassis.value = row.dataset.chassis || '';
 				form.elements.expiry.value = row.dataset.expiry || '';
-				formTitle.textContent = 'Edit registration record';
+				formTitle.textContent = 'Edit motorcycle record';
 				submitRecord.innerHTML = '<i data-lucide="save" style="width:13px;vertical-align:middle"></i> Update record';
 				lucide.createIcons();
 				form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				form.elements['car-brand'].focus();
+				form.elements['moto-brand'].focus();
 			});
 			row.querySelector('.erase').addEventListener('click', async () => {
 				if (!record.id) { row.remove(); updateSummary(); updateLabels(); return; }
+				if (!window.confirm(`Erase the ${record.brand || 'motorcycle'} record (${record.plate || 'no plate'})? This cannot be undone.`)) return;
 				const { error } = await window.sb.from(TABLE).delete().eq('id', record.id);
 				if (error) {
-					console.error('Unable to delete registration record:', error);
+					console.error('Unable to delete motorcycle record:', error);
+					window.alert('Could not erase the record. Check your connection and try again.');
 					return;
 				}
 				storedRecords = storedRecords.filter((item) => item.id !== record.id);
@@ -232,7 +235,7 @@
 
 		function resetFormMode() {
 			editingId = null;
-			formTitle.textContent = 'Add registration record';
+			formTitle.textContent = 'Add motorcycle record';
 			submitRecord.innerHTML = '<i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add record';
 			form.reset();
 			lucide.createIcons();
@@ -251,11 +254,12 @@
 			records.innerHTML = '';
 			storedRecords
 				.map((record, index) => ({ record, index }))
-				.sort((left, right) => getStatusRank(left.record.expiry) - getStatusRank(right.record.expiry) || left.index - right.index)					.forEach(({ record }) => addRecord(record));
-				updateSummary();
-				updateLabels();
-				updateExpiryBanner();
-			}
+				.sort((left, right) => getStatusRank(left.record.expiry) - getStatusRank(right.record.expiry) || left.index - right.index)
+				.forEach(({ record }) => addRecord(record));
+			updateSummary();
+			updateLabels();
+			updateExpiryBanner();
+		}
 
 		function updateExpiryBanner() {
 			const banner = document.getElementById('expiry-banner');
@@ -279,47 +283,26 @@
 			banner.innerHTML = `${expired > 0 ? '⚠️' : '🔔'} ${parts.join(' · ')} — highlighted in the table. <button type="button" onclick="this.parentElement.hidden=true">Dismiss</button>`;
 		}
 
-		async function refreshRecords() {
-			try {
-				await loadRecords();
-				if (!storedRecords.length) await importLegacyDeviceRecords();
-				renderStoredRecords();
-			} catch (error) {
-				console.error('Unable to load registration records from Supabase:', error);
-				const missingTable = error?.code === 'PGRST205' || /could not find the table/i.test(error?.message || '');
-				records.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#8b9388;font:10px 'DM Mono',monospace;text-transform:uppercase;">${missingTable ? 'Missing table: run supabase-migrations.sql in the Supabase SQL Editor' : 'Unable to load records'}</td></tr>`;
-			}
-		}
-
 		function updateSummary() {
 			registeredCount.textContent = String(records.children.length).padStart(2, '0');
 			expiringCount.textContent = String(records.querySelectorAll('.status.soon').length).padStart(2, '0');
 			expiredCount.textContent = String(records.querySelectorAll('.status.expired').length).padStart(2, '0');
 		}
 
-		// One-time: if the shared table is empty and this device has old localStorage
-		// records, offer to import them so nothing is lost when moving to Supabase.
-		async function importLegacyDeviceRecords() {
-			let legacy = [];
+		async function refreshRecords() {
 			try {
-				legacy = JSON.parse(localStorage.getItem('akgarage_registration_records') || '[]');
+				await loadRecords();
+				renderStoredRecords();
 			} catch (error) {
-				return;
+				console.error('Unable to load motorcycle records from Supabase:', error);
+				const missingTable = error?.code === 'PGRST205' || /could not find the table/i.test(error?.message || '');
+				records.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;color:#8b9388;font:10px 'DM Mono',monospace;text-transform:uppercase;">${missingTable ? 'Missing table: run section 6 of supabase-migrations.sql in the Supabase SQL Editor' : 'Unable to load records'}</td></tr>`;
 			}
-			if (!legacy.length) return;
-			if (!window.confirm(`Import ${legacy.length} record(s) saved on this device into the shared Supabase table?`)) return;
-			const rows = legacy.map(({ id, ...rest }) => rest);
-			const { error } = await window.sb.from(TABLE).insert(rows);
-			if (error) {
-				console.error('Unable to import device records:', error);
-				window.alert('Import failed. Your records are still safe on this device.');
-				return;
-			}
-			await loadRecords();
 		}
 
 		refreshRecords();
 		window.addEventListener('pageshow', refreshRecords);
+		setInterval(() => { if (!document.hidden) refreshRecords(); }, 5000);
 
 		// Viewers (team password) cannot add, edit, or erase — the admin token
 		// guards this in the database too, so hiding the controls is cosmetic.
@@ -332,11 +315,11 @@
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
 			const formData = new FormData(form);
-			const photoFile = formData.get('car-photo');
+			const photoFile = formData.get('moto-photo');
 			const editingItem = editingId ? storedRecords.find((item) => String(item.id) === String(editingId)) : null;
 			const photo = photoFile instanceof File && photoFile.size ? await compressPhoto(photoFile) : editingItem?.photo || '';
 			const record = {
-				brand: formData.get('car-brand'),
+				brand: formData.get('moto-brand'),
 				year: formData.get('year'),
 				code: formData.get('code'),
 				plate: formData.get('plate'),
@@ -358,10 +341,10 @@
 				resetFormMode();
 				recordsHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			} catch (error) {
-				console.error('Unable to save registration record:', error);
+				console.error('Unable to save motorcycle record:', error);
 				const missingTable = error?.code === 'PGRST205' || /could not find the table/i.test(error?.message || '');
 				window.alert(missingTable
-					? 'The mr_ak_cars table is missing in Supabase. Open supabase-migrations.sql from this project and run it in the Supabase SQL Editor, then try again.'
+					? 'The motorcycles table is missing in Supabase. Run section 6 of supabase-migrations.sql in the Supabase SQL Editor, then try again.'
 					: 'The record could not be saved. Please check your connection and try again.');
 			}
 		});

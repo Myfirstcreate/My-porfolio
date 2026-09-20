@@ -8,6 +8,8 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<script src="https://unpkg.com/lucide@latest"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="supabase-client.js"></script>
 	<style>
 		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --red:#ff7670; }
 		* { box-sizing:border-box; }
@@ -45,6 +47,7 @@
 		.vehicle-ref .table-wrap { min-width:0; }
 		.vehicle-ref table { min-width:0; }
 		.footnote { display:flex; justify-content:space-between; gap:15px; margin-top:13px; color:var(--muted); font:10px 'DM Mono',monospace; }
+		.viewer-note { margin:12px 0 0; padding:9px 12px; border:1px dashed #3c4439; border-radius:4px; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
 		@media(max-width:1100px) { .shell { padding:25px 20px 40px; } .form-grid { grid-template-columns:repeat(3,1fr); } } @media(max-width:650px) { .shell { padding:25px 15px 40px; } .intro,.form-head { align-items:start; flex-direction:column; } .intro p { max-width:none; } .stats { grid-template-columns:1fr; gap:9px; } .form-grid { grid-template-columns:repeat(2,1fr); } .submit { width:100%; } }
 	</style>
 </head>
@@ -52,8 +55,9 @@
 	<script src="auth-gate.js"></script>
 	<script>akgarageInitGate();</script>
 	<div class="shell">
-		<header class="topbar"><div class="brand"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></span></div><a class="back" href="bosscarsuaq.html"><i data-lucide="arrow-left"></i> Back to overview</a></header>
-		<section class="intro"><div><p class="eyebrow">Workspace / Service UAQ</p><h1>Service log.</h1></div><p>Record every service visit, mileage checkpoint, repair, and next due date for UAQ vehicles.</p></section>
+		<header class="topbar"><div class="brand"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></span></div><a class="back" id="service-back-link" href="bosscarsuaq.html"><i data-lucide="arrow-left"></i><span id="service-back-text">Back to overview</span></a></header>
+		<section class="intro"><div><p class="eyebrow" id="service-eyebrow">Workspace / Service UAQ</p><h1>Service log.</h1></div><p id="service-intro-desc">Record every service visit, mileage checkpoint, repair, and next due date for UAQ vehicles.</p></section>
+		<div class="viewer-note" hidden>View only — ask the admin to update service records.</div>
 		<section class="stats" aria-label="Service statistics"><a class="stat" href="#service-records"><label>Total services</label><strong id="total-count">00</strong><span>VIEW SERVICE RECORDS</span></a><a class="stat" href="#service-records"><label>Pending service</label><strong id="pending-count">00</strong><span>NEEDS ATTENTION</span></a><a class="stat" href="#service-records"><label>Service mileage</label><strong id="mileage-count">00</strong><span>KM LOGGED</span></a></section>
 		<div class="records-head"><h2>Service records</h2><span id="records-label">00 RECORDS</span></div>
 		<div class="table-wrap" id="service-records"><table><thead><tr><th>Date of service (Month)</th><th>Car brand</th><th>Model</th><th>Code</th><th>Plate No.</th><th>Mileage</th><th>Mileage (Ask rinat)</th><th>Need service</th><th>What was done</th><th>Mileage after service</th><th>Service tires</th><th>Service (tire)</th><th>Next service due</th><th>Status</th><th>Garage location</th><th>That KM used</th></tr></thead><tbody id="service-records-body"></tbody></table></div>
@@ -76,16 +80,71 @@
 		const recordsLabel = document.getElementById('records-label');
 		const emptyNote = document.getElementById('empty-note');
 		const detailsModal = document.getElementById('details-modal');
-		const detailsWork = document.getElementById('details-work');
-		let selectedServiceIndex = -1;
-		const STORAGE_KEY = 'akgarage_bosscars';
-		const recordsChannel = 'BroadcastChannel' in window ? new BroadcastChannel('akgarage_bosscars_sync') : null;
-		function getBossVehicleRecords() {
-			try {
-				return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-			} catch (error) {
-				return [];
+		const detailsWork = document.getElementById('details-work');			let selectedServiceId = null;
+			let serviceRecords = [];
+			// ?from=mrak -> service log for Mr AK Cars records; default -> Boss Car's UAQ.
+			const FROM_MRAK = new URLSearchParams(location.search).get('from') === 'mrak';
+			const TABLE = FROM_MRAK ? 'mr_ak_cars' : 'boss_cars_uaq';
+			if (FROM_MRAK) {
+				document.title = 'AK Garage | Mr AK Cars Service';
+				const backLink = document.getElementById('service-back-link');
+				if (backLink) backLink.href = 'mrakcars.html';
+				const backText = document.getElementById('service-back-text');
+				if (backText) backText.textContent = 'Back to Mr AK Cars';
+				const eyebrow = document.getElementById('service-eyebrow');
+				if (eyebrow) eyebrow.textContent = 'Workspace / Mr AK Cars Service';
+				const introDesc = document.getElementById('service-intro-desc');
+				if (introDesc) introDesc.textContent = 'Record every service visit, mileage checkpoint, repair, and next due date for Mr AK Cars vehicles.';
 			}
+		const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+		const pendingSaves = new Map();
+		// Supabase columns are snake_case; the page code uses camelCase. Map both ways.
+		const SERVICE_FIELD_MAP = {
+			service_date: 'serviceDate',
+			service_mileage: 'serviceMileage',
+			service_mileage_ask_rinat: 'serviceMileageAskRinat',
+			service_mileage_after: 'serviceMileageAfter',
+			service_tires: 'serviceTires',
+			service_work: 'serviceWork'
+		};
+		async function loadServiceRecords() {
+			const { data, error } = await window.sb.from(TABLE).select('*').order('code');
+			if (error) throw error;
+			serviceRecords = (data || []).map((row) => {
+				const item = { ...row };
+				for (const [dbField, camelField] of Object.entries(SERVICE_FIELD_MAP)) {
+					item[camelField] = row[dbField] ?? '';
+					delete item[dbField];
+				}
+				// Mr AK Cars records have no model column — show the year in its place.
+				if (FROM_MRAK) item.model = item.year || '';
+				return item;
+			});
+		}
+		function toDbFields(fields) {
+			const dbFields = {};
+			for (const [key, value] of Object.entries(fields)) {
+				const dbField = Object.keys(SERVICE_FIELD_MAP).find((name) => SERVICE_FIELD_MAP[name] === key);
+				dbFields[dbField || key] = value;
+			}
+			return dbFields;
+		}
+		function queueSave(id, fields) {
+			if (!id) return;
+			const pending = pendingSaves.get(id) || { fields: {} };
+			Object.assign(pending.fields, fields);
+			clearTimeout(pending.timer);				pending.timer = setTimeout(async () => {
+					pendingSaves.delete(id);
+					const { error } = await window.sb.from(TABLE).update(toDbFields(pending.fields)).eq('id', id);
+					if (error) {
+						console.error('Unable to save service record:', error);
+						const missingColumns = error?.code === '42703' || /does not exist/i.test(error?.message || '');
+						window.alert(missingColumns
+							? 'Save failed: the service fields are missing in the database. Ask the admin to run section 4 of supabase-migrations.sql in the Supabase SQL Editor, then try again.'
+							: 'Save failed: ' + (error?.message || 'unknown error'));
+					}
+				}, 400);
+			pendingSaves.set(id, pending);
 		}
 		function parseServiceDate(value) {
 			const text = String(value || '').trim();
@@ -122,8 +181,9 @@
 				const lastDay = new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 0).getDate();
 				dueDate.setDate(Math.min(day, lastDay));
 			}
-			const mileageValue = Number(mileage);
-			const dueMileage = String(mileage).trim() && Number.isFinite(mileageValue) ? mileageValue + 5000 : null;
+			const mileageText = mileage == null ? '' : String(mileage).trim();
+			const mileageValue = Number(mileageText);
+			const dueMileage = mileageText && Number.isFinite(mileageValue) ? mileageValue + 5000 : null;
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
 			const daysUntilDue = dueDate ? Math.ceil((dueDate - today) / 86400000) : null;
@@ -136,15 +196,17 @@
 			return `<strong>${info.status}</strong><span>DATE: ${info.dueDate}<br>KM: ${info.dueMileage}</span>`;
 		}
 		function calculateKmUsed(mileage, mileageAskRinat) {
-			const mileageValue = Number(mileage);
-			const askRinatValue = Number(mileageAskRinat);
-			if (!String(mileage).trim() || !String(mileageAskRinat).trim() || !Number.isFinite(mileageValue) || !Number.isFinite(askRinatValue)) return '-';
+			const mileageText = mileage == null ? '' : String(mileage).trim();
+			const askRinatText = mileageAskRinat == null ? '' : String(mileageAskRinat).trim();
+			const mileageValue = Number(mileageText);
+			const askRinatValue = Number(askRinatText);
+			if (!mileageText || !askRinatText || !Number.isFinite(mileageValue) || !Number.isFinite(askRinatValue)) return '-';
 			return (mileageValue - askRinatValue).toLocaleString();
 		}
-		function openServiceDetails(index) {
-			const item = getBossVehicleRecords()[index];
+		function openServiceDetails(id) {
+			const item = serviceRecords.find((record) => String(record.id) === String(id));
 			if (!item) return;
-			selectedServiceIndex = index;
+			selectedServiceId = id;
 			document.getElementById('details-title').textContent = `${item.brand || 'Vehicle'} service details`;
 			document.getElementById('details-subtitle').textContent = item.model || 'UAQ service record';
 			document.getElementById('details-date').textContent = item.serviceDate || '--';
@@ -159,81 +221,74 @@
 		}
 		function closeServiceDetails() {
 			detailsModal.hidden = true;
-			selectedServiceIndex = -1;
+			selectedServiceId = null;
 		}
 		function renderServiceRecords() {
-			const items = getBossVehicleRecords().map((item, index) => ({ item, index })).sort((left, right) => String(left.item.code || '').localeCompare(String(right.item.code || ''), undefined, { numeric: true, sensitivity: 'base' }));
+			const items = serviceRecords;
 			if (!items.length) {
 				records.innerHTML = '<tr><td colspan="16">No service records yet</td></tr>';
 				updateCounts();
 				return;
 			}
-			records.innerHTML = items.map(({ item, index }) => `
-				<tr data-service-record data-record-index="${index}">
-					<td><input class="service-date" type="text" placeholder="DD Month YYYY" value="${item.serviceDate || ''}" aria-label="Date of service for ${item.brand || 'vehicle'}"></td><td>${item.brand || ''}</td><td>${item.model || ''}</td><td class="code">${item.code || ''}</td><td>${item.plate || ''}</td>
-					<td><input class="service-mileage" type="text" inputmode="numeric" placeholder="0" value="${item.serviceMileage || ''}" data-mileage="${item.serviceMileage || 0}" aria-label="Mileage in kilometers for ${item.brand || 'vehicle'}"></td><td><input class="service-mileage-ask" type="text" inputmode="numeric" placeholder="0" value="${item.serviceMileageAskRinat || ''}" aria-label="Mileage Ask rinat for ${item.brand || 'vehicle'}"></td><td class="service-due ${getMaintenanceInfo(item.serviceDate, item.serviceMileage).className}">${renderMaintenanceCell(item.serviceDate, item.serviceMileage)}</td><td><button class="see-details" type="button" data-service-index="${index}">See details</button></td><td><input class="service-mileage-after" type="text" inputmode="numeric" placeholder="0" value="${item.serviceMileageAfter || ''}" aria-label="Mileage after service for ${item.brand || 'vehicle'}"></td><td><input class="service-tires" type="text" placeholder="Tire service" value="${item.serviceTires || ''}" aria-label="Service tires for ${item.brand || 'vehicle'}"></td><td></td><td></td><td></td><td></td><td class="km-used-result">${calculateKmUsed(item.serviceMileage, item.serviceMileageAskRinat)}</td>
+			records.innerHTML = items.map((item) => `
+				<tr data-service-record data-id="${item.id}">
+					<td><input class="service-date" type="text" placeholder="DD Month YYYY" value="${escapeHtml(item.serviceDate || '')}" aria-label="Date of service for ${escapeHtml(item.brand || 'vehicle')}"></td><td>${escapeHtml(item.brand || '')}</td><td>${escapeHtml(item.model || '')}</td><td class="code">${escapeHtml(item.code || '')}</td><td>${escapeHtml(item.plate || '')}</td>
+					<td><input class="service-mileage" type="text" inputmode="numeric" placeholder="0" value="${escapeHtml(item.serviceMileage || '')}" data-mileage="${escapeHtml(item.serviceMileage || 0)}" aria-label="Mileage in kilometers for ${escapeHtml(item.brand || 'vehicle')}"></td><td><input class="service-mileage-ask" type="text" inputmode="numeric" placeholder="0" value="${escapeHtml(item.serviceMileageAskRinat || '')}" aria-label="Mileage Ask rinat for ${escapeHtml(item.brand || 'vehicle')}"></td><td class="service-due ${getMaintenanceInfo(item.serviceDate, item.serviceMileage).className}">${renderMaintenanceCell(item.serviceDate, item.serviceMileage)}</td><td><button class="see-details" type="button" data-service-id="${item.id}">See details</button></td><td><input class="service-mileage-after" type="text" inputmode="numeric" placeholder="0" value="${escapeHtml(item.serviceMileageAfter || '')}" aria-label="Mileage after service for ${escapeHtml(item.brand || 'vehicle')}"></td><td><input class="service-tires" type="text" placeholder="Tire service" value="${escapeHtml(item.serviceTires || '')}" aria-label="Service tires for ${escapeHtml(item.brand || 'vehicle')}"></td><td></td><td></td><td></td><td></td><td class="km-used-result">${calculateKmUsed(item.serviceMileage, item.serviceMileageAskRinat)}</td>
 				</tr>
 			`).join('');
 			records.querySelectorAll('.service-date').forEach((input) => {
 				input.addEventListener('input', () => {
-					const currentItems = getBossVehicleRecords();
-					const index = Number(input.closest('tr').dataset.recordIndex);
-					if (!currentItems[index]) return;
-					currentItems[index].serviceDate = input.value;
-					localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
-					recordsChannel?.postMessage('records-updated');
-					const dueCell = input.closest('tr').querySelector('.service-due');
-					const info = getMaintenanceInfo(input.value, input.closest('tr').querySelector('.service-mileage').value);
+					const row = input.closest('tr');
+					const item = serviceRecords.find((record) => String(record.id) === row.dataset.id);
+					if (!item) return;
+					item.serviceDate = input.value;
+					queueSave(item.id, { serviceDate: input.value });
+					const dueCell = row.querySelector('.service-due');
+					const info = getMaintenanceInfo(input.value, row.querySelector('.service-mileage').value);
 					dueCell.className = `service-due ${info.className}`;
-					dueCell.innerHTML = renderMaintenanceCell(input.value, input.closest('tr').querySelector('.service-mileage').value);
+					dueCell.innerHTML = renderMaintenanceCell(input.value, row.querySelector('.service-mileage').value);
 				});
 			});
 			records.querySelectorAll('.service-mileage').forEach((input) => {
 				input.addEventListener('input', () => {
-					const currentItems = getBossVehicleRecords();
-					const index = Number(input.closest('tr').dataset.recordIndex);
-					if (!currentItems[index]) return;
-					currentItems[index].serviceMileage = input.value;
+					const row = input.closest('tr');
+					const item = serviceRecords.find((record) => String(record.id) === row.dataset.id);
+					if (!item) return;
+					item.serviceMileage = input.value;
 					input.dataset.mileage = input.value || '0';
-					localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
-					recordsChannel?.postMessage('records-updated');
-					input.closest('tr').querySelector('.km-used-result').textContent = calculateKmUsed(input.value, input.closest('tr').querySelector('.service-mileage-ask').value);
-					const dueCell = input.closest('tr').querySelector('.service-due');
-					const info = getMaintenanceInfo(input.closest('tr').querySelector('.service-date').value, input.value);
+					queueSave(item.id, { serviceMileage: input.value });
+					row.querySelector('.km-used-result').textContent = calculateKmUsed(input.value, row.querySelector('.service-mileage-ask').value);
+					const dueCell = row.querySelector('.service-due');
+					const info = getMaintenanceInfo(row.querySelector('.service-date').value, input.value);
 					dueCell.className = `service-due ${info.className}`;
-					dueCell.innerHTML = renderMaintenanceCell(input.closest('tr').querySelector('.service-date').value, input.value);
+					dueCell.innerHTML = renderMaintenanceCell(row.querySelector('.service-date').value, input.value);
 					updateCounts();
 				});
 			});
 			records.querySelectorAll('.service-mileage-ask').forEach((input) => {
 				input.addEventListener('input', () => {
-					const currentItems = getBossVehicleRecords();
-					const index = Number(input.closest('tr').dataset.recordIndex);
-					if (!currentItems[index]) return;
-					currentItems[index].serviceMileageAskRinat = input.value;
-					localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
-					recordsChannel?.postMessage('records-updated');
-					input.closest('tr').querySelector('.km-used-result').textContent = calculateKmUsed(input.closest('tr').querySelector('.service-mileage').value, input.value);
+					const row = input.closest('tr');
+					const item = serviceRecords.find((record) => String(record.id) === row.dataset.id);
+					if (!item) return;
+					item.serviceMileageAskRinat = input.value;
+					queueSave(item.id, { serviceMileageAskRinat: input.value });
+					row.querySelector('.km-used-result').textContent = calculateKmUsed(row.querySelector('.service-mileage').value, input.value);
 				});
 			});
 			records.querySelectorAll('.service-mileage-after').forEach((input) => {
 				input.addEventListener('input', () => {
-					const currentItems = getBossVehicleRecords();
-					const index = Number(input.closest('tr').dataset.recordIndex);
-					if (!currentItems[index]) return;
-					currentItems[index].serviceMileageAfter = input.value;
-					localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
-					recordsChannel?.postMessage('records-updated');
+					const item = serviceRecords.find((record) => String(record.id) === input.closest('tr').dataset.id);
+					if (!item) return;
+					item.serviceMileageAfter = input.value;
+					queueSave(item.id, { serviceMileageAfter: input.value });
 				});
 			});
 			records.querySelectorAll('.service-tires').forEach((input) => {
 				input.addEventListener('input', () => {
-					const currentItems = getBossVehicleRecords();
-					const index = Number(input.closest('tr').dataset.recordIndex);
-					if (!currentItems[index]) return;
-					currentItems[index].serviceTires = input.value;
-					localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
-					recordsChannel?.postMessage('records-updated');
+					const item = serviceRecords.find((record) => String(record.id) === input.closest('tr').dataset.id);
+					if (!item) return;
+					item.serviceTires = input.value;
+					queueSave(item.id, { serviceTires: input.value });
 				});
 			});
 			updateCounts();
@@ -246,18 +301,16 @@
 		}
 		records.addEventListener('click', (event) => {
 			const button = event.target.closest('.see-details');
-			if (button) openServiceDetails(Number(button.dataset.serviceIndex));
+			if (button) openServiceDetails(button.dataset.serviceId);
 		});
 		document.getElementById('close-details').addEventListener('click', closeServiceDetails);
 		document.getElementById('cancel-details').addEventListener('click', closeServiceDetails);
 		document.getElementById('save-details').addEventListener('click', () => {
-			const items = getBossVehicleRecords();
-			if (selectedServiceIndex < 0 || !items[selectedServiceIndex]) return;
-			items[selectedServiceIndex].serviceWork = detailsWork.value.trim();
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-			recordsChannel?.postMessage('records-updated');
+			const item = serviceRecords.find((record) => String(record.id) === String(selectedServiceId));
+			if (!item) return;
+			item.serviceWork = detailsWork.value.trim();
+			queueSave(item.id, { serviceWork: item.serviceWork });
 			closeServiceDetails();
-			renderServiceRecords();
 		});
 		detailsModal.addEventListener('click', (event) => {
 			if (event.target === detailsModal) closeServiceDetails();
@@ -266,17 +319,29 @@
 			if (event.key === 'Escape' && !detailsModal.hidden) closeServiceDetails();
 		});
 		function displayDate(value) { return new Intl.DateTimeFormat('en-GB', { day:'2-digit', month:'short', year:'numeric' }).format(new Date(`${value}T00:00:00`)); }
-		window.addEventListener('storage', (event) => {
-			if (event.key === STORAGE_KEY) {
+		async function refreshServiceRecords() {
+			try {
+				await loadServiceRecords();
 				renderServiceRecords();
+			} catch (error) {
+				console.error('Unable to load service records from Supabase:', error);
+				const missingColumns = error?.code === '42703' || /does not exist/i.test(error?.message || '');
+				records.innerHTML = `<tr><td colspan="16">${missingColumns ? 'Service fields missing: run the ALTER TABLE SQL (section 4 of supabase-migrations.sql) in Supabase' : 'Unable to load service records'}</td></tr>`;
 			}
-		});
-		recordsChannel?.addEventListener('message', renderServiceRecords);
+		}
 		window.addEventListener('visibilitychange', () => {
-			if (!document.hidden) renderServiceRecords();
+			if (!document.hidden) refreshServiceRecords();
 		});
-		window.addEventListener('pageshow', renderServiceRecords);
-		renderServiceRecords();
+		window.addEventListener('pageshow', refreshServiceRecords);
+		refreshServiceRecords();
+
+		// Viewers (team password) cannot type into the service fields — the admin
+		// token guards this in the database too, so this is cosmetic hardening.
+		(function applyViewerMode() {
+			const note = document.querySelector('.viewer-note');
+			if (window.akgarageIsAdmin()) return;
+			if (note) note.hidden = false;
+		})();
 	</script>
 </body>
 </html>

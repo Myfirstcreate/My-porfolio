@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>AK Garage | VIP Numbers</title>
+	<title>AK Garage | VIP Motorcycles</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -79,20 +79,20 @@
 			<a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a>
 		</header>
 		<section class="intro">
-			<div><p class="eyebrow">Workspace / VIP Numbers</p><h1>VIP number's </h1></div>
-			<p>Manage premium plates and keep every reserved number organized.</p>
+			<div><p class="eyebrow">Workspace / VIP Motorcycles</p><h1>VIP motorcycle plates</h1></div>
+			<p>Manage premium motorcycle plates and keep every reserved number organized.</p>
 		</section>
 		<div class="viewer-note" hidden>View only — ask the admin to add, edit, or erase records.</div>
-		<form class="form-card" id="vip-form">
-			<div class="form-head"><h2>Add VIP number</h2><span>All fields required</span></div>
+		<form class="form-card" id="vipmoto-form">
+			<div class="form-head"><h2>Add VIP motorcycle plate</h2><span>All fields required</span></div>
 			<div class="form-grid">
 				<div class="field"><label for="code">Code</label><input id="code" name="code" type="text" placeholder="VIP-001" required></div>
-				<div class="field"><label for="emirates">Emirates</label><input id="emirates" name="emirates" type="text" placeholder="Dubai" required></div>
+				<div class="field"><label for="emirates">Emirates</label><input id="emirates" name="emirates" type="text" placeholder="RAK" required></div>
 				<div class="field"><label for="plate">Plate No.</label><input id="plate" name="plate" type="text" placeholder="1" required></div>
-				<button class="submit" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add number</button>
+				<button class="submit" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add plate</button>
 			</div>
 		</form>
-		<div class="records-head"><h2>VIP number records</h2><div class="status-summary"><span class="status-count available">Available: <strong id="available-count">00</strong></span><span class="status-count registered">Registered: <strong id="registered-count">00</strong></span></div><div class="records-actions"><span id="record-count">00 RECORDS</span><button class="search-toggle" id="search-toggle" type="button">Search</button><button class="view-all" id="view-all" type="button" hidden>View all</button></div></div>
+		<div class="records-head"><h2>VIP motorcycle records</h2><div class="status-summary"><span class="status-count available">Available: <strong id="available-count">00</strong></span><span class="status-count registered">Registered: <strong id="registered-count">00</strong></span></div><div class="records-actions"><span id="record-count">00 RECORDS</span><button class="search-toggle" id="search-toggle" type="button">Search</button><button class="view-all" id="view-all" type="button" hidden>View all</button></div></div>
 		<div class="search-panel" id="search-panel">
 			<input class="search-input" id="search-input" type="search" placeholder="Search plate number" aria-label="Search plate number">
 			<div class="search-results">
@@ -106,16 +106,16 @@
 		<div class="table-wrap">
 			<table>
 				<thead><tr><th>Code</th><th>Emirates</th><th>Plate No.</th><th>Status</th><th>Action</th></tr></thead>
-				<tbody id="vip-records"></tbody>
+				<tbody id="vipmoto-records"></tbody>
 			</table>
-			<div class="empty" id="empty-state">No VIP numbers added</div>
+			<div class="empty" id="empty-state">No VIP motorcycle plates added</div>
 		</div>
 	</div>
 	<script>
 		lucide.createIcons();
-		const TABLE = 'vip_numbers';
-		const form = document.getElementById('vip-form');
-		const records = document.getElementById('vip-records');
+		const TABLE = 'vip_motorcycles';
+		const form = document.getElementById('vipmoto-form');
+		const records = document.getElementById('vipmoto-records');
 		const recordCount = document.getElementById('record-count');
 		const emptyState = document.getElementById('empty-state');
 		const availableCount = document.getElementById('available-count');
@@ -188,7 +188,7 @@
 				row.dataset.status = statusSelect.value;
 				statusSelect.className = `status-select ${statusSelect.value.toLowerCase()}`;
 				window.sb.from(TABLE).update({ status: statusSelect.value }).eq('id', record.id).then(({ error }) => {
-					if (error) console.error('Unable to update VIP status:', error);
+					if (error) console.error('Unable to update VIP motorcycle status:', error);
 				});
 				updateRecords();
 				if (searchPanel.classList.contains('open')) updateSearchResults();
@@ -196,7 +196,7 @@
 			row.querySelector('.erase').addEventListener('click', () => {
 				window.sb.from(TABLE).delete().eq('id', record.id).then(({ error }) => {
 					if (error) {
-						console.error('Unable to delete VIP record:', error);
+						console.error('Unable to delete VIP motorcycle record:', error);
 						return;
 					}
 					storedRecords = storedRecords.filter((item) => item.id !== record.id);
@@ -214,8 +214,8 @@
 				sortRecordsByCode();
 				updateRecords();
 			} catch (error) {
-				console.error('Unable to load VIP numbers from Supabase:', error);
-				emptyState.textContent = 'Unable to load VIP numbers';
+				console.error('Unable to load VIP motorcycle plates from Supabase:', error);
+				emptyState.textContent = 'Unable to load VIP motorcycle plates';
 			}
 		}
 		initialize();
@@ -253,7 +253,7 @@
 			};
 			const { data: inserted, error } = await window.sb.from(TABLE).insert(record).select().single();
 			if (error) {
-				console.error('Unable to add VIP number:', error);
+				console.error('Unable to add VIP motorcycle plate:', error);
 				return;
 			}
 			storedRecords.push(inserted);
