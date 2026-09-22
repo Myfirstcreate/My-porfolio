@@ -234,13 +234,19 @@
         const projectsTotal = document.getElementById('projects-total');
 
         async function fetchRegistrationRecords() {
-            const [mrak, boss] = await Promise.all([
+            const [mrak, boss, moto] = await Promise.all([
                 window.sb.from('mr_ak_cars').select('code, plate, year, expiry').order('code'),
-                window.sb.from('boss_cars_uaq').select('code, plate, expiry')
+                window.sb.from('boss_cars_uaq').select('code, plate, expiry'),
+                window.sb.from('motorcycles').select('code, plate, brand, expiry')
             ]);
             if (mrak.error) throw mrak.error;
             if (boss.error) throw boss.error;
-            return { mrakRecords: mrak.data || [], combined: [...(mrak.data || []), ...(boss.data || [])] };
+            const motoRecords = moto.error ? [] : (moto.data || []);
+            return { mrakRecords: mrak.data || [], combined: [
+                ...(mrak.data || []),
+                ...(boss.data || []),
+                ...motoRecords.map((m) => ({ ...m, _src: 'moto' }))
+            ] };
         }
 
         function updateExpiryBadge() {
@@ -260,7 +266,7 @@
                 if (!Number.isFinite(t)) return;
                 const days = Math.round((t - today.getTime()) / 86400000);
                 if (days < 0) { expired++; return; }
-                if (days <= 30) { expiring++; soonest.push({ days, code: record.code, plate: record.plate }); }
+                if (days <= 30) { expiring++; soonest.push({ days, code: record.code || record.brand, plate: record.plate, src: record._src }); }
             });
             window.__expiryCounts = { expiring, expired };
             const total = document.getElementById('expiring-total');
@@ -282,8 +288,8 @@
             const parts = [];
             if (expired) parts.push(`<b>${expired}</b> expired`);
             if (expiring) parts.push(`<b>${expiring}</b> expiring within 30 days`);
-            const nextTxt = next ? ` Next: <b>${String(next.code || '').toUpperCase()} ${next.plate}</b> — ${next.days === 0 ? 'today' : `in ${next.days} day${next.days === 1 ? '' : 's'}`}.` : '.';
-            text.innerHTML = `🔔 <b>${parts.join(' · ')}</b> across Mr AK Cars and Boss UAQ registrations.${nextTxt}`;
+            const nextTxt = next ? ` Next: <b>${next.src === 'moto' ? '🏍️ ' : ''}${String(next.code || '').toUpperCase()} ${next.plate}</b> — ${next.days === 0 ? 'today' : `in ${next.days} day${next.days === 1 ? '' : 's'}`}.` : '.';
+            text.innerHTML = `🔔 <b>${parts.join(' · ')}</b> across Mr AK Cars, Boss UAQ and Motorcycle registrations.${nextTxt}`;
             alertBox.classList.add('show');
             alertBox.classList.toggle('critical', expired > 0);
             if (icon && expired > 0) icon.textContent = '⚠️';
@@ -382,6 +388,7 @@
             if (error || !Number.isFinite(count)) { vipmotoTotal.textContent = '--'; return; }
             vipmotoTotal.textContent = String(count).padStart(2, '0');
         }
+
 
         async function renderSummaries() {
             async function renderProjectsCount() {
