@@ -84,6 +84,7 @@
 </head>
 <body>
 	<script src="auth-gate.js"></script>
+		<script src="export-report.js"></script>
 	<script>akgarageInitGate();</script>
 	<div class="shell">
 		<header class="topbar">
@@ -113,7 +114,7 @@
 				<button class="submit" id="submit-record" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add record</button>
 			</div>
 		</form>
-		<div class="records-head" id="registration-records-heading"><h2>Registration records</h2><span class="mono" id="record-count">00 RECORDS</span></div>
+		<div class="records-head" id="registration-records-heading"><h2>Registration records</h2><span class="mono" id="record-count">00 RECORDS</span><button type="button" class="export-report-btn" id="export-report">⬇ Export report</button></div>
 		<div class="expiry-banner" id="expiry-banner" hidden></div>
 		<div class="table-wrap">
 			<table>
@@ -364,6 +365,21 @@
 					? 'The mr_ak_cars table is missing in Supabase. Open supabase-migrations.sql from this project and run it in the Supabase SQL Editor, then try again.'
 					: 'The record could not be saved. Please check your connection and try again.');
 			}
+		});
+		window.addExpiryReportButton({
+			headSelector: '#registration-records-heading',
+			title: 'Mr AK Cars - expiring registrations',
+			filename: 'Mr-AK-Cars-expiring-report',
+			getRecords: function () { return typeof storedRecords !== 'undefined' ? storedRecords : []; },
+			columns: [
+				{ label: 'Status', value: function (r, days) { return days < 0 ? 'EXPIRED (' + Math.abs(days) + ' days ago)' : 'EXPIRING IN ' + days + ' DAYS'; } },
+				{ label: 'Code', value: function (r) { return r.code; } },
+				{ label: 'Car brand', value: function (r) { return r.brand; } },
+				{ label: 'Year', value: function (r) { return r.year; } },
+				{ label: 'Plate No.', value: function (r) { return r.plate; } },
+				{ label: 'Chassis', value: function (r) { return r.chassis; } },
+				{ label: 'Expiry date', value: function (r) { return r.expiry; } }
+			]
 		});
 	</script>
 </body>

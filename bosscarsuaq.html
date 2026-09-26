@@ -50,13 +50,14 @@
 </head>
 <body>
 	<script src="auth-gate.js"></script>
+		<script src="export-report.js"></script>
 	<script>akgarageInitGate();</script>
 	<div class="shell">
 		<header class="topbar"><div class="brand"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></span></div><div class="top-actions"><a class="back" href="serviceuaq.html"><i data-lucide="headphones"></i> Service</a><a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a></div></header>			<section class="intro"><div><p class="eyebrow">Workspace / Boss Car's UAQ</p><h1>Boss Car's UAQ.</h1></div><p>Keep the Boss Car's UAQ vehicle records organized for future entries.</p></section>
 			<div class="viewer-note" hidden>View only — ask the admin to add, edit, or erase records.</div>
 		<section class="stats" aria-label="Boss Car's UAQ statistics"><a class="stat" href="#boss-car-records"><label>Total cars</label><strong id="total-count">00</strong><span>VIEW CAR RECORDS</span></a><a class="stat" href="#boss-car-records"><label>UAQ cars</label><strong id="uaq-count">00</strong><span>REGISTERED IN UAQ</span></a><a class="stat" href="#boss-car-records"><label>Records added</label><strong id="record-count">00</strong><span>READY FOR FUTURE CARS</span></a></section>
 		<form class="form-card" id="boss-car-form"><div class="form-head"><h2 id="form-title">Add Boss Car's UAQ record</h2><span>All fields required</span></div><div class="form-grid"><div class="field"><label for="car-brand">Car brand</label><input id="car-brand" name="car-brand" type="text" placeholder="BMW" required></div><div class="field"><label for="car-model">Car model</label><input id="car-model" name="car-model" type="text" placeholder="E30 M3" required></div><div class="field"><label for="code">Code</label><input id="code" name="code" type="text" placeholder="BOSS-001" required></div><div class="field"><label for="plate">Plate No.</label><input id="plate" name="plate" type="text" placeholder="UAQ 1" required></div><div class="field"><label for="emirates">Emirates</label><input id="emirates" name="emirates" type="text" value="Umm Al Quwain" required></div><div class="field"><label for="chassis">Chassis</label><input id="chassis" name="chassis" type="text" placeholder="WBA123456789" required></div><div class="field"><label for="expiry">Expiry date</label><input id="expiry" name="expiry" type="date" required></div><button class="submit" id="submit-record" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add record</button></div></form>
-		<div class="records-head"><h2>Boss Car's UAQ records</h2><span id="records-label">00 RECORDS</span></div>
+		<div class="records-head"><h2>Boss Car's UAQ records</h2><span id="records-label">00 RECORDS</span><button type="button" class="export-report-btn" id="export-report">⬇ Export report</button></div>
 		<div class="expiry-banner" id="expiry-banner" hidden></div>
 		<div class="table-wrap" id="boss-car-records"><table><thead><tr><th>Car brand</th><th>Model</th><th>Code</th><th>Plate No.</th><th>Emirates</th><th>Chassis</th><th>Expiry date</th><th>Days to ex.</th><th>Action</th></tr></thead><tbody id="boss-car-records-body"></tbody></table></div>
 		<div class="footnote"><span id="empty-note">NO RECORDS ADDED</span><span>READY FOR FUTURE CARS</span></div>
@@ -228,6 +229,22 @@
 			if (window.akgarageIsAdmin()) return;
 			if (note) note.hidden = false;
 		})();
+		window.addExpiryReportButton({
+			headSelector: '.records-head',
+			title: 'Boss Cars UAQ - expiring registrations',
+			filename: 'Boss-UAQ-expiring-report',
+			getRecords: function () { return typeof storedRecords !== 'undefined' ? storedRecords : []; },
+			columns: [
+				{ label: 'Status', value: function (r, days) { return days < 0 ? 'EXPIRED (' + Math.abs(days) + ' days ago)' : 'EXPIRING IN ' + days + ' DAYS'; } },
+				{ label: 'Code', value: function (r) { return r.code; } },
+				{ label: 'Car brand', value: function (r) { return r.brand; } },
+				{ label: 'Model', value: function (r) { return r.model; } },
+				{ label: 'Plate No.', value: function (r) { return r.plate; } },
+				{ label: 'Emirates', value: function (r) { return r.emirates; } },
+				{ label: 'Chassis', value: function (r) { return r.chassis; } },
+				{ label: 'Expiry date', value: function (r) { return r.expiry; } }
+			]
+		});
 	</script>
 </body>
 </html>
