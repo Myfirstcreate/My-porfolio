@@ -75,6 +75,9 @@
         .icon-button:hover { color: var(--text); border-color: #697163; }
         .avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--black); background: var(--amber); font-weight: 700; font-size: 12px; }
         .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 13px; margin-bottom: 18px; }
+        .alert-metrics { grid-template-columns: repeat(3, 1fr); }
+        .metric.alert-card { border-color: #4a3b1f; }
+        .metric.alert-card::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--amber); }
         .metric { position: relative; padding: 18px 18px 16px; min-height: 119px; border: 1px solid var(--line); border-radius: 6px; background: rgba(16,18,16,.86); overflow: hidden; }
         /* Expiring registrations alert */
         .expiry-alert { display:none; align-items:center; gap:14px; margin-bottom:22px; padding:15px 18px; border:1px solid #6b5200; border-radius:8px; background:linear-gradient(90deg,#241a00,#1a1608); }
@@ -163,24 +166,28 @@
                 <div><p class="eyebrow" id="current-date">Loading date...</p><h1>Good day, Boss AK</h1></div>
                 <div class="top-actions"><span class="date" id="last-sync">LAST SYNC --:--:--</span><button class="icon-button" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-badge" id="expiry-notif-badge" hidden></span></button><div class="avatar">AS</div></div>
             </header>
-            <section class="metrics" aria-label="Garage metrics">
-                <article class="metric"><span class="metric-label">Active projects</span><strong id="projects-total">--</strong><span class="metric-change">READY FOR FUTURE BUILDS</span></article>
-                <article class="metric"><span class="metric-label">Parts in inventory</span><strong>00</strong><span class="metric-change">NO DATA YET</span></article>
-                <article class="metric"><span class="metric-label">Monthly revenue</span><strong>$0.00</strong><span class="metric-change neutral">NO SALES LOGGED YET</span></article>
-                <article class="metric"><span class="metric-label">Hours logged</span><strong>186.5</strong><span class="metric-change neutral">ON TARGET</span></article>
-                <article class="metric"><span class="metric-label">Expiring registrations</span><strong id="expiring-total">00</strong><span class="metric-change neutral" id="expiring-sub">WITHIN 30 DAYS</span></article>
-            </section>
-            <div class="expiry-alert" id="expiry-alert" role="alert">
-                <span class="ea-icon" id="expiry-alert-icon">🔔</span>
-                <span class="ea-text" id="expiry-alert-text"></span>
-                <a class="ea-link" href="mrakcars.html">View records</a>
-            </div>
             <section class="metrics record-metrics" aria-label="Car record metrics">
                 <article class="metric"><span class="metric-label">Mr AK car records</span><strong id="mr-ak-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">VIP Plates</span><strong id="vip-plates-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">Boss UAQ records</span><strong id="boss-uaq-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">Motorcycle records</span><strong id="moto-total">--</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">VIP moto plates</span><strong id="vipmoto-total">--</strong><span class="metric-change">TOTAL RECORDS</span></article>
+            </section>
+            <section class="metrics alert-metrics" aria-label="Alerts needing attention">
+                <article class="metric alert-card"><span class="metric-label">Expiring registrations</span><strong id="expiring-total">00</strong><span class="metric-change neutral" id="expiring-sub">WITHIN 30 DAYS</span></article>
+                <article class="metric alert-card"><span class="metric-label">Mr AK services due</span><strong id="service-due-mrak">--</strong><span class="metric-change neutral">DUE NOW + 30 DAYS</span></article>
+                <article class="metric alert-card"><span class="metric-label">Boss UAQ services due</span><strong id="service-due-boss">--</strong><span class="metric-change neutral">DUE NOW + 30 DAYS</span></article>
+            </section>
+            <div class="expiry-alert" id="expiry-alert" role="alert">
+                <span class="ea-icon" id="expiry-alert-icon">🔔</span>
+                <span class="ea-text" id="expiry-alert-text"></span>
+                <a class="ea-link" href="mrakcars.html">View records</a>
+            </div>
+            <section class="metrics" aria-label="Garage metrics">
+                <article class="metric"><span class="metric-label">Active projects</span><strong id="projects-total">--</strong><span class="metric-change">READY FOR FUTURE BUILDS</span></article>
+                <article class="metric"><span class="metric-label">Parts in inventory</span><strong>00</strong><span class="metric-change">NO DATA YET</span></article>
+                <article class="metric"><span class="metric-label">Monthly revenue</span><strong>$0.00</strong><span class="metric-change neutral">NO SALES LOGGED YET</span></article>
+                <article class="metric"><span class="metric-label">Hours logged</span><strong>186.5</strong><span class="metric-change neutral">ON TARGET</span></article>
             </section>
             <section class="workspace">
                 <article class="card chart-card">
@@ -231,6 +238,8 @@
         const bossUaqTotal = document.getElementById('boss-uaq-total');
         const motoTotal = document.getElementById('moto-total');
         const vipmotoTotal = document.getElementById('vipmoto-total');
+        const serviceDueMrak = document.getElementById('service-due-mrak');
+        const serviceDueBoss = document.getElementById('service-due-boss');
         const projectsTotal = document.getElementById('projects-total');
 
         async function fetchRegistrationRecords() {
@@ -389,7 +398,6 @@
             vipmotoTotal.textContent = String(count).padStart(2, '0');
         }
 
-
         async function renderSummaries() {
             async function renderProjectsCount() {
             const { count, error } = await window.sb.from('modifications').select('id', { count: 'exact', head: true }).eq('status', 'In progress');
@@ -397,8 +405,45 @@
             projectsTotal.textContent = String(count).padStart(2, '0');
         }
 
+        // Services due: reuses the service page rule — due date = service date + 3 months,
+        // or mileage + 5,000 km, whichever the user's service page flags as DUE NOW / DUE SOON.
+        // Here we count by date only: overdue (DUE NOW) + due within 30 days (DUE SOON).
+            async function renderServicesDueCount() {
+                if (!serviceDueMrak && !serviceDueBoss) return;
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const parseDate = (value) => {
+                    const text = String(value || '').trim();
+                    const numeric = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+                    const monthName = text.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+                    const match = numeric || monthName;
+                    if (!match) return null;
+                    const day = Number(match[1]);
+                    const month = numeric ? Number(match[2]) - 1 : new Date(`${match[2]} 1, 2000`).getMonth();
+                    const date = new Date(Number(match[3]), month, day);
+                    return date.getDate() === day && date.getMonth() === month ? date : null;
+                };
+                const isDue = (value) => {
+                    const date = parseDate(value);
+                    if (!date) return false;
+                    const day = date.getDate();
+                    date.setDate(1);
+                    date.setMonth(date.getMonth() + 3);
+                    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+                    date.setDate(Math.min(day, lastDay));
+                    const days = Math.ceil((date - today) / 86400000);
+                    return days <= 30; // overdue counts too (negative days)
+                };
+                const [mrak, boss] = await Promise.all([
+                    window.sb.from('mr_ak_cars').select('service_date, service_mileage'),
+                    window.sb.from('boss_cars_uaq').select('service_date, service_mileage')
+                ]);
+                const countDue = (rows) => (rows || []).filter((row) => isDue(row.service_date)).length;
+                if (serviceDueMrak) serviceDueMrak.textContent = mrak.error ? '--' : String(countDue(mrak.data)).padStart(2, '0');
+                if (serviceDueBoss) serviceDueBoss.textContent = boss.error ? '--' : String(countDue(boss.data)).padStart(2, '0');
+            }
+
         // Each summary independently: one failing table must not blank the others.
-            await Promise.allSettled([renderRegistrationSummary(), renderVipSummary(), renderBossSummary(), renderProjectsCount(), renderFleetChart(), renderMotoCount(), renderVipMotoCount()]);
+            await Promise.allSettled([renderRegistrationSummary(), renderVipSummary(), renderBossSummary(), renderProjectsCount(), renderFleetChart(), renderMotoCount(), renderVipMotoCount(), renderServicesDueCount()]);
         }
 
         renderSummaries().catch((error) => {
