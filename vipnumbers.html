@@ -42,6 +42,9 @@
 		.status-count { font:10px 'DM Mono',monospace; text-transform:uppercase; }
 		.status-count.available { color:#7dff78; } .status-count.registered { color:#ff7670; }
 		.records-actions { display:flex; align-items:center; gap:12px; }
+		.filter-select { padding:7px 10px; border:1px solid var(--line); border-radius:3px; color:var(--muted); background:#080a08; font:10px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
+		.filter-select:hover, .filter-select:focus { color:var(--text); border-color:var(--lime); outline:0; }
+		.filter-select option { color:var(--text); background:#080a08; }
 		.view-all { padding:7px 10px; border:1px solid var(--line); border-radius:3px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
 		.view-all:hover { color:var(--black); border-color:var(--lime); background:var(--lime); }
 		.search-toggle { padding:7px 10px; border:1px solid var(--line); border-radius:3px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
@@ -57,6 +60,8 @@
 		.table-wrap { overflow:auto; border:1px solid var(--line); border-radius:6px; background:rgba(16,18,16,.92); }
 		table { width:100%; min-width:560px; border-collapse:collapse; }
 		th { padding:15px 20px; color:#697268; border-bottom:1px solid var(--line); font:10px 'DM Mono',monospace; letter-spacing:.1em; text-align:left; text-transform:uppercase; }
+		.sort-toggle { padding:0; border:0; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; text-transform:inherit; cursor:pointer; }
+		.sort-toggle:hover { color:var(--lime); }
 		td { padding:6px 20px; border-bottom:1px solid #20241f; color:#dfe5da; font-size:13px; }
 		.plate-cell { padding:10px 20px !important; }
 		.vip-plate { display:inline-flex; align-items:center; justify-content:space-between; gap:22px; min-width:220px; padding:9px 16px; background:#ffffff; border:2px solid #141414; border-radius:5px; color:#141414; font-family:'DM Mono',monospace; font-weight:700; font-size:15px; letter-spacing:.03em; }
@@ -96,7 +101,7 @@
 				<button class="submit" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add number</button>
 			</div>
 		</form>
-		<div class="records-head"><h2>VIP number records</h2><div class="status-summary"><span class="status-count available">Available: <strong id="available-count">00</strong></span><span class="status-count registered">Registered: <strong id="registered-count">00</strong></span></div><div class="records-actions"><span id="record-count">00 RECORDS</span><button class="search-toggle" id="search-toggle" type="button">Search</button><button class="view-all" id="view-all" type="button" hidden>View all</button></div></div>
+		<div class="records-head"><h2>VIP number records</h2><div class="status-summary"><span class="status-count available">Available: <strong id="available-count">00</strong></span><span class="status-count registered">Registered: <strong id="registered-count">00</strong></span></div><div class="records-actions"><span id="record-count">00 RECORDS</span><select class="filter-select" id="status-filter" aria-label="Filter by status"><option value="all">All status</option><option value="Available">Available</option><option value="Registered">Registered</option></select><select class="filter-select" id="sort-order" aria-label="Sort records"><option value="code">Sort: Code</option><option value="plate">Sort: Plate no.</option></select><button class="search-toggle" id="search-toggle" type="button">Search</button><button class="view-all" id="view-all" type="button" hidden>View all</button></div></div>
 		<div class="search-panel" id="search-panel">
 			<input class="search-input" id="search-input" type="search" placeholder="Search plate number" aria-label="Search plate number">
 			<div class="search-results">
@@ -109,7 +114,7 @@
 		</div>
 		<div class="table-wrap">
 			<table>
-				<thead><tr><th>Plate</th><th>Status</th><th>Action</th></tr></thead>
+				<thead><tr><th><button type="button" class="sort-toggle" data-sort="plate">Plate</button></th><th>Status</th><th>Action</th></tr></thead>
 				<tbody id="vip-records"></tbody>
 			</table>
 			<div class="empty" id="empty-state">No VIP numbers added</div>
@@ -130,7 +135,10 @@
 		const searchInput = document.getElementById('search-input');
 		const searchRecords = document.getElementById('search-records');
 		const searchEmpty = document.getElementById('search-empty');
-		let showAllRecords = false;		form.querySelectorAll('input').forEach((input) => input.addEventListener('input', () => {
+		let showAllRecords = false;
+		const statusFilter = document.getElementById('status-filter');
+		const sortOrderSelect = document.getElementById('sort-order');
+		let statusFilterValue = 'all';		form.querySelectorAll('input').forEach((input) => input.addEventListener('input', () => {
 			input.value = input.value.toUpperCase();
 		}));
 
@@ -142,22 +150,28 @@
 			storedRecords = data || [];
 		}
 
-		function sortRecordsByCode() {
+		function sortRecords() {
 			[...records.children]
-				.sort((first, second) => String(first.dataset.code || '').localeCompare(String(second.dataset.code || ''), undefined, { numeric: true, sensitivity: 'base' }))
+				.sort((first, second) => { const key = sortOrderSelect.value; return String(first.dataset[key] || '').localeCompare(String(second.dataset[key] || ''), undefined, { numeric: true, sensitivity: 'base' }); })
 				.forEach((row) => records.appendChild(row));
 		}
 
 		function updateRecords() {
-			recordCount.textContent = `${String(records.children.length).padStart(2, '0')} RECORDS`;
+			const rows = [...records.children];
+			let visibleCount = 0;
+			rows.forEach((row) => {
+				const matchesStatus = statusFilterValue === 'all' || row.dataset.status === statusFilterValue;
+				row.hidden = !matchesStatus || (!showAllRecords && visibleCount >= 10);
+				if (!row.hidden) visibleCount += 1;
+			});
+			recordCount.textContent = `${String(rows.filter((row) => !row.hidden).length).padStart(2, '0')} RECORDS`;
 			availableCount.textContent = String([...records.children].filter((row) => row.dataset.status === 'Available').length).padStart(2, '0');
 			registeredCount.textContent = String([...records.children].filter((row) => row.dataset.status === 'Registered').length).padStart(2, '0');
-			emptyState.hidden = records.children.length > 0;
-			viewAllButton.hidden = records.children.length <= 10;
+			const matching = rows.filter((row) => statusFilterValue === 'all' || row.dataset.status === statusFilterValue).length;
+			emptyState.hidden = matching > 0;
+			emptyState.textContent = statusFilterValue === 'all' ? 'No VIP numbers added' : `No ${statusFilterValue.toLowerCase()} plates`;
+			viewAllButton.hidden = matching <= 10;
 			viewAllButton.textContent = showAllRecords ? 'View less' : 'View all';
-			[...records.children].forEach((row, index) => {
-				row.hidden = !showAllRecords && index >= 10;
-			});
 		}
 
 		function escapeHtml(value) {
@@ -215,7 +229,7 @@
 			try {
 				await loadRecords();
 				storedRecords.forEach(addRecord);
-				sortRecordsByCode();
+				sortRecords();
 				updateRecords();
 			} catch (error) {
 				console.error('Unable to load VIP numbers from Supabase:', error);
@@ -236,6 +250,12 @@
 			showAllRecords = !showAllRecords;
 			updateRecords();
 		});
+
+		statusFilter.addEventListener('change', () => {
+			statusFilterValue = statusFilter.value;
+			updateRecords();
+		});
+		sortOrderSelect.addEventListener('change', sortRecords);
 
 		searchToggle.addEventListener('click', () => {
 			searchPanel.classList.toggle('open');
@@ -262,7 +282,7 @@
 			}
 			storedRecords.push(inserted);
 			addRecord(inserted);
-			sortRecordsByCode();
+			sortRecords();
 			form.reset();
 			updateRecords();
 				if (searchPanel.classList.contains('open')) updateSearchResults();
