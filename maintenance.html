@@ -158,12 +158,6 @@ td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-a
 				<div><label>Search</label><input id="q" placeholder="Plate, model, mechanic..." title="Filters records by plate, model, mechanic, or garage"></div>
 				<div><label>Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
 			</div>
-			<div class="row" style="margin-top:12px">
-				<button class="btn ghost sm" id="save-file" type="button">⬇ Save file</button>
-				<button class="btn ghost sm" id="import-file-btn" type="button">⬆ Import file</button>
-				<span class="muted" id="import-status" style="font-size:11px"></span>
-			</div>
-			<input type="file" id="import-file" accept="application/json,.json" class="hidden">
 		</div>
 		<div id="list"></div>
 	</section>
@@ -175,7 +169,11 @@ td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-a
 			<button class="btn ghost sm" id="back">← Back</button>
 			<button class="btn sm" id="edit">Edit</button>
 			<button class="btn ghost sm" onclick="window.print()">Print</button>
+			<button class="btn ghost sm" id="save-file" type="button" title="Download all maintenance records as JSON backup">⬇ Save file</button>
+			<button class="btn ghost sm" id="import-file-btn" type="button" title="Restore records from a JSON backup">⬆ Import file</button>
 			<button class="btn ghost sm danger" id="del">Delete</button>
+			<span class="muted" id="import-status" style="font-size:11px"></span>
+			<input type="file" id="import-file" accept="application/json,.json" class="hidden">
 		</div>
 		<div class="card" id="detail"></div>
 	</section>
