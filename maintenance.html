@@ -155,7 +155,7 @@ td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-a
 		<div class="stats" id="stats"></div>
 		<div class="card no-print">
 			<div class="grid">
-				<div><label>Search</label><input id="q" placeholder="Plate, model, mechanic..."></div>
+				<div><label>Search</label><input id="q" placeholder="Plate, model, mechanic..." title="Filters records by plate, model, mechanic, or garage"></div>
 				<div><label>Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
 			</div>
 		</div>
@@ -429,6 +429,14 @@ function show(tab){
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="new" && editingId) clearForm(); show(b.dataset.tab); });
 
 $("f-date").value = today(); buildChecklist(); renderGen();
+
+// Deep link: maintenance.html?plate=XXX opens History filtered to that plate.
+(function openPlateHistory() {
+	const plateParam = new URLSearchParams(location.search).get('plate');
+	if (!plateParam) return;
+	$("q").value = plateParam.toUpperCase();
+	show("history");
+})();
 
 (async function initialize(){
 	try {

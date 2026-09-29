@@ -73,8 +73,9 @@
 		.status.soon { color:var(--amber); } .status.expired { color:var(--red); }
 		.erase { padding:6px 8px; border:1px solid #49302d; border-radius:3px; color:var(--red); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
 		.erase:hover { color:var(--black); border-color:var(--red); background:var(--red); }
-		.edit { padding:6px 8px; border:1px solid #40552c; border-radius:3px; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
-		.edit:hover { color:var(--black); border-color:var(--lime); background:var(--lime); }
+		.edit { padding:6px 8px; border:1px solid #40552c; border-radius:3px; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }				.edit:hover { color:var(--black); border-color:var(--lime); background:var(--lime); }
+				.maint-link { display:inline-flex; align-items:center; gap:4px; margin-right:6px; padding:6px 8px; border:1px solid var(--line); border-radius:3px; color:var(--muted); font:9px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
+				.maint-link:hover { color:var(--black); border-color:var(--lime); background:var(--lime); }
 		.action-buttons { display:flex; gap:6px; }
 		.footnote { display:flex; justify-content:space-between; gap:15px; margin-top:13px; color:var(--muted); font:10px 'DM Mono',monospace; }
 		.viewer-note { margin:12px 0 0; padding:9px 12px; border:1px dashed #3c4439; border-radius:4px; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
@@ -199,7 +200,7 @@
 				<td class="expiry ${statusClass}">${hasExpiry ? dateFormatter.format(expiryTime) : '--'}</td>
 				<td class="days-left ${statusClass}">${!hasExpiry ? '--' : daysUntilExpiry < 0 ? `${Math.abs(daysUntilExpiry)} days ago` : `${daysUntilExpiry} days`}</td>
 				<td><span class="status ${statusClass}">${status}</span></td>
-				<td><div class="action-buttons"><button class="edit" type="button">Edit</button><button class="erase" type="button">Erase</button></div></td>`;
+				<td><div class="action-buttons"><button class="edit" type="button">Edit</button><a class="maint-link" href="maintenance.html?plate=${encodeURIComponent(String(record.plate || ''))}" title="Open maintenance history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Maintenance</a><button class="erase" type="button">Erase</button></div></td>`;
 			if (targetRow) targetRow.replaceWith(row);
 			else records.appendChild(row);
 			row.querySelector('.edit').addEventListener('click', () => {
