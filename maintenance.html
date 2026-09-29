@@ -426,7 +426,7 @@ function openDetail(id){
 		return `<tr><th colspan="3" class="muted" style="padding-top:12px">${cat}</th></tr>` +
 			got.map(n=>{ const ph = r.photos?.[n]||[];
 				return `<tr><td>${n}${ph.length?`<div class="thumbs" data-item="${esc(n)}" style="margin-top:6px">${thumbsHTML(ph,"",false)}</div>`:""}</td>
-				<td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted">${esc(r.notes?.[n]||"")}</td></tr>`}).join("");
+				<td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted" style="white-space:pre-wrap">${esc(r.notes?.[n]||"")}</td></tr>`}).join("");
 	}).join("");
 	const all = [...Object.entries(r.photos||{}).flatMap(([k,v])=>v.map(u=>({u,k}))), ...(r.genPhotos||[]).map(u=>({u,k:"Other"}))];
 	$("detail").innerHTML = `
@@ -441,7 +441,7 @@ function openDetail(id){
 			<div><label>Next service</label>${r.next?r.next.toLocaleString()+" km":"—"}</div>
 		</div>
 		<table><thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
-		${r.remarks?`<div style="margin-top:14px"><label>Remarks</label>${esc(r.remarks)}</div>`:""}
+		${r.remarks?`<div style="margin-top:14px"><label>Remarks</label><div style="white-space:pre-wrap;line-height:1.6">${esc(r.remarks)}</div></div>`:""}
 		${all.length?`<div style="margin-top:16px"><label>All Photos (${all.length})</label><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div></div>`:""}`;
 	$("detail").querySelectorAll("td .thumbs").forEach(b=>{ const n = b.dataset.item; wireThumbs(b, r.photos[n], n, ()=>{}); });
 	const g = $("gal"); if (g) g.querySelectorAll(".thumb").forEach(t=>t.onclick=()=>{const p=all[+t.dataset.i]; openLB(p.u,p.k);});
