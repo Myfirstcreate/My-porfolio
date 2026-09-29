@@ -96,6 +96,8 @@ td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-a
 .progress i{display:block;height:100%;background:var(--brand);transition:width .2s}
 .viewer-note{margin:0 0 14px;padding:9px 12px;border:1px dashed #3c4439;border-radius:4px;color:var(--muted);font:10px 'DM Mono',monospace;text-transform:uppercase}
 .empty-note{padding:20px;text-align:center;color:var(--muted);font:10px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+.due-cell.soon{color:var(--warn);font-weight:700}
+.due-cell.overdue{color:var(--bad);font-weight:700}
 @media (max-width:650px){ header.topbar{padding:20px 15px} nav.tabs{padding:10px 15px} main{padding:16px 15px 50px} .item{grid-template-columns:1fr;gap:6px} }
 @media print{header.topbar,nav.tabs,.no-print{display:none!important}body{background:#fff;color:#000}.card,.stat,.rec{border:1px solid #ccc;background:#fff}}
 </style>
@@ -194,7 +196,8 @@ const ITEMS = {
 };
 const LBL = {done:"Done",ok:"OK",attn:"Attn",na:"N/A"};
 const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>';
-const today = () => new Date().toISOString().slice(0,10);
+const localISO = d => { const p = n => String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
+const today = () => localISO(new Date());
 const $ = id => document.getElementById(id);
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = d => d ? new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
@@ -456,14 +459,40 @@ $("del").onclick = async ()=>{
 	await loadRecords(); toast("Deleted"); show("history");
 };
 
+function addMonths(dateStr, months) {
+	const d = new Date(dateStr + "T00:00");
+	if (isNaN(d)) return "";
+	const day = d.getDate();
+	d.setMonth(d.getMonth() + months);
+	const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+	d.setDate(Math.min(day, lastDay));
+	return localISO(d);
+}
+function kmStatus(nextKm, lastKm) {
+	if (!nextKm) return { label: "—", cls: "" };
+	const left = nextKm - (lastKm || 0);
+	if (left <= 0) return { label: "OVERDUE " + Math.abs(left).toLocaleString() + " km", cls: "overdue" };
+	if (left <= 1000) return { label: "DUE SOON · " + left.toLocaleString() + " km left", cls: "soon" };
+	return { label: nextKm.toLocaleString() + " km", cls: "" };
+}
+function dateStatus(lastDate) {
+	if (!lastDate) return { label: "—", cls: "" };
+	const due = addMonths(lastDate, 3);
+	if (!due) return { label: "—", cls: "" };
+	const days = Math.round((new Date(due + "T00:00") - new Date(today() + "T00:00")) / 86400000);
+	if (days < 0) return { label: "OVERDUE " + Math.abs(days) + "d (" + fmt(due) + ")", cls: "overdue" };
+	if (days <= 14) return { label: "DUE SOON · " + days + "d (" + fmt(due) + ")", cls: "soon" };
+	return { label: fmt(due), cls: "" };
+}
 function renderDue(){
 	const latest = {};
 	records.forEach(r=>{ if(!latest[r.plate] || (r.date||"")>(latest[r.plate].date||"")) latest[r.plate]=r; });
 	const arr = Object.values(latest);
-	$("due").innerHTML = arr.length ? `<table><thead><tr><th>Plate</th><th>Last service</th><th>Last km</th><th>Next due</th><th>Open issues</th></tr></thead><tbody>${
+	$("due").innerHTML = arr.length ? `<table><thead><tr><th>Plate</th><th>Last service</th><th>Last km</th><th>Next due (km)</th><th>Next due (3 months)</th><th>Open issues</th></tr></thead><tbody>${
 		arr.map(r=>{const a=Object.entries(r.items).filter(([k,v])=>v==="attn").map(([k])=>k);
+			const km = kmStatus(r.next, r.km), dt = dateStatus(r.date);
 			return `<tr><td class="plate">${esc(r.plate)}</td><td>${fmt(r.date)}</td><td>${r.km?r.km.toLocaleString():"—"}</td>
-			<td>${r.next?r.next.toLocaleString()+" km":"—"}</td><td>${a.length?a.map(x=>`<span class="pill attn">${x}</span>`).join(" "):'<span class="pill ok">None</span>'}</td></tr>`}).join("")
+			<td class="due-cell ${km.cls}">${km.label}</td><td class="due-cell ${dt.cls}">${dt.label}</td><td>${a.length?a.map(x=>`<span class="pill attn">${x}</span>`).join(" "):'<span class="pill ok">None</span>'}</td></tr>`}).join("")
 	}</tbody></table>` : `<div class="muted">No records yet.</div>`;
 }
 
