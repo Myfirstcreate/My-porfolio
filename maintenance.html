@@ -158,6 +158,12 @@ td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-a
 				<div><label>Search</label><input id="q" placeholder="Plate, model, mechanic..." title="Filters records by plate, model, mechanic, or garage"></div>
 				<div><label>Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
 			</div>
+			<div class="row" style="margin-top:12px">
+				<button class="btn ghost sm" id="save-file" type="button">⬇ Save file</button>
+				<button class="btn ghost sm" id="import-file-btn" type="button">⬆ Import file</button>
+				<span class="muted" id="import-status" style="font-size:11px"></span>
+			</div>
+			<input type="file" id="import-file" accept="application/json,.json" class="hidden">
 		</div>
 		<div id="list"></div>
 	</section>
@@ -373,6 +379,48 @@ function renderHistory(){
 }
 $("q").oninput = renderHistory; $("flt").onchange = renderHistory;
 
+$("save-file").onclick = () => {
+	if (!records.length) { toast("No records to save yet"); return; }
+	const payload = { app: "AK Garage Maintenance", version: 1, exportedAt: new Date().toISOString(), count: records.length,
+		records: records.map(r => ({ plate: r.plate, model: r.model, date: r.date, km: r.km, mech: r.mech, loc: r.loc, cost: r.cost, next: r.next, remarks: r.remarks, items: r.items, notes: r.notes, photos: r.photos, genPhotos: r.genPhotos })) };
+	const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = `AK-Garage-maintenance-backup-${today()}.json`;
+	document.body.appendChild(a); a.click(); a.remove();
+	URL.revokeObjectURL(a.href);
+	toast(`Saved ${records.length} record${records.length===1?"":"s"} to file ✓`);
+};
+$("import-file-btn").onclick = () => { $("import-file").value = ""; $("import-file").click(); };
+$("import-file").onchange = async e => {
+	const file = e.target.files[0];
+	if (!file) return;
+	$("import-status").textContent = "Reading file...";
+	try {
+		const parsed = JSON.parse(await file.text());
+		const incoming = Array.isArray(parsed) ? parsed : parsed.records;
+		if (!Array.isArray(incoming) || !incoming.length) throw new Error("no records found in file");
+		const rows = incoming.filter(r => r && r.plate).map(r => ({
+			plate: String(r.plate).toUpperCase(), model: r.model || "", service_date: r.date || r.service_date || "",
+			km: +r.km || 0, mechanic: r.mech || r.mechanic || "", location: r.loc || r.location || "",
+			cost: +r.cost || 0, next_km: +r.next || +r.next_km || 0, remarks: r.remarks || "",
+			items: r.items || {}, notes: r.notes || {}, photos: r.photos || {}, gen_photos: r.genPhotos || r.gen_photos || [],
+			updated_at: new Date().toISOString()
+		}));
+		if (!rows.length) throw new Error("every record needs a plate no.");
+		const { error } = await window.sb.from(TABLE).insert(rows).select();
+		if (error) throw error;
+		await loadRecords(); renderHistory();
+		$("import-status").textContent = "";
+		toast(`Imported ${rows.length} record${rows.length===1?"":"s"} ✓`);
+	} catch (err) {
+		console.error("Import failed:", err);
+		$("import-status").textContent = "";
+		const msg = String(err?.message || "");
+		toast(/row-level security/i.test(msg) ? "Import failed — admin only" : "Import failed: " + msg);
+	}
+};
+
 function openDetail(id){
 	const r = records.find(x=>String(x.id)===String(id)); if(!r) return; currentId=id;
 	const rows = Object.entries(ITEMS).map(([cat,list])=>{
@@ -450,7 +498,7 @@ $("f-date").value = today(); buildChecklist(); renderGen();
 	// guards this in the database too, so hiding the buttons is cosmetic.
 	if (!window.akgarageIsAdmin()) {
 		document.querySelector('.viewer-note').hidden = false;
-		["save","edit","del","gen-add"].forEach(id => { const el = $(id); if (el) el.classList.add("hidden"); });
+		["save","edit","del","gen-add","import-file-btn"].forEach(id => { const el = $(id); if (el) el.classList.add("hidden"); });
 	}
 })();
 window.addEventListener('visibilitychange', () => { if (!document.hidden) loadRecords().then(renderHistory).catch(()=>{}); });
