@@ -98,6 +98,10 @@ td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-a
 .empty-note{padding:20px;text-align:center;color:var(--muted);font:10px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
 .due-cell.soon{color:var(--warn);font-weight:700}
 .due-cell.overdue{color:var(--bad);font-weight:700}
+tr.row-overdue{background:linear-gradient(90deg,rgba(255,118,112,.14),transparent 65%);box-shadow:inset 3px 0 0 var(--bad)}
+tr.row-overdue:hover{background:linear-gradient(90deg,rgba(255,118,112,.24),#151a15 65%)}
+tr.row-soon-due{background:linear-gradient(90deg,rgba(255,173,98,.12),transparent 65%);box-shadow:inset 3px 0 0 var(--warn)}
+tr.row-soon-due:hover{background:linear-gradient(90deg,rgba(255,173,98,.2),#151a15 65%)}
 @media (max-width:650px){ header.topbar{padding:20px 15px} nav.tabs{padding:10px 15px} main{padding:16px 15px 50px} .item{grid-template-columns:1fr;gap:6px} }
 @media print{header.topbar,nav.tabs,.no-print{display:none!important}body{background:#fff;color:#000}.card,.stat,.rec{border:1px solid #ccc;background:#fff}}
 </style>
@@ -491,7 +495,8 @@ function renderDue(){
 	$("due").innerHTML = arr.length ? `<table><thead><tr><th>Plate</th><th>Last service</th><th>Last km</th><th>Next due (km)</th><th>Next due (3 months)</th><th>Open issues</th></tr></thead><tbody>${
 		arr.map(r=>{const a=Object.entries(r.items).filter(([k,v])=>v==="attn").map(([k])=>k);
 			const km = kmStatus(r.next, r.km), dt = dateStatus(r.date);
-			return `<tr><td class="plate">${esc(r.plate)}</td><td>${fmt(r.date)}</td><td>${r.km?r.km.toLocaleString():"—"}</td>
+			const rowCls = (km.cls === "overdue" || dt.cls === "overdue") ? "row-overdue" : (km.cls === "soon" || dt.cls === "soon") ? "row-soon-due" : "";
+			return `<tr class="${rowCls}"><td class="plate">${esc(r.plate)}</td><td>${fmt(r.date)}</td><td>${r.km?r.km.toLocaleString():"—"}</td>
 			<td class="due-cell ${km.cls}">${km.label}</td><td class="due-cell ${dt.cls}">${dt.label}</td><td>${a.length?a.map(x=>`<span class="pill attn">${x}</span>`).join(" "):'<span class="pill ok">None</span>'}</td></tr>`}).join("")
 	}</tbody></table>` : `<div class="muted">No records yet.</div>`;
 }
