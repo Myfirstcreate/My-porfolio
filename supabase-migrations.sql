@@ -283,3 +283,50 @@ create policy "admin can update vip_motorcycles" on public.vip_motorcycles
 drop policy if exists "admin can delete vip_motorcycles" on public.vip_motorcycles;
 create policy "admin can delete vip_motorcycles" on public.vip_motorcycles
 	for delete to anon using (public.is_ak_admin());
+
+-- =============================================================================
+-- 8. MAINTENANCE CHECKLIST (run once — makes maintenance.html live for the
+--    whole team). Safe to re-run.
+--
+--    One row = one full maintenance checklist for one vehicle visit.
+--    items / notes / photos / gen_photos are JSONB so the page can store the
+--    whole checklist (Done / OK / Attn marks, per-item notes, compressed
+--    photos as data URLs) without extra tables.
+-- =============================================================================
+
+create table if not exists public.maintenance_checks (
+	id uuid primary key default gen_random_uuid(),
+	created_at timestamptz not null default now(),
+	updated_at timestamptz,
+	plate text not null,
+	model text not null default '',
+	service_date text not null default '',
+	km bigint not null default 0,
+	mechanic text not null default '',
+	location text not null default '',
+	cost numeric not null default 0,
+	next_km bigint not null default 0,
+	remarks text not null default '',
+	items jsonb not null default '{}'::jsonb,
+	notes jsonb not null default '{}'::jsonb,
+	photos jsonb not null default '{}'::jsonb,
+	gen_photos jsonb not null default '[]'::jsonb
+);
+
+alter table public.maintenance_checks enable row level security;
+
+drop policy if exists "team can read maintenance_checks" on public.maintenance_checks;
+create policy "team can read maintenance_checks" on public.maintenance_checks
+	for select to anon using (true);
+
+drop policy if exists "admin can insert maintenance_checks" on public.maintenance_checks;
+create policy "admin can insert maintenance_checks" on public.maintenance_checks
+	for insert to anon with check (public.is_ak_admin());
+
+drop policy if exists "admin can update maintenance_checks" on public.maintenance_checks;
+create policy "admin can update maintenance_checks" on public.maintenance_checks
+	for update to anon using (public.is_ak_admin()) with check (public.is_ak_admin());
+
+drop policy if exists "admin can delete maintenance_checks" on public.maintenance_checks;
+create policy "admin can delete maintenance_checks" on public.maintenance_checks
+	for delete to anon using (public.is_ak_admin());

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Garage | Maintenance Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+:root{
+	--bg:#070807;--card:#101210;--ink:#f0f3ec;--muted:#8b9388;--line:#292d29;
+	--brand:#c4f04e;--brand-ink:#070807;
+	--ok:#7dff78;--ok-bg:#0f230e;--warn:#ffad62;--warn-bg:#2e2109;
+	--bad:#ff7670;--bad-bg:#2e0f0d;--na:#8b9388;--na-bg:#191d18;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 90% 0,#172016 0,transparent 24%),var(--bg);color:var(--ink);font:15px/1.45 'Space Grotesk',sans-serif}
+a{color:inherit;text-decoration:none}
+header.topbar{display:flex;justify-content:space-between;align-items:center;padding:25px 42px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;color:var(--brand-ink);background:var(--brand);font-size:12px;font-weight:700}
+.brand strong{display:block;font-size:14px;letter-spacing:.08em} .brand small{display:block;margin-top:3px;color:var(--muted);font:10px 'DM Mono',monospace;letter-spacing:.08em}
+.top-actions{display:flex;align-items:center;gap:8px}
+.back{display:flex;align-items:center;gap:8px;padding:10px 13px;border:1px solid var(--line);border-radius:4px;color:var(--muted);font:11px 'DM Mono',monospace;text-transform:uppercase}
+.back:hover{color:var(--brand-ink);border-color:var(--brand);background:var(--brand)} .back svg{width:15px}
+nav.tabs{display:flex;gap:6px;padding:12px 42px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
+nav.tabs button{border:1px solid var(--line);background:transparent;color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:10px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+nav.tabs button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+main{max-width:1080px;margin:0 auto;padding:20px 42px 60px}
+.card{background:rgba(16,18,16,.92);border:1px solid var(--line);border-radius:6px;padding:18px;margin-bottom:14px}
+.card h2{margin:0 0 12px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-family:'DM Mono',monospace}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:#080a08;color:var(--ink);font:13px 'DM Mono',monospace;outline:0}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+textarea{min-height:80px;resize:vertical;font-family:'DM Mono',monospace}
+.btn{border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:4px;font:600 10px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:#d8ff70;border-color:#d8ff70}
+.btn.ghost{background:transparent;color:var(--muted);border-color:var(--line)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--brand);background:transparent}
+.btn.sm{padding:7px 11px;font-size:9px}
+.btn.danger{color:var(--bad);border-color:#49302d;background:transparent}
+.btn.danger:hover{color:var(--brand-ink);border-color:var(--bad);background:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cat{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:16px 0 6px;letter-spacing:.14em;font-family:'DM Mono',monospace}
+.item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid #20241f}
+.item .name{font-weight:500;font-size:14px;cursor:pointer}
+.item input.note{grid-column:1/-1;font-size:12px;padding:6px 8px;display:none}
+.item.show-note input.note{display:block}
+.item .thumbs{grid-column:1/-1}
+.cam{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:4px;padding:6px 9px;cursor:pointer;display:flex;align-items:center;gap:4px;font:10px 'DM Mono',monospace}
+.cam svg{width:15px;height:15px}
+.cam.has{border-color:var(--brand);color:var(--brand);font-weight:700}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumbs:empty{display:none}
+.thumb{position:relative;width:72px;height:72px;border-radius:4px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;padding:0}
+.thumb .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:8px}
+.gallery .thumb{width:auto;height:110px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:20;padding:16px;flex-direction:column;gap:10px;color:#fff}
+.lightbox.show{display:flex}
+.lightbox img{max-width:100%;max-height:82vh;border-radius:6px}
+.editbar{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:10px 14px;margin-bottom:14px;font:600 12px 'DM Mono',monospace;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;text-transform:uppercase}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);padding:6px 9px;font:10px 'DM Mono',monospace;cursor:pointer;border-right:1px solid var(--line);text-transform:uppercase}
+.seg button:last-child{border-right:0}
+.seg button.on[data-v="done"]{background:var(--ok-bg);color:var(--ok);font-weight:700}
+.seg button.on[data-v="ok"]{background:var(--ok-bg);color:var(--ok);font-weight:700}
+.seg button.on[data-v="attn"]{background:var(--warn-bg);color:var(--warn);font-weight:700}
+.seg button.on[data-v="na"]{background:var(--na-bg);color:var(--na)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font:600 10px 'DM Mono',monospace;text-transform:uppercase}
+.pill.done,.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.attn{background:var(--warn-bg);color:var(--warn)}
+.pill.na{background:var(--na-bg);color:var(--na)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:13px}
+.stat b{display:block;margin-top:6px;font-size:24px;letter-spacing:-.04em}
+.stat span{font:10px 'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.rec{border:1px solid var(--line);border-radius:6px;padding:13px;margin-bottom:10px;cursor:pointer;background:rgba(16,18,16,.92)}
+.rec:hover{border-color:var(--brand)}
+.rec .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.plate{font-weight:800;letter-spacing:.5px;font-family:'DM Mono',monospace}
+.muted{color:var(--muted);font-size:13px}
+.hidden{display:none}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:4px;font:600 11px 'DM Mono',monospace;opacity:0;transition:.25s;pointer-events:none;z-index:30}
+.toast.show{opacity:1}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-align:top}
+.progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.progress i{display:block;height:100%;background:var(--brand);transition:width .2s}
+.viewer-note{margin:0 0 14px;padding:9px 12px;border:1px dashed #3c4439;border-radius:4px;color:var(--muted);font:10px 'DM Mono',monospace;text-transform:uppercase}
+.empty-note{padding:20px;text-align:center;color:var(--muted);font:10px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+@media (max-width:650px){ header.topbar{padding:20px 15px} nav.tabs{padding:10px 15px} main{padding:16px 15px 50px} .item{grid-template-columns:1fr;gap:6px} }
+@media print{header.topbar,nav.tabs,.no-print{display:none!important}body{background:#fff;color:#000}.card,.stat,.rec{border:1px solid #ccc;background:#fff}}
+</style>
+</head>
+<body>
+<script src="auth-gate.js"></script>
+<script>akgarageInitGate();</script>
+<header class="topbar">
+	<div class="brand"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MAINTENANCE CHECKLIST</small></span></div>
+	<div class="top-actions"><a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a></div>
+</header>
+<nav class="tabs">
+	<button data-tab="new" class="active">+ New Checklist</button>
+	<button data-tab="history">History</button>
+	<button data-tab="due">Due Soon</button>
+</nav>
+<main>
+	<div class="viewer-note" hidden>View only — ask the admin to save or edit checklists.</div>
+	<section id="tab-new">
+		<div class="editbar hidden no-print" id="editbar"><span id="edit-lbl">Editing record</span><button class="btn ghost sm" id="cancel-edit">Cancel edit</button></div>
+		<div class="card">
+			<h2>Vehicle &amp; Service Info</h2>
+			<div class="grid">
+				<div><label>Plate No.</label><input id="f-plate" placeholder="e.g. RAK A 12345" style="text-transform:uppercase"></div>
+				<div><label>Car Model</label><input id="f-model" placeholder="e.g. Nissan Patrol 2022" style="text-transform:uppercase"></div>
+				<div><label>Date</label><input id="f-date" type="date"></div>
+				<div><label>Odometer (km)</label><input id="f-km" type="number" placeholder="e.g. 45200"></div>
+				<div><label>Mechanic / Done by</label><input id="f-mech" placeholder="Name" style="text-transform:uppercase"></div>
+				<div><label>Garage / Location</label><input id="f-loc" placeholder="e.g. UAQ workshop" style="text-transform:uppercase"></div>
+				<div><label>Total Cost (AED)</label><input id="f-cost" type="number" placeholder="0"></div>
+				<div><label>Next Service (km)</label><input id="f-next" type="number" placeholder="auto +10,000"></div>
+			</div>
+		</div>
+		<div class="card">
+			<div class="row" style="justify-content:space-between">
+				<h2 style="margin:0">Checklist</h2>
+				<div class="row no-print"><button class="btn ghost sm" id="all-na">Reset all</button></div>
+			</div>
+			<div class="muted" style="margin-top:6px;font-size:12px">Tap: <b style="color:var(--ok)">Done</b> = replaced/serviced · <b style="color:var(--ok)">OK</b> = checked, fine · <b style="color:var(--warn)">Attn</b> = needs attention · <b>N/A</b> = not done. Tap the item name to add a note. Tap the camera to add a photo of the part.</div>
+			<div class="progress"><i id="prog" style="width:0"></i></div>
+			<div id="checklist"></div>
+		</div>
+		<div class="card">
+			<h2>Remarks</h2>
+			<textarea id="f-remarks" placeholder="Other work done, parts used, recommendations..."></textarea>
+			<label style="margin-top:14px">Other Photos (receipt, old parts, before / after)</label>
+			<div class="row"><button class="cam no-print" id="gen-add" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>Add photos</button></div>
+			<div class="thumbs" id="gen-thumbs" style="margin-top:8px"></div>
+			<div class="row" style="margin-top:14px">
+				<button class="btn" id="save">Save Checklist</button>
+				<button class="btn ghost" id="clear">Clear form</button>
+				<span class="muted" id="save-status" style="font-size:11px"></span>
+			</div>
+		</div>
+	</section>
+	<section id="tab-history" class="hidden">
+		<div class="stats" id="stats"></div>
+		<div class="card no-print">
+			<div class="grid">
+				<div><label>Search</label><input id="q" placeholder="Plate, model, mechanic..."></div>
+				<div><label>Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
+			</div>
+		</div>
+		<div id="list"></div>
+	</section>
+	<section id="tab-due" class="hidden">
+		<div class="card"><h2>Next Service per Vehicle</h2><div id="due"></div></div>
+	</section>
+	<section id="tab-detail" class="hidden">
+		<div class="row no-print" style="margin-bottom:10px">
+			<button class="btn ghost sm" id="back">← Back</button>
+			<button class="btn sm" id="edit">Edit</button>
+			<button class="btn ghost sm" onclick="window.print()">Print</button>
+			<button class="btn ghost sm danger" id="del">Delete</button>
+		</div>
+		<div class="card" id="detail"></div>
+	</section>
+</main>
+<div class="toast" id="toast"></div>
+<div class="lightbox" id="lb"><img id="lb-img" alt=""><div id="lb-cap"></div><button class="btn ghost sm" style="color:#fff;border-color:#fff">Close</button></div>
+<input type="file" id="picker" accept="image/*" multiple class="hidden">
+<script>
+lucide.createIcons();
+const TABLE = 'maintenance_checks';
+const ITEMS = {
+	"Engine":["Engine oil change","Oil filter","Air filter","Fuel filter","Spark plugs","Drive / serpentine belt"],
+	"Fluids":["Coolant level","Brake fluid","Power steering fluid","Transmission fluid","Windshield washer fluid"],
+	"Brakes & Tires":["Front brake pads","Rear brake pads","Brake discs","Tire pressure","Tire rotation","Wheel alignment / balancing","Spare tire"],
+	"Electrical":["Battery test","Headlights / tail lights","Indicators & brake lights","Horn"],
+	"Comfort & Other":["AC system / gas","Cabin (AC) filter","Wiper blades","Suspension / shocks","Underbody / leaks check","Car wash / interior clean"]
+};
+const LBL = {done:"Done",ok:"OK",attn:"Attn",na:"N/A"};
+const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>';
+const today = () => new Date().toISOString().slice(0,10);
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = d => d ? new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+
+let state = {}, notes = {}, photos = {}, genPhotos = [];
+let currentId = null, editingId = null;
+let records = [];
+
+async function loadRecords() {
+	const { data, error } = await window.sb.from(TABLE).select('*').order('created_at', { ascending: false });
+	if (error) throw error;
+	records = (data || []).map(r => ({
+		id: r.id, plate: r.plate || '', model: r.model || '', date: r.service_date || today(),
+		km: r.km || 0, mech: r.mechanic || '', loc: r.location || '', cost: r.cost || 0,
+		next: r.next_km || 0, remarks: r.remarks || '',
+		items: r.items || {}, notes: r.notes || {}, photos: r.photos || {},
+		genPhotos: r.gen_photos || [], updated: r.updated_at || null
+	}));
+}
+
+/* ---------- Photos ---------- */
+function shrink(file){
+	return new Promise((res,rej)=>{
+		const r = new FileReader();
+		r.onload = () => { const img = new Image();
+			img.onload = () => { const m = 1280, s = Math.min(1, m/Math.max(img.width,img.height));
+				const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+				c.getContext("2d").drawImage(img,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",0.75)); };
+			img.onerror = rej; img.src = r.result; };
+		r.onerror = rej; r.readAsDataURL(file);
+	});
+}
+let pickTarget = null;
+function pick(target){ pickTarget = target; $("picker").value = ""; $("picker").click(); }
+$("picker").onchange = async e => {
+	const files = [...e.target.files]; if(!files.length) return;
+	toast("Processing photos...");
+	const urls = await Promise.all(files.map(shrink));
+	if (pickTarget === "__gen") { genPhotos.push(...urls); renderGen(); }
+	else { (photos[pickTarget] ||= []).push(...urls);
+		if (!state[pickTarget] || state[pickTarget]==="na") state[pickTarget] = "done";
+		buildChecklist(); }
+	toast(urls.length + " photo" + (urls.length>1?"s":"") + " added");
+};
+function thumbsHTML(list, caption, removable){
+	return list.map((u,i)=>`<div class="thumb" data-i="${i}"><img src="${u}" alt="">${caption?`<span class="cap">${esc(caption)}</span>`:""}${removable?`<button class="x" title="Remove">×</button>`:""}</div>`).join("");
+}
+function wireThumbs(box, list, caption, onRemove){
+	box.querySelectorAll(".thumb").forEach(t=>{
+		t.onclick = ev => { if (ev.target.classList.contains("x")) { ev.stopPropagation(); onRemove(+t.dataset.i); } else openLB(list[+t.dataset.i], caption); };
+	});
+}
+function renderGen(){
+	const box = $("gen-thumbs"); box.innerHTML = thumbsHTML(genPhotos, "", true);
+	wireThumbs(box, genPhotos, "Other photo", i => { genPhotos.splice(i,1); renderGen(); });
+}
+$("gen-add").onclick = () => pick("__gen");
+function openLB(src, cap){ $("lb-img").src = src; $("lb-cap").textContent = cap||""; $("lb").classList.add("show"); }
+$("lb").onclick = () => $("lb").classList.remove("show");
+
+/* ---------- Checklist form ---------- */
+function buildChecklist(){
+	const box = $("checklist"); box.innerHTML = "";
+	for (const [cat,list] of Object.entries(ITEMS)){
+		const h = document.createElement("div"); h.className="cat"; h.textContent=cat; box.appendChild(h);
+		list.forEach(name=>{
+			const ph = photos[name] || [];
+			const row = document.createElement("div"); row.className="item";
+			row.innerHTML = `<div class="name">${name}</div>
+				<div class="seg">${Object.keys(LBL).map(v=>`<button data-v="${v}">${LBL[v]}</button>`).join("")}</div>
+				<button class="cam no-print ${ph.length?"has":""}" type="button" title="Add photo">${CAM}${ph.length||""}</button>
+				<input class="note" placeholder="Note for ${name}...">
+				<div class="thumbs">${thumbsHTML(ph, "", true)}</div>`;
+			const setOn = () => row.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on", b.dataset.v===(state[name]||"na")));
+			row.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{state[name]=b.dataset.v; setOn(); progress();});
+			row.querySelector(".name").onclick=()=>row.classList.toggle("show-note");
+			row.querySelector(".cam").onclick=()=>pick(name);
+			wireThumbs(row.querySelector(".thumbs"), ph, name, i => { ph.splice(i,1); if(!ph.length) delete photos[name]; buildChecklist(); });
+			const n = row.querySelector(".note"); n.value = notes[name]||""; n.oninput=()=>notes[name]=n.value;
+			if (notes[name]) row.classList.add("show-note");
+			setOn(); box.appendChild(row);
+		});
+	}
+	progress();
+}
+function progress(){
+	const all = Object.values(ITEMS).flat().length;
+	const n = Object.values(state).filter(v=>v && v!=="na").length;
+	$("prog").style.width = (n/all*100)+"%";
+}
+const FIELDS = {plate:"f-plate",model:"f-model",date:"f-date",km:"f-km",mech:"f-mech",loc:"f-loc",cost:"f-cost",next:"f-next",remarks:"f-remarks"};
+function clearForm(){
+	Object.values(FIELDS).forEach(i=>$(i).value="");
+	$("f-date").value = today(); state={}; notes={}; photos={}; genPhotos=[];
+	editingId = null; $("editbar").classList.add("hidden"); $("save").textContent = "Save Checklist";
+	buildChecklist(); renderGen();
+}
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200);}
+
+$("save").onclick = async ()=>{
+	const plate = $("f-plate").value.trim().toUpperCase();
+	if(!plate){toast("Please enter the plate no.");$("f-plate").focus();return;}
+	const items = {}; Object.entries(state).forEach(([k,v])=>{if(v&&v!=="na")items[k]=v});
+	if(!Object.keys(items).length){toast("Mark at least one item");return;}
+	const km = +$("f-km").value||0;
+	const payload = {
+		plate, model:$("f-model").value.trim(), service_date:$("f-date").value||today(), km,
+		mechanic:$("f-mech").value.trim(), location:$("f-loc").value.trim(), cost:+$("f-cost").value||0,
+		next_km:+$("f-next").value||(km?km+10000:0), remarks:$("f-remarks").value.trim(),
+		items,
+		notes:Object.fromEntries(Object.entries(notes).filter(([k,v])=>v&&items[k])),
+		photos:Object.fromEntries(Object.entries(photos).filter(([k,v])=>v.length&&items[k]).map(([k,v])=>[k,[...v]])),
+		gen_photos:[...genPhotos],
+		updated_at:new Date().toISOString()
+	};
+	$("save").disabled = true; $("save-status").textContent = "Saving...";
+	try {
+		let error;
+		if (editingId){
+			({ error } = await window.sb.from(TABLE).update(payload).eq('id', editingId));
+		} else {
+			({ error } = await window.sb.from(TABLE).insert(payload));
+		}
+		if (error) throw error;
+		await loadRecords();
+		if (editingId){ const id = editingId; clearForm(); toast("Changes saved ✓"); openDetail(id); }
+		else { toast("Checklist saved ✓"); clearForm(); show("history"); }
+	} catch (err) {
+		console.error('Unable to save checklist:', err);
+		const missing = err?.code === '42P01' || /does not exist/i.test(err?.message || '') || /schema cache/i.test(err?.message || '');
+		toast(missing ? "Table missing — run section 8 of supabase-migrations.sql" : "Save failed: " + (err?.message || "unknown error"));
+	} finally {
+		$("save").disabled = false; $("save-status").textContent = "";
+	}
+};
+$("clear").onclick = clearForm;
+$("cancel-edit").onclick = ()=>{ const id = editingId; clearForm(); openDetail(id); };
+$("all-na").onclick = ()=>{state={};notes={};photos={};buildChecklist();};
+
+function startEdit(id){
+	const r = records.find(x=>x.id===id); if(!r) return;
+	$("f-plate").value=r.plate; $("f-model").value=r.model; $("f-date").value=r.date; $("f-km").value=r.km||"";
+	$("f-mech").value=r.mech; $("f-loc").value=r.loc; $("f-cost").value=r.cost||""; $("f-next").value=r.next||"";
+	$("f-remarks").value=r.remarks||"";
+	state = {...r.items}; notes = {...(r.notes||{})};
+	photos = Object.fromEntries(Object.entries(r.photos||{}).map(([k,v])=>[k,[...v]]));
+	genPhotos = [...(r.genPhotos||[])];
+	editingId = id; $("edit-lbl").textContent = "Editing: " + r.plate + " · " + fmt(r.date);
+	$("editbar").classList.remove("hidden"); $("save").textContent = "Save Changes";
+	buildChecklist(); renderGen(); show("new");
+}
+$("edit").onclick = ()=>startEdit(currentId);
+
+/* ---------- History ---------- */
+function photoCount(r){ return Object.values(r.photos||{}).flat().length + (r.genPhotos||[]).length; }
+function renderHistory(){
+	const q = $("q").value.toLowerCase(), f = $("flt").value;
+	const rs = records.filter(r=>[r.plate,r.model,r.mech,r.loc].join(" ").toLowerCase().includes(q))
+					.filter(r=>!f || Object.values(r.items).includes("attn"));
+	const attn = records.reduce((a,r)=>a+Object.values(r.items).filter(v=>v==="attn").length,0);
+	const cars = new Set(records.map(r=>r.plate)).size;
+	const cost = records.reduce((a,r)=>a+(r.cost||0),0);
+	$("stats").innerHTML = `
+		<div class="stat"><span>Service records</span><b>${records.length}</b></div>
+		<div class="stat"><span>Vehicles</span><b>${cars}</b></div>
+		<div class="stat"><span style="color:var(--warn)">Items need attention</span><b style="color:var(--warn)">${attn}</b></div>
+		<div class="stat"><span>Total spent</span><b>AED ${cost.toLocaleString()}</b></div>`;
+	$("list").innerHTML = rs.length ? rs.map(r=>{
+		const v = Object.values(r.items), a = v.filter(x=>x==="attn").length, pc = photoCount(r);
+		return `<div class="rec" data-id="${r.id}">
+			<div class="top"><span class="plate">${esc(r.plate)}</span><span class="muted">${fmt(r.date)}${r.updated?" · edited":""}</span></div>
+			<div class="muted">${esc(r.model||"—")} · ${r.km?r.km.toLocaleString()+" km":"—"} · ${esc(r.mech||"—")}</div>
+			<div class="row" style="margin-top:6px">
+				<span class="pill done">${v.filter(x=>x==="done").length} done</span>
+				<span class="pill ok">${v.filter(x=>x==="ok").length} checked OK</span>
+				${a?`<span class="pill attn">${a} needs attention</span>`:""}
+				${pc?`<span class="pill na">${pc} photo${pc>1?"s":""}</span>`:""}
+				${r.cost?`<span class="muted">AED ${r.cost.toLocaleString()}</span>`:""}
+			</div></div>`}).join("") : `<div class="empty-note">No records found — save your first checklist.</div>`;
+	document.querySelectorAll(".rec").forEach(e=>e.onclick=()=>openDetail(e.dataset.id));
+}
+$("q").oninput = renderHistory; $("flt").onchange = renderHistory;
+
+function openDetail(id){
+	const r = records.find(x=>String(x.id)===String(id)); if(!r) return; currentId=id;
+	const rows = Object.entries(ITEMS).map(([cat,list])=>{
+		const got = list.filter(n=>r.items[n]); if(!got.length) return "";
+		return `<tr><th colspan="3" class="muted" style="padding-top:12px">${cat}</th></tr>` +
+			got.map(n=>{ const ph = r.photos?.[n]||[];
+				return `<tr><td>${n}${ph.length?`<div class="thumbs" data-item="${esc(n)}" style="margin-top:6px">${thumbsHTML(ph,"",false)}</div>`:""}</td>
+				<td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted">${esc(r.notes?.[n]||"")}</td></tr>`}).join("");
+	}).join("");
+	const all = [...Object.entries(r.photos||{}).flatMap(([k,v])=>v.map(u=>({u,k}))), ...(r.genPhotos||[]).map(u=>({u,k:"Other"}))];
+	$("detail").innerHTML = `
+		<div class="row" style="justify-content:space-between"><h2 style="margin:0" class="plate">${esc(r.plate)}</h2><span class="muted">${fmt(r.date)}</span></div>
+		${r.updated?`<div class="muted" style="margin-top:4px">Last edited ${new Date(r.updated).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</div>`:""}
+		<div class="grid" style="margin:12px 0">
+			<div><label>Model</label>${esc(r.model||"—")}</div>
+			<div><label>Odometer</label>${r.km?r.km.toLocaleString()+" km":"—"}</div>
+			<div><label>Done by</label>${esc(r.mech||"—")}</div>
+			<div><label>Location</label>${esc(r.loc||"—")}</div>
+			<div><label>Cost</label>AED ${(r.cost||0).toLocaleString()}</div>
+			<div><label>Next service</label>${r.next?r.next.toLocaleString()+" km":"—"}</div>
+		</div>
+		<table><thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
+		${r.remarks?`<div style="margin-top:14px"><label>Remarks</label>${esc(r.remarks)}</div>`:""}
+		${all.length?`<div style="margin-top:16px"><label>All Photos (${all.length})</label><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div></div>`:""}`;
+	$("detail").querySelectorAll("td .thumbs").forEach(b=>{ const n = b.dataset.item; wireThumbs(b, r.photos[n], n, ()=>{}); });
+	const g = $("gal"); if (g) g.querySelectorAll(".thumb").forEach(t=>t.onclick=()=>{const p=all[+t.dataset.i]; openLB(p.u,p.k);});
+	show("detail");
+}
+$("back").onclick = ()=>show("history");
+$("del").onclick = async ()=>{
+	if (!confirm("Delete this checklist?")) return;
+	const { error } = await window.sb.from(TABLE).delete().eq('id', currentId);
+	if (error) { console.error('Unable to delete checklist:', error); toast("Delete failed: " + error.message); return; }
+	await loadRecords(); toast("Deleted"); show("history");
+};
+
+function renderDue(){
+	const latest = {};
+	records.forEach(r=>{ if(!latest[r.plate] || (r.date||"")>(latest[r.plate].date||"")) latest[r.plate]=r; });
+	const arr = Object.values(latest);
+	$("due").innerHTML = arr.length ? `<table><thead><tr><th>Plate</th><th>Last service</th><th>Last km</th><th>Next due</th><th>Open issues</th></tr></thead><tbody>${
+		arr.map(r=>{const a=Object.entries(r.items).filter(([k,v])=>v==="attn").map(([k])=>k);
+			return `<tr><td class="plate">${esc(r.plate)}</td><td>${fmt(r.date)}</td><td>${r.km?r.km.toLocaleString():"—"}</td>
+			<td>${r.next?r.next.toLocaleString()+" km":"—"}</td><td>${a.length?a.map(x=>`<span class="pill attn">${x}</span>`).join(" "):'<span class="pill ok">None</span>'}</td></tr>`}).join("")
+	}</tbody></table>` : `<div class="muted">No records yet.</div>`;
+}
+
+function show(tab){
+	["new","history","due","detail"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==tab));
+	document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab||(tab==="detail"&&b.dataset.tab==="history")));
+	if(tab==="history") renderHistory(); if(tab==="due") renderDue();
+	window.scrollTo(0,0);
+}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="new" && editingId) clearForm(); show(b.dataset.tab); });
+
+$("f-date").value = today(); buildChecklist(); renderGen();
+
+(async function initialize(){
+	try {
+		await loadRecords();
+		renderHistory();
+	} catch (error) {
+		console.error('Unable to load maintenance records from Supabase:', error);
+		$("list").innerHTML = '<div class="empty-note">Unable to load — run section 8 of supabase-migrations.sql in Supabase.</div>';
+	}
+	// Viewers (team password) cannot save, edit, or delete — the admin token
+	// guards this in the database too, so hiding the buttons is cosmetic.
+	if (!window.akgarageIsAdmin()) {
+		document.querySelector('.viewer-note').hidden = false;
+		["save","edit","del","gen-add"].forEach(id => { const el = $(id); if (el) el.classList.add("hidden"); });
+	}
+})();
+window.addEventListener('visibilitychange', () => { if (!document.hidden) loadRecords().then(renderHistory).catch(()=>{}); });
+</script>
+</body>
+</html>
