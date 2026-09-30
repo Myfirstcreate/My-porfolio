@@ -4,116 +4,163 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AK Garage | Maintenance Checklist</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <style>
 :root{
-	--bg:#070807;--card:#101210;--ink:#f0f3ec;--muted:#8b9388;--line:#292d29;
-	--brand:#c4f04e;--brand-ink:#070807;
-	--ok:#7dff78;--ok-bg:#0f230e;--warn:#ffad62;--warn-bg:#2e2109;
-	--bad:#ff7670;--bad-bg:#2e0f0d;--na:#8b9388;--na-bg:#191d18;
+  --bg:#f4f5f7;--card:#fff;--ink:#16181d;--muted:#6b7280;--line:#e5e7eb;
+  --brand:#d62828;--brand-ink:#fff;--ok:#15803d;--ok-bg:#dcfce7;--warn:#b45309;--warn-bg:#fef3c7;
+  --bad:#b91c1c;--bad-bg:#fee2e2;--na:#6b7280;--na-bg:#f3f4f6;
 }
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1115;--card:#181b22;--ink:#e8eaee;--muted:#9aa1ad;--line:#2a2f3a;
+  --ok:#4ade80;--ok-bg:#12301d;--warn:#fbbf24;--warn-bg:#3a2c0b;--bad:#f87171;--bad-bg:#3b1414;--na:#9aa1ad;--na-bg:#23272f;
+}}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:radial-gradient(circle at 90% 0,#172016 0,transparent 24%),var(--bg);color:var(--ink);font:15px/1.45 'Space Grotesk',sans-serif}
-a{color:inherit;text-decoration:none}
-header.topbar{display:flex;justify-content:space-between;align-items:center;padding:25px 42px;border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:11px}
-.mark{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;color:var(--brand-ink);background:var(--brand);font-size:12px;font-weight:700}
-.brand strong{display:block;font-size:14px;letter-spacing:.08em} .brand small{display:block;margin-top:3px;color:var(--muted);font:10px 'DM Mono',monospace;letter-spacing:.08em}
-.top-actions{display:flex;align-items:center;gap:8px}
-.back{display:flex;align-items:center;gap:8px;padding:10px 13px;border:1px solid var(--line);border-radius:4px;color:var(--muted);font:11px 'DM Mono',monospace;text-transform:uppercase}
-.back:hover{color:var(--brand-ink);border-color:var(--brand);background:var(--brand)} .back svg{width:15px}
-nav.tabs{display:flex;gap:6px;padding:12px 42px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
-nav.tabs button{border:1px solid var(--line);background:transparent;color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:10px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
-nav.tabs button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
-main{max-width:1080px;margin:0 auto;padding:20px 42px 60px}
-.card{background:rgba(16,18,16,.92);border:1px solid var(--line);border-radius:6px;padding:18px;margin-bottom:14px}
-.card h2{margin:0 0 12px;font-size:14px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#111;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header .logo{background:var(--brand);border-radius:8px;padding:4px 8px;font-weight:800;letter-spacing:.5px}
+header h1{font-size:17px;margin:0;font-weight:600}
+header .top-actions{margin-left:auto}
+header .back{color:#fff;opacity:.8;text-decoration:none;font-size:13px;border:1px solid #333;border-radius:8px;padding:6px 10px}
+header .back:hover{opacity:1;border-color:#555}
+nav{display:flex;gap:6px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit}
+nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+main{max-width:960px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 12px;font-size:16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-label{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-family:'DM Mono',monospace}
-input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:#080a08;color:var(--ink);font:13px 'DM Mono',monospace;outline:0}
-input:focus,select:focus,textarea:focus{border-color:var(--brand)}
-textarea{min-height:80px;resize:vertical;font-family:'DM Mono',monospace}
-.btn{border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:4px;font:600 10px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-.btn:hover{background:#d8ff70;border-color:#d8ff70}
-.btn.ghost{background:transparent;color:var(--muted);border-color:var(--line)}
-.btn.ghost:hover{color:var(--ink);border-color:var(--brand);background:transparent}
-.btn.sm{padding:7px 11px;font-size:9px}
-.btn.danger{color:var(--bad);border-color:#49302d;background:transparent}
-.btn.danger:hover{color:var(--brand-ink);border-color:var(--bad);background:var(--bad)}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--brand)}
+textarea{min-height:70px;resize:vertical}
+#f-remarks{min-height:180px}
+.remarks{white-space:pre-wrap;word-wrap:break-word;line-height:1.55}
+td.muted{white-space:pre-wrap}
+.btn{border:0;background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.danger{background:transparent;border:1px solid var(--line);color:var(--bad)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.cat{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:16px 0 6px;letter-spacing:.14em;font-family:'DM Mono',monospace}
-.item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid #20241f}
-.item .name{font-weight:500;font-size:14px;cursor:pointer}
-.item input.note{grid-column:1/-1;font-size:12px;padding:6px 8px;display:none}
+.cat{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:14px 0 6px;letter-spacing:.4px}
+.item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.item .name{font-weight:500;cursor:pointer}
+.item input.note{grid-column:1/-1;font-size:13px;padding:6px 8px;display:none}
 .item.show-note input.note{display:block}
 .item .thumbs{grid-column:1/-1}
-.cam{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:4px;padding:6px 9px;cursor:pointer;display:flex;align-items:center;gap:4px;font:10px 'DM Mono',monospace}
-.cam svg{width:15px;height:15px}
+.cam{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:5px 8px;cursor:pointer;display:flex;align-items:center;gap:4px;font:inherit;font-size:12px}
+.cam svg{width:16px;height:16px}
 .cam.has{border-color:var(--brand);color:var(--brand);font-weight:700}
 .thumbs{display:flex;gap:8px;flex-wrap:wrap}
 .thumbs:empty{display:none}
-.thumb{position:relative;width:72px;height:72px;border-radius:4px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in}
+.thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb .x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;padding:0}
 .thumb .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:8px}
 .gallery .thumb{width:auto;height:110px}
-.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:20;padding:16px;flex-direction:column;gap:10px;color:#fff}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:20;padding:16px;flex-direction:column;gap:10px;color:#fff}
 .lightbox.show{display:flex}
-.lightbox img{max-width:100%;max-height:82vh;border-radius:6px}
-.editbar{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:10px 14px;margin-bottom:14px;font:600 12px 'DM Mono',monospace;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;text-transform:uppercase}
-.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.seg button{border:0;background:transparent;color:var(--muted);padding:6px 9px;font:10px 'DM Mono',monospace;cursor:pointer;border-right:1px solid var(--line);text-transform:uppercase}
+.lightbox img{max-width:100%;max-height:82vh;border-radius:8px}
+.editbar{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);padding:6px 9px;font:inherit;font-size:12px;cursor:pointer;border-right:1px solid var(--line)}
 .seg button:last-child{border-right:0}
 .seg button.on[data-v="done"]{background:var(--ok-bg);color:var(--ok);font-weight:700}
 .seg button.on[data-v="ok"]{background:var(--ok-bg);color:var(--ok);font-weight:700}
 .seg button.on[data-v="attn"]{background:var(--warn-bg);color:var(--warn);font-weight:700}
 .seg button.on[data-v="na"]{background:var(--na-bg);color:var(--na)}
-.pill{display:inline-block;padding:2px 8px;border-radius:999px;font:600 10px 'DM Mono',monospace;text-transform:uppercase}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
 .pill.done,.pill.ok{background:var(--ok-bg);color:var(--ok)}
 .pill.attn{background:var(--warn-bg);color:var(--warn)}
 .pill.na{background:var(--na-bg);color:var(--na)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:13px}
-.stat b{display:block;margin-top:6px;font-size:24px;letter-spacing:-.04em}
-.stat span{font:10px 'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.rec{border:1px solid var(--line);border-radius:6px;padding:13px;margin-bottom:10px;cursor:pointer;background:rgba(16,18,16,.92)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--muted)}
+.rec{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;background:var(--card)}
 .rec:hover{border-color:var(--brand)}
 .rec .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.plate{font-weight:800;letter-spacing:.5px;font-family:'DM Mono',monospace}
+.plate{font-weight:800;letter-spacing:.5px}
 .muted{color:var(--muted);font-size:13px}
 .hidden{display:none}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:4px;font:600 11px 'DM Mono',monospace;opacity:0;transition:.25s;pointer-events:none;z-index:30}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none}
 .toast.show{opacity:1}
-table{width:100%;border-collapse:collapse;font-size:13px}
-td,th{padding:8px 6px;border-bottom:1px solid #20241f;text-align:left;vertical-align:top}
-.progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0 4px}
-.progress i{display:block;height:100%;background:var(--brand);transition:width .2s}
-.viewer-note{margin:0 0 14px;padding:9px 12px;border:1px dashed #3c4439;border-radius:4px;color:var(--muted);font:10px 'DM Mono',monospace;text-transform:uppercase}
-.empty-note{padding:20px;text-align:center;color:var(--muted);font:10px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:6px}
+.progress i{display:block;height:100%;background:var(--brand)}
 .due-cell.soon{color:var(--warn);font-weight:700}
 .due-cell.overdue{color:var(--bad);font-weight:700}
-tr.row-overdue{background:linear-gradient(90deg,rgba(255,118,112,.14),transparent 65%);box-shadow:inset 3px 0 0 var(--bad)}
-tr.row-overdue:hover{background:linear-gradient(90deg,rgba(255,118,112,.24),#151a15 65%)}
-tr.row-soon-due{background:linear-gradient(90deg,rgba(255,173,98,.12),transparent 65%);box-shadow:inset 3px 0 0 var(--warn)}
-tr.row-soon-due:hover{background:linear-gradient(90deg,rgba(255,173,98,.2),#151a15 65%)}
-@media (max-width:650px){ header.topbar{padding:20px 15px} nav.tabs{padding:10px 15px} main{padding:16px 15px 50px} .item{grid-template-columns:1fr;gap:6px} }
-@media print{header.topbar,nav.tabs,.no-print{display:none!important}body{background:#fff;color:#000}.card,.stat,.rec{border:1px solid #ccc;background:#fff}}
+tr.row-overdue{background:linear-gradient(90deg,var(--bad-bg),transparent 65%);box-shadow:inset 3px 0 0 var(--bad)}
+tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%);box-shadow:inset 3px 0 0 var(--warn)}
+.viewer-note{margin:0 0 14px;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;color:var(--muted);font-size:12px}
+.empty-note{padding:20px;text-align:center;color:var(--muted)}
+/* ---- Pro service report ---- */
+.rp{font-size:14px}
+.rp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:3px solid var(--brand)}
+.rp-brand{display:flex;align-items:center;gap:10px}
+.rp-brand .logo{background:var(--brand);color:#fff;border-radius:8px;padding:8px 10px;font-weight:800;letter-spacing:.5px;font-size:18px}
+.rp-brand b{display:block;font-size:18px;letter-spacing:1.5px}
+.rp-brand small{color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:600}
+.rp-meta{display:flex;gap:18px;text-align:right}
+.rp-meta span,.rp-info span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.rp-meta b{font-size:14px}
+.rp-vehicle{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:16px 0 10px}
+.rp-plate{font-size:24px;font-weight:800;letter-spacing:1.5px;border:2px solid var(--ink);border-radius:6px;padding:2px 12px}
+.rp-model{font-size:16px;color:var(--muted);font-weight:500}
+.rp-info{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.rp-info>div{background:var(--card);padding:10px 12px}
+.rp-info b{font-size:14.5px}
+.rp-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
+.rp-sum div{border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.rp-sum b{font-size:22px}
+.rp-sum span{font-size:12px;font-weight:600}
+.s-done,.s-ok{background:var(--ok-bg);color:var(--ok)}
+.s-attn{background:var(--warn-bg);color:var(--warn)}
+.rp-title{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line);color:var(--ink)}
+.rp-table th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)}
+.rp-table tr.rp-cat td{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--brand);padding-top:12px;border-bottom:1px solid var(--line)}
+.rp-remarks{display:grid;gap:10px}
+.rp-sec{border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 14px;background:var(--card);break-inside:avoid}
+.rp-sec p{margin:0 0 4px;line-height:1.6}
+.rp-sec p:last-child{margin-bottom:0}
+.rp-h{font-weight:800;font-size:13px;letter-spacing:.6px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.rp-h i{font-style:normal;background:var(--ink);color:var(--card);border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.rp-summary{border-left-color:var(--brand);background:var(--bg)}
+.rp-kv{display:flex;gap:10px;padding:4px 0}
+.rp-kv span{color:var(--muted);min-width:110px;font-weight:600}
+.rp-reco{margin-top:6px;background:var(--warn-bg);color:var(--ink);border-radius:6px;padding:8px 10px;line-height:1.5}
+.rp-reco span{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--warn);margin-bottom:2px}
+.rp-sign{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px;break-inside:avoid}
+.rp-sign .line{border-bottom:1px solid var(--ink);height:36px}
+.rp-sign span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.rp-sign b{font-size:13px}
+.rp-foot{margin-top:22px;font-size:11px;color:var(--muted);text-align:center}
+@media (max-width:620px){.rp-info{grid-template-columns:repeat(2,1fr)}.rp-info>div:last-child{grid-column:1/-1}}
+@media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}.rp-sign{grid-template-columns:1fr;gap:6px}}
+@media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
+@media print{
+  @page{size:A4;margin:12mm}
+  :root{--bg:#f5f5f5;--card:#fff;--ink:#111;--muted:#555;--line:#d4d4d4;--ok:#166534;--ok-bg:#e7f6ec;--warn:#92400e;--warn-bg:#fdf3dc;--na-bg:#eee;--na:#555}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,nav,.no-print{display:none!important}
+  body{background:#fff;color:#000}
+  main{padding:0;max-width:none}
+  #tab-detail .card{padding:0;margin:0;border:0}
+  .toast,.lightbox{display:none!important}
+  .rp-table tr{break-inside:avoid}
+  .gallery{grid-template-columns:repeat(4,1fr)}
+  .gallery .thumb{height:95px}
+}
 </style>
 </head>
 <body>
 <script src="auth-gate.js"></script>
 <script>akgarageInitGate();</script>
-<header class="topbar">
-	<div class="brand"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MAINTENANCE CHECKLIST</small></span></div>
-	<div class="top-actions"><a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a></div>
-</header>
-<nav class="tabs">
+<header><span class="logo">AK</span><h1>AK Garage · Maintenance Checklist</h1><div class="top-actions"><a class="back" href="index.html">← Overview</a></div></header>
+<nav>
 	<button data-tab="new" class="active">+ New Checklist</button>
 	<button data-tab="history">History</button>
 	<button data-tab="due">Due Soon</button>
@@ -140,7 +187,7 @@ tr.row-soon-due:hover{background:linear-gradient(90deg,rgba(255,173,98,.2),#151a
 				<h2 style="margin:0">Checklist</h2>
 				<div class="row no-print"><button class="btn ghost sm" id="all-na">Reset all</button></div>
 			</div>
-			<div class="muted" style="margin-top:6px;font-size:12px">Tap: <b style="color:var(--ok)">Done</b> = replaced/serviced · <b style="color:var(--ok)">OK</b> = checked, fine · <b style="color:var(--warn)">Attn</b> = needs attention · <b>N/A</b> = not done. Tap the item name to add a note. Tap the camera to add a photo of the part.</div>
+			<div class="muted" style="margin-top:6px">Tap: <b style="color:var(--ok)">Done</b> = replaced/serviced · <b style="color:var(--ok)">OK</b> = checked, fine · <b style="color:var(--warn)">Attn</b> = needs attention · <b>N/A</b> = not done. Tap the item name to add a note. Tap the camera to add a photo of the part.</div>
 			<div class="progress"><i id="prog" style="width:0"></i></div>
 			<div id="checklist"></div>
 		</div>
@@ -150,10 +197,10 @@ tr.row-soon-due:hover{background:linear-gradient(90deg,rgba(255,173,98,.2),#151a
 			<label style="margin-top:14px">Other Photos (receipt, old parts, before / after)</label>
 			<div class="row"><button class="cam no-print" id="gen-add" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>Add photos</button></div>
 			<div class="thumbs" id="gen-thumbs" style="margin-top:8px"></div>
-			<div class="row" style="margin-top:14px">
+			<div class="row" style="margin-top:12px">
 				<button class="btn" id="save">Save Checklist</button>
 				<button class="btn ghost" id="clear">Clear form</button>
-				<span class="muted" id="save-status" style="font-size:11px"></span>
+				<span class="muted" id="save-status" style="font-size:12px"></span>
 			</div>
 		</div>
 	</section>
@@ -174,13 +221,14 @@ tr.row-soon-due:hover{background:linear-gradient(90deg,rgba(255,173,98,.2),#151a
 		<div class="row no-print" style="margin-bottom:10px">
 			<button class="btn ghost sm" id="back">← Back</button>
 			<button class="btn sm" id="edit">Edit</button>
-			<button class="btn ghost sm" onclick="window.print()">Print</button>
+			<button class="btn ghost sm" id="print">Print</button>
 			<button class="btn ghost sm" id="save-file" type="button" title="Download all maintenance records as JSON backup">⬇ Save file</button>
 			<button class="btn ghost sm" id="import-file-btn" type="button" title="Restore records from a JSON backup">⬆ Import file</button>
 			<button class="btn ghost sm danger" id="del">Delete</button>
-			<span class="muted" id="import-status" style="font-size:11px"></span>
+			<span class="muted" id="import-status" style="font-size:12px"></span>
 			<input type="file" id="import-file" accept="application/json,.json" class="hidden">
 		</div>
+		<div class="editbar hidden no-print" id="printhelp"><span>Hindi ma-open ang print dito sa preview. Pindutin ang <b>Save as file</b>, buksan ang file sa Chrome o Edge, at automatic na lalabas ang Print (pwede ring "Save as PDF").</span><button class="btn ghost sm" id="ph-x">OK</button></div>
 		<div class="card" id="detail"></div>
 	</section>
 </main>
@@ -188,7 +236,6 @@ tr.row-soon-due:hover{background:linear-gradient(90deg,rgba(255,173,98,.2),#151a
 <div class="lightbox" id="lb"><img id="lb-img" alt=""><div id="lb-cap"></div><button class="btn ghost sm" style="color:#fff;border-color:#fff">Close</button></div>
 <input type="file" id="picker" accept="image/*" multiple class="hidden">
 <script>
-lucide.createIcons();
 const TABLE = 'maintenance_checks';
 const ITEMS = {
 	"Engine":["Engine oil change","Oil filter","Air filter","Fuel filter","Spark plugs","Drive / serpentine belt"],
@@ -342,7 +389,7 @@ $("cancel-edit").onclick = ()=>{ const id = editingId; clearForm(); openDetail(i
 $("all-na").onclick = ()=>{state={};notes={};photos={};buildChecklist();};
 
 function startEdit(id){
-	const r = records.find(x=>x.id===id); if(!r) return;
+	const r = records.find(x=>String(x.id)===String(id)); if(!r) return;
 	$("f-plate").value=r.plate; $("f-model").value=r.model; $("f-date").value=r.date; $("f-km").value=r.km||"";
 	$("f-mech").value=r.mech; $("f-loc").value=r.loc; $("f-cost").value=r.cost||""; $("f-next").value=r.next||"";
 	$("f-remarks").value=r.remarks||"";
@@ -365,10 +412,10 @@ function renderHistory(){
 	const cars = new Set(records.map(r=>r.plate)).size;
 	const cost = records.reduce((a,r)=>a+(r.cost||0),0);
 	$("stats").innerHTML = `
-		<div class="stat"><span>Service records</span><b>${records.length}</b></div>
-		<div class="stat"><span>Vehicles</span><b>${cars}</b></div>
-		<div class="stat"><span style="color:var(--warn)">Items need attention</span><b style="color:var(--warn)">${attn}</b></div>
-		<div class="stat"><span>Total spent</span><b>AED ${cost.toLocaleString()}</b></div>`;
+		<div class="stat"><b>${records.length}</b><span>Service records</span></div>
+		<div class="stat"><b>${cars}</b><span>Vehicles</span></div>
+		<div class="stat"><b style="color:var(--warn)">${attn}</b><span>Items need attention</span></div>
+		<div class="stat"><b>AED ${cost.toLocaleString()}</b><span>Total spent</span></div>`;
 	$("list").innerHTML = rs.length ? rs.map(r=>{
 		const v = Object.values(r.items), a = v.filter(x=>x==="attn").length, pc = photoCount(r);
 		return `<div class="rec" data-id="${r.id}">
@@ -427,34 +474,103 @@ $("import-file").onchange = async e => {
 	}
 };
 
+/* ---------- Pro report formatting ---------- */
+function formatRemarks(text){
+	const blocks = text.replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+	const isHead = l => { const t=l.replace(/^\d+[.)]\s*/,""); return t.length<70 && /[A-Z]/.test(t) && !/[a-z]/.test(t); };
+	return blocks.map(b=>{
+		const lines = b.split("\n").map(l=>l.trim()).filter(Boolean);
+		let head = "", num = "";
+		if (isHead(lines[0])) { const m = lines[0].match(/^(\d+)[.)]\s*(.*)$/); if(m){num=m[1];head=m[2];} else head=lines[0]; lines.shift(); }
+		const body = lines.map(l=>{
+			const kv = l.match(/^([A-Za-z][A-Za-z0-9 \/()&-]{1,28}):\s*(.+)$/);
+			if (kv && /^recommend/i.test(kv[1])) return `<div class="rp-reco"><span>${esc(kv[1])}</span>${esc(kv[2])}</div>`;
+			if (kv) return `<div class="rp-kv"><span>${esc(kv[1])}</span><b>${esc(kv[2])}</b></div>`;
+			return `<p>${esc(l)}</p>`;
+		}).join("");
+		const cls = /^summary$/i.test(head) ? "rp-sec rp-summary" : "rp-sec";
+		return `<div class="${cls}">${head?`<div class="rp-h">${num?`<i>${num}</i>`:""}${esc(head)}</div>`:""}${body}</div>`;
+	}).join("");
+}
+
 function openDetail(id){
 	const r = records.find(x=>String(x.id)===String(id)); if(!r) return; currentId=id;
+	const vals = Object.values(r.items);
+	const cnt = k => vals.filter(v=>v===k).length;
 	const rows = Object.entries(ITEMS).map(([cat,list])=>{
 		const got = list.filter(n=>r.items[n]); if(!got.length) return "";
-		return `<tr><th colspan="3" class="muted" style="padding-top:12px">${cat}</th></tr>` +
+		return `<tr class="rp-cat"><td colspan="3">${cat}</td></tr>` +
 			got.map(n=>{ const ph = r.photos?.[n]||[];
 				return `<tr><td>${n}${ph.length?`<div class="thumbs" data-item="${esc(n)}" style="margin-top:6px">${thumbsHTML(ph,"",false)}</div>`:""}</td>
-				<td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted" style="white-space:pre-wrap">${esc(r.notes?.[n]||"")}</td></tr>`}).join("");
+				<td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted">${esc(r.notes?.[n]||"")}</td></tr>`}).join("");
 	}).join("");
 	const all = [...Object.entries(r.photos||{}).flatMap(([k,v])=>v.map(u=>({u,k}))), ...(r.genPhotos||[]).map(u=>({u,k:"Other"}))];
+	const repNo = "AKG-" + String(r.date||"").replace(/-/g,"").slice(2) + "-" + String(r.id).slice(-4).padStart(4,"0");
 	$("detail").innerHTML = `
-		<div class="row" style="justify-content:space-between"><h2 style="margin:0" class="plate">${esc(r.plate)}</h2><span class="muted">${fmt(r.date)}</span></div>
-		${r.updated?`<div class="muted" style="margin-top:4px">Last edited ${new Date(r.updated).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</div>`:""}
-		<div class="grid" style="margin:12px 0">
-			<div><label>Model</label>${esc(r.model||"—")}</div>
-			<div><label>Odometer</label>${r.km?r.km.toLocaleString()+" km":"—"}</div>
-			<div><label>Done by</label>${esc(r.mech||"—")}</div>
-			<div><label>Location</label>${esc(r.loc||"—")}</div>
-			<div><label>Cost</label>AED ${(r.cost||0).toLocaleString()}</div>
-			<div><label>Next service</label>${r.next?r.next.toLocaleString()+" km":"—"}</div>
+	<div class="rp">
+		<div class="rp-top">
+			<div class="rp-brand"><span class="logo">AK</span><div><b>AK GARAGE</b><small>Vehicle Service Report</small></div></div>
+			<div class="rp-meta"><div><span>Report No.</span><b>${repNo}</b></div><div><span>Service Date</span><b>${fmt(r.date)}</b></div></div>
 		</div>
-		<table><thead><tr><th>Item</th><th>Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
-		${r.remarks?`<div style="margin-top:14px"><label>Remarks</label><div style="white-space:pre-wrap;line-height:1.6">${esc(r.remarks)}</div></div>`:""}
-		${all.length?`<div style="margin-top:16px"><label>All Photos (${all.length})</label><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div></div>`:""}`;
+		<div class="rp-vehicle">
+			<div class="rp-plate">${esc(r.plate)}</div>
+			<div class="rp-model">${esc(r.model||"—")}</div>
+		</div>
+		<div class="rp-info">
+			<div><span>Odometer</span><b>${r.km?r.km.toLocaleString()+" km":"—"}</b></div>
+			<div><span>Next Service</span><b>${r.next?r.next.toLocaleString()+" km":"—"}</b></div>
+			<div><span>Technician</span><b>${esc(r.mech||"—")}</b></div>
+			<div><span>Location</span><b>${esc(r.loc||"—")}</b></div>
+			<div><span>Total Cost</span><b>AED ${(r.cost||0).toLocaleString()}</b></div>
+		</div>
+		<div class="rp-sum">
+			<div class="s-done"><b>${cnt("done")}</b><span>Serviced</span></div>
+			<div class="s-ok"><b>${cnt("ok")}</b><span>Checked OK</span></div>
+			<div class="s-attn"><b>${cnt("attn")}</b><span>Needs Attention</span></div>
+		</div>
+		<h3 class="rp-title">Inspection Checklist</h3>
+		<table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
+		${r.remarks?`<h3 class="rp-title">Technician Report</h3><div class="rp-remarks">${formatRemarks(r.remarks)}</div>`:""}
+		${all.length?`<h3 class="rp-title">Photos (${all.length})</h3><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div>`:""}
+		<div class="rp-sign">
+			<div><div class="line"></div><span>Technician</span><b>${esc(r.mech||"")}</b></div>
+			<div><div class="line"></div><span>Checked by</span><b></b></div>
+			<div><div class="line"></div><span>Customer</span><b></b></div>
+		</div>
+		<div class="rp-foot">${r.updated?`Last edited ${new Date(r.updated).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})} · `:""}Generated by AK Garage · ${repNo}</div>
+	</div>`;
 	$("detail").querySelectorAll("td .thumbs").forEach(b=>{ const n = b.dataset.item; wireThumbs(b, r.photos[n], n, ()=>{}); });
 	const g = $("gal"); if (g) g.querySelectorAll(".thumb").forEach(t=>t.onclick=()=>{const p=all[+t.dataset.i]; openLB(p.u,p.k);});
 	show("detail");
 }
+
+/* ---------- Print / Save ---------- */
+function doPrint(){
+	$("printhelp").classList.add("hidden");
+	const t = performance.now(); let failed = false;
+	try { window.print(); } catch(e){ failed = true; }
+	// If the print dialog was blocked (e.g. inside an app preview), print() returns instantly
+	if (failed || performance.now() - t < 120) $("printhelp").classList.remove("hidden");
+}
+function saveReport(){
+	const r = records.find(x=>String(x.id)===String(currentId)); if(!r) return;
+	const css = document.querySelector("style").textContent;
+	const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Service Report ${esc(r.plate)} ${r.date}</title><style>${css}
+body{background:#fff}main{padding:24px}.card{border:0}</style></head>
+<body><main><div class="card">${$("detail").innerHTML}</div></main>
+<script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`;
+	const blob = new Blob([html], {type:"text/html"});
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = `AK-Garage-Report_${r.plate.replace(/\s+/g,"-")}_${r.date}.html`;
+	document.body.appendChild(a); a.click(); a.remove();
+	setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+	toast("Report saved ✓");
+}
+$("print").onclick = doPrint;
+$("dl") && ($("dl").onclick = saveReport);
+$("ph-x").onclick = ()=>$("printhelp").classList.add("hidden");
 $("back").onclick = ()=>show("history");
 $("del").onclick = async ()=>{
 	if (!confirm("Delete this checklist?")) return;
@@ -503,11 +619,11 @@ function renderDue(){
 
 function show(tab){
 	["new","history","due","detail"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==tab));
-	document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab||(tab==="detail"&&b.dataset.tab==="history")));
+	document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab||(tab==="detail"&&b.dataset.tab==="history")));
 	if(tab==="history") renderHistory(); if(tab==="due") renderDue();
 	window.scrollTo(0,0);
 }
-document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="new" && editingId) clearForm(); show(b.dataset.tab); });
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="new" && editingId) clearForm(); show(b.dataset.tab); });
 
 $("f-date").value = today(); buildChecklist(); renderGen();
 
