@@ -28,16 +28,11 @@ Then open http://127.0.0.1:8000/ — or run it through the Preview tab.
 ## Deploy to Vercel
 
 The site is already configured (`vercel.json`: static, no build, no-store
-caching, basic security headers).
+caching, basic security headers) and the GitHub repo is already connected to
+the Vercel project `akgarage` — **every push to `main` deploys to
+akgarage.vercel.app automatically.** No manual deploy needed.
 
-1. Push this folder to a GitHub repository.
-2. Go to [vercel.com/new](https://vercel.com/new), import the repo.
-3. Vercel auto-detects **Other** (static). Leave Framework Preset as-is and
-   click **Deploy**. No environment variables are needed — the Supabase URL
-   and anon key are public client-side values in `supabase-client.js`.
-4. Every future `git push` to the production branch redeploys automatically.
-
-CLI alternative:
+Manual CLI deploy (only if ever needed):
 
 ```bash
 npm i -g vercel
