@@ -250,9 +250,15 @@
 			const item = storedRecords.find((record) => String(record.id) === String(selectedRecordId));
 			if (!item) return;
 			item.maintenance = maintenanceInput.value.trim();
-			const { error } = await window.sb.from(TABLE).update({ maintenance: item.maintenance }).eq('id', item.id);
+			const { error, count } = await window.sb.from(TABLE).update({ maintenance: item.maintenance }, { count: 'exact' }).eq('id', item.id);
 			if (error) {
 				console.error('Unable to save maintenance notes:', error);
+				return;
+			}
+			if (!count) {
+				// RLS silently skipped the row — admin session token is missing or expired.
+				window.alert('Session expired — enter the admin password to save changes.');
+				if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
 				return;
 			}
 			closeDetails();

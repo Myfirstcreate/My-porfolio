@@ -220,10 +220,16 @@
 			row.querySelector('.erase').addEventListener('click', async () => {
 				if (!record.id) { row.remove(); updateSummary(); updateLabels(); return; }
 				if (!window.confirm(`Erase the ${record.brand || 'motorcycle'} record (${record.plate || 'no plate'})? This cannot be undone.`)) return;
-				const { error } = await window.sb.from(TABLE).delete().eq('id', record.id);
+				const { error, count } = await window.sb.from(TABLE).delete({ count: 'exact' }).eq('id', record.id);
 				if (error) {
 					console.error('Unable to delete motorcycle record:', error);
 					window.alert('Could not erase the record. Check your connection and try again.');
+					return;
+				}
+				if (!count) {
+					// RLS skipped the row — admin session token is missing or expired.
+					window.alert('Session expired — enter the admin password to erase records.');
+					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
 					return;
 				}
 				storedRecords = storedRecords.filter((item) => item.id !== record.id);
@@ -331,7 +337,10 @@
 			};
 			try {
 				if (editingId) {
-					const { error } = await window.sb.from(TABLE).update(record).eq('id', editingId);
+					const { error, count } = await window.sb.from(TABLE).update(record, { count: 'exact' }).eq('id', editingId);
+					// Row Level Security silently skips rows when the admin session token is
+					// missing or expired: the request "succeeds" but changes 0 rows.
+					if (!error && !count) throw Object.assign(new Error('row-level security blocked the update — admin session expired or missing'), { code: '42501' });
 					if (error) throw error;
 				} else {
 					const { error } = await window.sb.from(TABLE).insert(record);
@@ -344,9 +353,15 @@
 			} catch (error) {
 				console.error('Unable to save motorcycle record:', error);
 				const missingTable = error?.code === 'PGRST205' || /could not find the table/i.test(error?.message || '');
-				window.alert(missingTable
-					? 'The motorcycles table is missing in Supabase. Run section 6 of supabase-migrations.sql in the Supabase SQL Editor, then try again.'
-					: 'The record could not be saved. Please check your connection and try again.');
+				const authFail = error?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(error?.message || '');
+				if (authFail) {
+					window.alert('Session expired — enter the admin password to save changes.');
+					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+				} else {
+					window.alert(missingTable
+						? 'The motorcycles table is missing in Supabase. Run section 6 of supabase-migrations.sql in the Supabase SQL Editor, then try again.'
+						: 'The record could not be saved. Please check your connection and try again.');
+				}
 			}
 		});
 		window.addExpiryReportButton({

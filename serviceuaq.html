@@ -135,13 +135,18 @@
 			Object.assign(pending.fields, fields);
 			clearTimeout(pending.timer);				pending.timer = setTimeout(async () => {
 					pendingSaves.delete(id);
-					const { error } = await window.sb.from(TABLE).update(toDbFields(pending.fields)).eq('id', id);
+					const { error, count } = await window.sb.from(TABLE).update(toDbFields(pending.fields), { count: 'exact' }).eq('id', id);
 					if (error) {
 						console.error('Unable to save service record:', error);
 						const missingColumns = error?.code === '42703' || /does not exist/i.test(error?.message || '');
 						window.alert(missingColumns
 							? 'Save failed: the service fields are missing in the database. Ask the admin to run section 4 of supabase-migrations.sql in the Supabase SQL Editor, then try again.'
 							: 'Save failed: ' + (error?.message || 'unknown error'));
+					}
+					if (!error && !count) {
+						// RLS silently skipped the row — admin session token is missing or expired.
+						window.alert('Session expired — enter the admin password to save changes.');
+						if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
 					}
 				}, 400);
 			pendingSaves.set(id, pending);

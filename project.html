@@ -222,6 +222,12 @@
 				const pnl = (Number(job.sold_price) || 0) - grand_total;
 				const { data, error } = await window.sb.from(TABLE).update({ expenses, grand_total, pnl }).eq('id', job.id).select();
 				if (error) { showBanner(saveErrorMessage(error)); return null; }
+				if (!(data || []).length) {
+					// RLS silently skipped the row — admin session token is missing or expired.
+					showBanner('Session expired — enter the admin password to save changes.');
+					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+					return null;
+				}
 				const updated = (data || [])[0];
 				if (updated) records = records.map((item) => (item.id === updated.id ? updated : item));
 				return updated;
@@ -427,8 +433,14 @@
 			async function eraseJob(job) {
 				if (!window.akgarageCanEdit()) return;
 				if (!confirm(`Erase "${job.title}" and all its expenses? This cannot be undone.`)) return;
-				const { error } = await window.sb.from(TABLE).delete().eq('id', job.id);
+				const { error, count } = await window.sb.from(TABLE).delete({ count: 'exact' }).eq('id', job.id);
 				if (error) { formError.textContent = 'Erase failed: ' + error.message; return; }
+				if (!count) {
+					// RLS skipped the row — admin session token is missing or expired.
+					formError.textContent = 'Session expired — enter the admin password to erase.';
+					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+					return;
+				}
 				records = records.filter((item) => item.id !== job.id);
 				if (editingId === job.id) resetFormMode();
 				render();
@@ -455,6 +467,12 @@
 					: window.sb.from(TABLE).insert(payload);
 				const { data, error } = await request.select();
 				if (error) { formError.textContent = saveErrorMessage(error); return; }
+				if (editingId && !(data || []).length) {
+					// RLS silently skipped the row — admin session token is missing or expired.
+					formError.textContent = 'Session expired — enter the admin password to save changes.';
+					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+					return;
+				}
 				const saved = (data || [])[0];
 				if (editingId) {
 					if (saved) records = records.map((item) => (item.id === saved.id ? saved : item));
