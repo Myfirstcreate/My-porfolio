@@ -129,9 +129,15 @@
 					form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 				});
 				row.querySelector('.erase').addEventListener('click', () => {
-					window.sb.from(TABLE).delete().eq('id', item.id).then(({ error }) => {
+					window.sb.from(TABLE).delete({ count: 'exact' }).eq('id', item.id).then(({ error, count }) => {
 						if (error) {
 							console.error('Unable to delete Boss Car record:', error);
+							return;
+						}
+						if (!count) {
+							// RLS skipped the row — admin session token is missing or expired.
+							window.alert('Session expired — enter the admin password to erase records.');
+							if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
 							return;
 						}
 						storedRecords = storedRecords.filter((record) => record.id !== item.id);
@@ -200,15 +206,23 @@
 			};
 			try {
 				const query = editingId
-					? window.sb.from(TABLE).update(record).eq('id', editingId)
+					? window.sb.from(TABLE).update(record, { count: 'exact' }).eq('id', editingId)
 					: window.sb.from(TABLE).insert(record);
-				const { error } = await query;
+				const { error, count } = await query;
 				if (error) throw error;
+				// Row Level Security silently skips rows when the admin session token is
+				// missing or expired: the request "succeeds" but changes 0 rows.
+				if (editingId && !count) throw Object.assign(new Error('row-level security blocked the update — admin session expired or missing'), { code: '42501' });
 				await loadRecords();
 				renderStoredRecords();
 				resetFormMode();
 			} catch (error) {
 				console.error('Unable to save Boss Car record:', error);
+				const authFail = error?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(error?.message || '');
+				if (authFail) {
+					window.alert('Session expired — enter the admin password to save changes.');
+					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+				}
 			}
 		});
 		async function initialize() {

@@ -205,16 +205,27 @@
 			statusSelect.addEventListener('change', () => {
 				row.dataset.status = statusSelect.value;
 				statusSelect.className = `status-select ${statusSelect.value.toLowerCase()}`;
-				window.sb.from(TABLE).update({ status: statusSelect.value }).eq('id', record.id).then(({ error }) => {
-					if (error) console.error('Unable to update VIP status:', error);
+				window.sb.from(TABLE).update({ status: statusSelect.value }, { count: 'exact' }).eq('id', record.id).then(({ error, count }) => {
+					if (error) { console.error('Unable to update VIP status:', error); return; }
+					// RLS silently skips rows for an expired/missing admin token (0 rows changed).
+					if (!count) {
+						window.alert('Session expired — enter the admin password to make changes.');
+						if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+					}
 				});
 				updateRecords();
 				if (searchPanel.classList.contains('open')) updateSearchResults();
 			});
 			row.querySelector('.erase').addEventListener('click', () => {
-				window.sb.from(TABLE).delete().eq('id', record.id).then(({ error }) => {
+				window.sb.from(TABLE).delete({ count: 'exact' }).eq('id', record.id).then(({ error, count }) => {
 					if (error) {
 						console.error('Unable to delete VIP record:', error);
+						return;
+					}
+					if (!count) {
+						// RLS skipped the row — admin session token is missing or expired.
+						window.alert('Session expired — enter the admin password to erase records.');
+						if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
 						return;
 					}
 					storedRecords = storedRecords.filter((item) => item.id !== record.id);

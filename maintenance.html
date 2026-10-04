@@ -491,9 +491,12 @@ $("save").onclick = async ()=>{
 	};
 	$("save").disabled = true; $("save-status").textContent = "Saving...";
 	try {
-		let error;
+		let error, count;
 		if (editingId){
-			({ error } = await sb.from(TABLE).update(payload).eq('id', editingId));
+			({ error, count } = await sb.from(TABLE).update(payload, { count: "exact" }).eq('id', editingId));
+			// Row Level Security silently skips rows when the admin session token is
+			// missing or expired: the request "succeeds" but changes 0 rows. Surface it.
+			if (!error && !count) throw Object.assign(new Error("row-level security blocked the update — admin session expired or missing"), { code: "42501" });
 		} else {
 			({ error } = await sb.from(TABLE).insert(payload));
 		}
@@ -706,8 +709,15 @@ $("del").onclick = async ()=>{
 	if (!confirm("Delete this checklist?")) return;
 	try {
 		const sb = ensureSupabase();
-		const { error } = await sb.from(TABLE).delete().eq('id', currentId);
+		const { error, count } = await sb.from(TABLE).delete({ count: "exact" }).eq('id', currentId);
 		if (error) { console.error('Unable to delete checklist:', error); toast("Delete failed: " + error.message); return; }
+		if (!count) {
+			// RLS skipped the row — admin session token is missing or expired.
+			console.error('Delete blocked by row-level security (0 rows changed)');
+			toast("Session expired — mag-login ulit bilang admin.");
+			if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+			return;
+		}
 		await loadRecords(); toast("Deleted"); show("history");
 	} catch (error) {
 		console.error('Unable to delete checklist:', error);
