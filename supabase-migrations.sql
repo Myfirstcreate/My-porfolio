@@ -333,6 +333,7 @@ create table if not exists public.maintenance_checks (
 	updated_at timestamptz,
 	plate text not null,
 	model text not null default '',
+	chassis_no text not null default '',
 	service_date text not null default '',
 	km bigint not null default 0,
 	mechanic text not null default '',
@@ -345,6 +346,9 @@ create table if not exists public.maintenance_checks (
 	photos jsonb not null default '{}'::jsonb,
 	gen_photos jsonb not null default '[]'::jsonb
 );
+
+-- Chassis number (added Oct 2026). Safe to re-run; fills existing rows with ''.
+alter table public.maintenance_checks add column if not exists chassis_no text not null default '';
 
 alter table public.maintenance_checks enable row level security;
 

@@ -114,7 +114,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 .rp-vehicle{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:16px 0 10px}
 .rp-plate{font-size:24px;font-weight:800;letter-spacing:1.5px;border:2px solid var(--ink);border-radius:6px;padding:2px 12px}
 .rp-model{font-size:16px;color:var(--muted);font-weight:500}
-.rp-info{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.rp-info{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .rp-info>div{background:var(--card);padding:10px 12px}
 .rp-info b{font-size:14.5px}
 .rp-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
@@ -142,7 +142,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 .rp-sign span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
 .rp-sign b{font-size:13px}
 .rp-foot{margin-top:22px;font-size:11px;color:var(--muted);text-align:center}
-@media (max-width:620px){.rp-info{grid-template-columns:repeat(2,1fr)}.rp-info>div:last-child{grid-column:1/-1}}
+@media (max-width:620px){.rp-info{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}.rp-sign{grid-template-columns:1fr;gap:6px}}
 @media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
 
@@ -166,10 +166,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
    #tab-detail .rp .rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:500;letter-spacing:.2px}
    #tab-detail .rp .rp-info{background:#e2dccd;border-color:#e2dccd;border-radius:0}
    #tab-detail .rp .rp-info>div{background:#fbf9f5;padding:8px 10px}
-   #tab-detail .rp .rp-info>div:last-child{display:flex;align-items:center;gap:8px;min-width:0}
-   #tab-detail .rp .rp-info>div:last-child b{white-space:nowrap;font-family:Arial,Helvetica,sans-serif;font-size:14.5px;font-weight:700;letter-spacing:normal}
    #tab-detail .rp .rp-info span{color:#8a7f6a}
-   #tab-detail .rp .rp-info>div:last-child span{display:inline;flex:0 0 auto}
    #tab-detail .rp .rp-info b{color:#14213a;font-family:var(--serif)}
    #tab-detail .rp .rp-sum div{border-radius:0;border:1px solid #e2dccd}
    #tab-detail .rp .s-done, #tab-detail .rp .s-ok{background:#eef4ea;color:#315c40}
@@ -200,6 +197,30 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 @media screen{
   #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
   #tab-detail .rp{background:transparent}
+}
+
+/* Phone paper view: bigger, easier-to-read report on small screens.
+   Screen media only — the printed A4 sizing from the theme rules above
+   is untouched. */
+@media screen and (max-width:640px){
+  #tab-detail .rp{font-size:14px}
+  #tab-detail .rp .rp-brand b{font-size:24px}
+  #tab-detail .rp .rp-meta>div{min-width:150px;padding:8px 12px}
+  #tab-detail .rp .rp-meta b{font-size:13px}
+  #tab-detail .rp .rp-meta span,#tab-detail .rp .rp-info span{font-size:12px}
+  #tab-detail .rp .rp-plate{font-size:30px}
+  #tab-detail .rp .rp-model{font-size:21px}
+  #tab-detail .rp .rp-info b{font-size:16px}
+  #tab-detail .rp .rp-sum b{font-size:24px}
+  #tab-detail .rp .rp-sum span{font-size:13px}
+  #tab-detail .rp .rp-title{font-size:13px}
+  #tab-detail .rp .rp-h{font-size:14px}
+  #tab-detail .rp .rp-h i{width:24px;height:24px;font-size:13px}
+  #tab-detail .rp .pill{font-size:12px}
+  #tab-detail .rp .rp-sign span{font-size:12px}
+  #tab-detail .rp .rp-foot{font-size:12px}
+  #tab-detail .rp .rp-reco span{font-size:12px}
+  #tab-detail .rp-table td,#tab-detail .rp-table th{padding:9px 8px}
 }
 @media print{
   @page{size:A4;margin:12mm}
@@ -243,11 +264,9 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 			<div class="grid">
 				<div><label for="f-plate">Plate No.</label><input id="f-plate" placeholder="e.g. RAK A 12345" style="text-transform:uppercase"></div>
 				<div><label for="f-model">Car Model</label><input id="f-model" placeholder="e.g. Nissan Patrol 2022" style="text-transform:uppercase"></div>
+				<div><label for="f-chassis">Chassis No.</label><input id="f-chassis" placeholder="e.g. WBA12345ABC123456" style="text-transform:uppercase"></div>
 				<div><label for="f-date">Date</label><input id="f-date" type="date"></div>
 				<div><label for="f-km">Odometer (km)</label><input id="f-km" type="number" placeholder="e.g. 45200"></div>
-				<div><label for="f-mech">Mechanic / Done by</label><input id="f-mech" placeholder="Name" style="text-transform:uppercase"></div>
-				<div><label for="f-loc">Garage / Location</label><input id="f-loc" placeholder="e.g. UAQ workshop" style="text-transform:uppercase"></div>
-				<div><label for="f-cost">Total Cost (AED)</label><input id="f-cost" type="number" placeholder="0"></div>
 				<div><label for="f-next">Next Service (km)</label><input id="f-next" type="number" placeholder="auto +10,000"></div>
 			</div>
 		</div>
@@ -345,7 +364,7 @@ async function loadRecords() {
 	if (error) throw error;
 	records = (Array.isArray(data) ? data : []).filter(r => r && typeof r === 'object').map(r => ({
 		id: r.id, plate: asText(r.plate), model: asText(r.model), date: asText(r.service_date) || today(),
-		km: asNumber(r.km), mech: asText(r.mechanic), loc: asText(r.location), cost: asNumber(r.cost),
+		km: asNumber(r.km), mech: asText(r.mechanic), loc: asText(r.location), cost: asNumber(r.cost), chassis: asText(r.chassis_no),
 		next: asNumber(r.next_km), remarks: asText(r.remarks),
 		items: asObject(r.items), notes: asObject(r.notes), photos: asObject(r.photos),
 		genPhotos: Array.isArray(r.gen_photos) ? r.gen_photos : [], updated: asText(r.updated_at) || null
@@ -442,7 +461,7 @@ function progress(){
 	$("prog").style.width = (n/all*100)+"%";
 	$("prog").parentElement.setAttribute("aria-valuenow", String(Math.round(n/all*100)));
 }
-const FIELDS = {plate:"f-plate",model:"f-model",date:"f-date",km:"f-km",mech:"f-mech",loc:"f-loc",cost:"f-cost",next:"f-next",remarks:"f-remarks"};
+const FIELDS = {plate:"f-plate",model:"f-model",chassis:"f-chassis",date:"f-date",km:"f-km",next:"f-next",remarks:"f-remarks"};
 function clearForm(){
 	Object.values(FIELDS).forEach(i=>$(i).value="");
 	$("f-date").value = today(); state={}; notes={}; photos={}; genPhotos=[];
@@ -459,9 +478,10 @@ $("save").onclick = async ()=>{
 	const remarks = $("f-remarks").value.trim();
 	if(!Object.keys(items).length && !remarks){toast("Mark an item or enter remarks");return;}
 	const km = +$("f-km").value||0;
+	const chassis = $("f-chassis").value.trim().toUpperCase();
 	const payload = {
 		plate, model:$("f-model").value.trim(), service_date:$("f-date").value||today(), km,
-		mechanic:$("f-mech").value.trim(), location:$("f-loc").value.trim(), cost:+$("f-cost").value||0,
+		...(chassis ? { chassis_no: chassis } : {}),
 		next_km:+$("f-next").value||(km?km+10000:0), remarks,
 		items,
 		notes:Object.fromEntries(Object.entries(notes).filter(([k,v])=>v&&items[k])),
@@ -496,7 +516,7 @@ $("all-na").onclick = ()=>{state={};notes={};photos={};buildChecklist();};
 function startEdit(id){
 	const r = records.find(x=>String(x.id)===String(id)); if(!r) return;
 	$("f-plate").value=r.plate; $("f-model").value=r.model; $("f-date").value=r.date; $("f-km").value=r.km||"";
-	$("f-mech").value=r.mech; $("f-loc").value=r.loc; $("f-cost").value=r.cost||""; $("f-next").value=r.next||"";
+	$("f-chassis").value=r.chassis||""; $("f-next").value=r.next||"";
 	$("f-remarks").value=r.remarks||"";
 	state = {...r.items}; notes = {...(r.notes||{})};
 	photos = Object.fromEntries(Object.entries(r.photos||{}).map(([k,v])=>[k,[...v]]));
@@ -511,7 +531,7 @@ $("edit").onclick = ()=>startEdit(currentId);
 function photoCount(r){ return Object.values(r.photos||{}).flat().length + (r.genPhotos||[]).length; }
 function renderHistory(){
 	const q = $("q").value.toLowerCase(), f = $("flt").value;
-	const rs = records.filter(r=>[r.plate,r.model,r.mech,r.loc].join(" ").toLowerCase().includes(q))
+	const rs = records.filter(r=>[r.plate,r.model,r.chassis,r.mech,r.loc].join(" ").toLowerCase().includes(q))
 					.filter(r=>!f || Object.values(r.items).includes("attn"));
 	const attn = records.reduce((a,r)=>a+Object.values(r.items).filter(v=>v==="attn").length,0);
 	const cars = new Set(records.map(r=>r.plate)).size;
@@ -525,13 +545,12 @@ function renderHistory(){
 		const v = Object.values(r.items), a = v.filter(x=>x==="attn").length, pc = photoCount(r);
 		return `<div class="rec" data-id="${r.id}">
 			<div class="top"><span class="plate">${esc(r.plate)}</span><span class="muted">${fmt(r.date)}${r.updated?" · edited":""}</span></div>
-			<div class="muted">${esc(r.model||"—")} · ${r.km?r.km.toLocaleString()+" km":"—"} · ${esc(r.mech||"—")}</div>
+			<div class="muted">${esc([r.model||"—", r.km?r.km.toLocaleString()+" km":"", r.chassis?"CHASSIS "+r.chassis:""].filter(Boolean).join(" · "))}</div>
 			<div class="row" style="margin-top:6px">
-				<span class="pill done">${v.filter(x=>x==="done").length} done</span>
-				<span class="pill ok">${v.filter(x=>x==="ok").length} checked OK</span>
+				${v.filter(x=>x==="done").length?`<span class="pill done">${v.filter(x=>x==="done").length} done</span>`:""}
+				${v.filter(x=>x==="ok").length?`<span class="pill ok">${v.filter(x=>x==="ok").length} checked OK</span>`:""}
 				${a?`<span class="pill attn">${a} needs attention</span>`:""}
 				${pc?`<span class="pill na">${pc} photo${pc>1?"s":""}</span>`:""}
-				${r.cost?`<span class="muted">AED ${r.cost.toLocaleString()}</span>`:""}
 			</div></div>`}).join("") : `<div class="empty-note">No records found — save your first checklist.</div>`;
 	document.querySelectorAll(".rec").forEach(e=>e.onclick=()=>openDetail(e.dataset.id));
 }
@@ -540,7 +559,7 @@ $("q").oninput = renderHistory; $("flt").onchange = renderHistory;
 $("save-file").onclick = () => {
 	if (!records.length) { toast("No records to save yet"); return; }
 	const payload = { app: "AK Garage Maintenance", version: 1, exportedAt: new Date().toISOString(), count: records.length,
-		records: records.map(r => ({ plate: r.plate, model: r.model, date: r.date, km: r.km, mech: r.mech, loc: r.loc, cost: r.cost, next: r.next, remarks: r.remarks, items: r.items, notes: r.notes, photos: r.photos, genPhotos: r.genPhotos })) };
+		records: records.map(r => ({ plate: r.plate, model: r.model, chassis: r.chassis, date: r.date, km: r.km, mech: r.mech, loc: r.loc, cost: r.cost, next: r.next, remarks: r.remarks, items: r.items, notes: r.notes, photos: r.photos, genPhotos: r.genPhotos })) };
 	const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
 	const a = document.createElement("a");
 	a.href = URL.createObjectURL(blob);
@@ -562,7 +581,7 @@ $("import-file").onchange = async e => {
 		const rows = incoming.filter(r => r && r.plate).map(r => ({
 			plate: String(r.plate).toUpperCase(), model: r.model || "", service_date: r.date || r.service_date || "",
 			km: +r.km || 0, mechanic: r.mech || r.mechanic || "", location: r.loc || r.location || "",
-			cost: +r.cost || 0, next_km: +r.next || +r.next_km || 0, remarks: r.remarks || "",
+			cost: +r.cost || 0, next_km: +r.next || +r.next_km || 0, remarks: r.remarks || "", chassis_no: String(r.chassis || r.chassis_no || "").toUpperCase(),
 			items: r.items || {}, notes: r.notes || {}, photos: r.photos || {}, gen_photos: r.genPhotos || r.gen_photos || [],
 			updated_at: new Date().toISOString()
 		}));
@@ -624,18 +643,14 @@ function openDetail(id){
 		</div>
 		<div class="rp-info">
 			<div><span>Odometer</span><b>${r.km?r.km.toLocaleString()+" km":"—"}</b></div>
-			<div><span>Next Service</span><b>${r.next?r.next.toLocaleString()+" km":"—"}</b></div>
-			<div><span>Technician</span><b>${esc(r.mech||"—")}</b></div>
-			<div><span>Location</span><b>${esc(r.loc||"—")}</b></div>
-			<div><span>Total Cost</span><b>AED ${(r.cost||0).toLocaleString()}</b></div>
+			<div><span>Chassis No.</span><b>${esc(r.chassis||"—")}</b></div>
 		</div>
 		<div class="rp-sum">
 			<div class="s-done"><b>${cnt("done")}</b><span>Serviced</span></div>
 			<div class="s-ok"><b>${cnt("ok")}</b><span>Checked OK</span></div>
 			<div class="s-attn"><b>${cnt("attn")}</b><span>Needs Attention</span></div>
 		</div>
-		<h3 class="rp-title">Inspection Checklist</h3>
-		<table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
+		${rows?`<h3 class="rp-title">Inspection Checklist</h3><table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`:""}
 		${r.remarks?`<h3 class="rp-title">Technician Report</h3><div class="rp-remarks">${formatRemarks(r.remarks)}</div>`:""}
 		${all.length?`<h3 class="rp-title">Photos (${all.length})</h3><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div>`:""}
 		<div class="rp-sign">
