@@ -145,6 +145,62 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 @media (max-width:620px){.rp-info{grid-template-columns:repeat(2,1fr)}.rp-info>div:last-child{grid-column:1/-1}}
 @media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}.rp-sign{grid-template-columns:1fr;gap:6px}}
 @media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
+
+/* ---- Report paper view (screen): clicking a record shows the same
+     navy/gold report as the print-out, as a white sheet on the dark app.
+     The same theme rules below are reused by the print stylesheet. ---- */
+   #tab-detail .rp .rp-meta{gap:8px}
+   #tab-detail .rp .rp-h{color:#172845}
+   #tab-detail .rp .rp-sign b{color:#172845}
+   #tab-detail .rp{--serif:Georgia,'Times New Roman',serif;--bg:#f7f4ee;--card:#fbf9f5;--ink:#2b2a26;--muted:#8a7f6a;--line:#e2dccd;--ok:#315c40;--ok-bg:#eef4ea;--warn:#8a6a2f;--warn-bg:#f9f1e2;--na:#6b6459;--na-bg:#f4f1ea;border-top:3px solid #a8844a;background:#fff;color:#2b2a26;font-size:12px}
+   #tab-detail .rp .rp-top{background:#14213a;border-radius:0;padding:16px 18px;border-bottom:2px solid #a8844a;align-items:center;margin-bottom:8px}
+   #tab-detail .rp .rp-brand .logo{background:#a8844a;color:#14213a;border-radius:0;font-family:var(--serif)}
+   #tab-detail .rp .rp-brand{flex:1;justify-content:flex-start}
+   #tab-detail .rp .rp-brand b{position:relative;color:#c9a96a;font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:3px;text-align:left;text-transform:uppercase;border-bottom:3px solid transparent;border-image:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%) 1;padding-bottom:8px}
+   #tab-detail .rp .rp-brand small, #tab-detail .rp .rp-meta span{color:#c9a96a}
+   #tab-detail .rp .rp-meta>div{min-width:166px;padding:10px 16px;text-align:center;background:#1b2b49;border:1px solid #a8844a;border-radius:10px}
+   #tab-detail .rp .rp-meta b{color:#fff;font-family:var(--serif);font-size:15px}
+   #tab-detail .rp .rp-plate{border:1px solid #a8844a;outline:3px solid #14213a;outline-offset:3px;border-radius:8px;color:#14213a;font-family:var(--serif)}
+   #tab-detail .rp .rp-vehicle{position:relative;padding-top:12px;margin:12px 0 10px}
+   #tab-detail .rp .rp-vehicle::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+   #tab-detail .rp .rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:500;letter-spacing:.2px}
+   #tab-detail .rp .rp-info{background:#e2dccd;border-color:#e2dccd;border-radius:0}
+   #tab-detail .rp .rp-info>div{background:#fbf9f5;padding:8px 10px}
+   #tab-detail .rp .rp-info>div:last-child{display:flex;align-items:center;gap:8px;min-width:0}
+   #tab-detail .rp .rp-info>div:last-child b{white-space:nowrap;font-family:Arial,Helvetica,sans-serif;font-size:14.5px;font-weight:700;letter-spacing:normal}
+   #tab-detail .rp .rp-info span{color:#8a7f6a}
+   #tab-detail .rp .rp-info>div:last-child span{display:inline;flex:0 0 auto}
+   #tab-detail .rp .rp-info b{color:#14213a;font-family:var(--serif)}
+   #tab-detail .rp .rp-sum div{border-radius:0;border:1px solid #e2dccd}
+   #tab-detail .rp .s-done, #tab-detail .rp .s-ok{background:#eef4ea;color:#315c40}
+   #tab-detail .rp .s-attn{background:#f9f1e2;color:#8a6a2f}
+   #tab-detail .rp .rp-sum b, #tab-detail .rp .rp-sum span{color:inherit}
+   #tab-detail .rp .rp-sum b{font-family:var(--serif)}
+   #tab-detail .rp .rp-title{color:#14213a;font-family:var(--serif);letter-spacing:2.5px;border-bottom:1px solid #e2dccd}
+   #tab-detail .rp .rp-title::before{content:"";display:inline-block;width:26px;height:2px;background:#a8844a;vertical-align:middle;margin-right:8px}
+   #tab-detail .rp .rp-remarks::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+   #tab-detail .rp .rp-table th{background:#14213a;color:#fff;border-bottom:0;letter-spacing:.8px}
+   #tab-detail .rp .rp-table td{border-bottom:1px solid #efeadf;color:#2b2a26}
+   #tab-detail .rp .rp-table td.muted{color:#6f6552}
+   #tab-detail .rp .rp-table tbody tr:nth-child(even) td{background:#fbf9f5}
+   #tab-detail .rp .rp-table tr.rp-cat td{background:#f7f4ee;color:#14213a;border-bottom:1px solid #e2dccd;box-shadow:inset 3px 0 0 #a8844a}
+   #tab-detail .rp .pill{border-radius:2px;text-transform:uppercase;font-size:10.5px;letter-spacing:.5px;border:1px solid transparent}
+   #tab-detail .rp .pill.done, #tab-detail .rp .pill.ok{background:#eef4ea;color:#315c40;border-color:#cfdcc8}
+   #tab-detail .rp .pill.attn{background:#f9f1e2;color:#8a6a2f;border-color:#e5d4ae}
+   #tab-detail .rp .pill.na{background:#f4f1ea;color:#6b6459;border-color:#e2dccd}
+   #tab-detail .rp .rp-sec{background:#fbf9f5;border-color:#e2dccd;border-left:3px solid #a8844a;border-radius:0}
+   #tab-detail .rp .rp-h i{background:#a8844a;color:#fff;border-radius:0}
+   #tab-detail .rp .rp-summary{background:#f7f4ee}
+   #tab-detail .rp .rp-reco{background:#f9f1e2;border-radius:0;color:#172845}
+   #tab-detail .rp .rp-reco span, #tab-detail .rp .rp-kv span, #tab-detail .rp .rp-sign span{color:#8a7f6a}
+   #tab-detail .rp .thumb{border-color:#e2dccd;border-radius:0}
+   #tab-detail .rp .rp-sign .line{border-color:#14213a}
+   #tab-detail .rp .rp-foot{padding:8px 12px;background:#14213a!important;color:#c9d2e4!important}
+
+@media screen{
+  #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
+  #tab-detail .rp{background:transparent}
+}
 @media print{
   @page{size:A4;margin:12mm}
   :root{color-scheme:light}
@@ -157,53 +213,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
   #tab-new,#tab-history,#tab-due{display:none!important}
   #tab-detail{display:block!important}
   #tab-detail .card{padding:0;margin:0;border:0}
-  .rp .rp-meta{gap:8px}
-  .rp .rp-h{color:#172845}
-  .rp .rp-sign b{color:#172845}
-  .rp{--serif:Georgia,'Times New Roman',serif;--bg:#f7f4ee;--card:#fbf9f5;--ink:#2b2a26;--muted:#8a7f6a;--line:#e2dccd;--ok:#315c40;--ok-bg:#eef4ea;--warn:#8a6a2f;--warn-bg:#f9f1e2;--na:#6b6459;--na-bg:#f4f1ea;border-top:3px solid #a8844a;background:#fff;color:#2b2a26;font-size:12px}
-  .rp .rp-top{background:#14213a;border-radius:0;padding:16px 18px;border-bottom:2px solid #a8844a;align-items:center;margin-bottom:8px}
-  .rp .rp-brand .logo{background:#a8844a;color:#14213a;border-radius:0;font-family:var(--serif)}
-  .rp .rp-brand{flex:1;justify-content:flex-start}
-  .rp .rp-brand b{position:relative;color:#c9a96a;font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:3px;text-align:left;text-transform:uppercase;border-bottom:3px solid transparent;border-image:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%) 1;padding-bottom:8px}
-  .rp .rp-brand small,.rp .rp-meta span{color:#c9a96a}
-  .rp .rp-meta>div{min-width:166px;padding:10px 16px;text-align:center;background:#1b2b49;border:1px solid #a8844a;border-radius:10px}
-  .rp .rp-meta b{color:#fff;font-family:var(--serif);font-size:15px}
-  .rp .rp-plate{border:1px solid #a8844a;outline:3px solid #14213a;outline-offset:3px;border-radius:8px;color:#14213a;font-family:var(--serif)}
-  .rp .rp-vehicle{position:relative;padding-top:12px;margin:12px 0 10px}
-  .rp .rp-vehicle::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
-  .rp .rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:500;letter-spacing:.2px}
-  .rp .rp-info{background:#e2dccd;border-color:#e2dccd;border-radius:0}
-  .rp .rp-info>div{background:#fbf9f5;padding:8px 10px}
-  .rp .rp-info>div:last-child{display:flex;align-items:center;gap:8px;min-width:0}
-  .rp .rp-info>div:last-child b{white-space:nowrap;font-family:Arial,Helvetica,sans-serif;font-size:14.5px;font-weight:700;letter-spacing:normal}
-  .rp .rp-info span{color:#8a7f6a}
-  .rp .rp-info>div:last-child span{display:inline;flex:0 0 auto}
-  .rp .rp-info b{color:#14213a;font-family:var(--serif)}
-  .rp .rp-sum div{border-radius:0;border:1px solid #e2dccd}
-  .rp .s-done,.rp .s-ok{background:#eef4ea;color:#315c40}
-  .rp .s-attn{background:#f9f1e2;color:#8a6a2f}
-  .rp .rp-sum b,.rp .rp-sum span{color:inherit}
-  .rp .rp-sum b{font-family:var(--serif)}
-  .rp .rp-title{color:#14213a;font-family:var(--serif);letter-spacing:2.5px;border-bottom:1px solid #e2dccd}
-  .rp .rp-title::before{content:"";display:inline-block;width:26px;height:2px;background:#a8844a;vertical-align:middle;margin-right:8px}
-  .rp .rp-remarks::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
-  .rp .rp-table th{background:#14213a;color:#fff;border-bottom:0;letter-spacing:.8px}
-  .rp .rp-table td{border-bottom:1px solid #efeadf;color:#2b2a26}
-  .rp .rp-table td.muted{color:#6f6552}
-  .rp .rp-table tbody tr:nth-child(even) td{background:#fbf9f5}
-  .rp .rp-table tr.rp-cat td{background:#f7f4ee;color:#14213a;border-bottom:1px solid #e2dccd;box-shadow:inset 3px 0 0 #a8844a}
-  .rp .pill{border-radius:2px;text-transform:uppercase;font-size:10.5px;letter-spacing:.5px;border:1px solid transparent}
-  .rp .pill.done,.rp .pill.ok{background:#eef4ea;color:#315c40;border-color:#cfdcc8}
-  .rp .pill.attn{background:#f9f1e2;color:#8a6a2f;border-color:#e5d4ae}
-  .rp .pill.na{background:#f4f1ea;color:#6b6459;border-color:#e2dccd}
-  .rp .rp-sec{background:#fbf9f5;border-color:#e2dccd;border-left:3px solid #a8844a;border-radius:0}
-  .rp .rp-h i{background:#a8844a;color:#fff;border-radius:0}
-  .rp .rp-summary{background:#f7f4ee}
-  .rp .rp-reco{background:#f9f1e2;border-radius:0;color:#172845}
-  .rp .rp-reco span,.rp .rp-kv span,.rp .rp-sign span{color:#8a7f6a}
-  .rp .thumb{border-color:#e2dccd;border-radius:0}
-  .rp .rp-sign .line{border-color:#14213a}
-  .rp .rp-foot{position:fixed;bottom:0;left:0;right:0;margin:0;padding:8px 12px;background:#14213a!important;color:#c9d2e4!important}
+  #tab-detail .rp .rp-foot{position:fixed;bottom:0;left:0;right:0;margin:0}
   .rp *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .toast,.lightbox{display:none!important}
   .rp-table tr{break-inside:avoid}
