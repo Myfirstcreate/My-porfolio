@@ -28,11 +28,27 @@
             margin: 0;
             min-height: 100vh;
             color: var(--text);
-            background: var(--black);
+            background: radial-gradient(circle at 82% 3%, #172016 0, transparent 26%), var(--black);
             font-family: 'Space Grotesk', sans-serif;
         }
+        /* Animated 3D car backdrop: video over a poster, faded out down the page. */
+        .bg-media {
+            position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+            opacity: .3;
+            -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 44%, transparent 78%);
+            mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 44%, transparent 78%);
+        }
+        .bg-media::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(7,8,7,.35), rgba(7,8,7,.12) 45%, transparent 75%);
+        }
+        .bg-poster, .bg-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .bg-video { opacity: 0; transition: opacity .9s ease; }
+        .bg-video.is-on { opacity: 1; }
+        @media (max-width: 900px) { .bg-media { opacity: .22; } }
+        @media (prefers-reduced-motion: reduce) { .bg-video { display: none; } }
         button { font: inherit; }
-        .app { display: flex; min-height: 100vh; }
+        .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
         .sidebar {
             width: 236px;
             flex: 0 0 236px;
@@ -65,7 +81,7 @@
         .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 11px var(--lime); }
         .status-box p { margin: 10px 0 0; color: var(--muted); font: 10px 'DM Mono', monospace; line-height: 1.5; }
 
-        main { width: 100%; min-width: 0; padding: 32px 42px 38px; background: radial-gradient(circle at 89% 4%, #172016 0, transparent 23%), var(--black); }
+        main { width: 100%; min-width: 0; padding: 32px 42px 38px; background: transparent; }
         .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; }
         .eyebrow { margin: 0 0 7px; color: var(--lime); font: 11px 'DM Mono', monospace; letter-spacing: .16em; text-transform: uppercase; }
         h1 { margin: 0; font-size: clamp(26px, 3vw, 38px); letter-spacing: -.045em; line-height: 1.05; }
@@ -142,6 +158,13 @@
 <body>
     <script src="auth-gate.js"></script>
     <script>akgarageInitGate();</script>
+    <div class="bg-media" aria-hidden="true">
+        <img class="bg-poster" src="assets/hero-car-poster.jpg" alt="">
+        <video class="bg-video" muted loop playsinline preload="none">
+            <source src="assets/hero-car.webm" type="video/webm">
+            <source src="assets/hero-car.mp4" type="video/mp4">
+        </video>
+    </div>
     <div class="app">
         <aside class="sidebar">
             <div class="brand"><div class="brand-mark">AK</div><div><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></div></div>
@@ -205,6 +228,28 @@
     </div>
     <script>
         lucide.createIcons();
+
+        // Background car video: start once the page is idle, skip when the
+        // visitor prefers reduced motion, and pause while the tab is hidden.
+        (function () {
+            const video = document.querySelector('.bg-video');
+            if (!video) return;
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+            let starting = false;
+            function start() {
+                if (reduced.matches || starting || !video.paused) return;
+                starting = true;
+                const promise = video.play();
+                if (promise && promise.catch) promise.catch(() => {}).then(() => { starting = false; });
+            }
+            video.addEventListener('playing', () => video.classList.add('is-on'));
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) video.pause();
+                else start();
+            });
+            if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 2500 });
+            else setTimeout(start, 800);
+        })();
         const currentDate = document.getElementById('current-date');
         const lastSync = document.getElementById('last-sync');
         const dateFormatter = new Intl.DateTimeFormat('en-GB', {
