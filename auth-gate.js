@@ -173,4 +173,18 @@
 		});
 		return false;
 	};
+
+	// A write failed because the stored session is no longer valid (for example
+	// after the admin password was changed). Clear the stale role/token and open
+	// the login gate so the user can sign in again.
+	window.akgarageForceRelogin = function () {
+		try {
+			localStorage.removeItem(TOKEN_KEY);
+			localStorage.setItem(AUTH_KEY, 'viewer');
+		} catch (error) {}
+		window.akgarageAdminToken = '';
+		window.akgarageApplyRole();
+		addRoleBadge();
+		openGate();
+	};
 })();

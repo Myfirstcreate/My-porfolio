@@ -178,6 +178,33 @@ begin
 end
 $$;
 
+-- Normalize the remaining team tables the same way: drop EVERY policy
+-- (including stray permissive ones left over from early manual setups —
+-- policies combine with OR, so one open policy keeps a table writable by
+-- everyone) and recreate the four role policies bound to is_ak_admin().
+do $$
+declare
+	t text;
+	r record;
+begin
+	foreach t in array array['maintenance_checks','motorcycles','vip_motorcycles','modifications'] loop
+		if to_regclass('public.' || t) is not null then
+			for r in
+				select policyname from pg_policies
+				where schemaname = 'public' and tablename = t
+			loop
+				raise notice '%: dropping policy %', t, r.policyname;
+				execute format('drop policy if exists %I on public.%I', r.policyname, t);
+			end loop;
+			execute format('create policy "team can read %1$s" on public.%1$I for select to anon using (true)', t);
+			execute format('create policy "admin can insert %1$s" on public.%1$I for insert to anon with check (public.is_ak_admin())', t);
+			execute format('create policy "admin can update %1$s" on public.%1$I for update to anon using (public.is_ak_admin()) with check (public.is_ak_admin())', t);
+			execute format('create policy "admin can delete %1$s" on public.%1$I for delete to anon using (public.is_ak_admin())', t);
+		end if;
+	end loop;
+end
+$$;
+
 -- Note: the RPC uses Postgres's built-in sha256(), so no extension is needed.
 -- (An earlier draft used pgcrypto's digest(), which is not on the default
 -- search path in Supabase — sha256() avoids that entirely.)

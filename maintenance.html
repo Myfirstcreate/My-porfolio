@@ -481,7 +481,7 @@ $("save").onclick = async ()=>{
 	const chassis = $("f-chassis").value.trim().toUpperCase();
 	const payload = {
 		plate, model:$("f-model").value.trim(), service_date:$("f-date").value||today(), km,
-		...(chassis ? { chassis_no: chassis } : {}),
+		chassis_no: chassis,
 		next_km:+$("f-next").value||(km?km+10000:0), remarks,
 		items,
 		notes:Object.fromEntries(Object.entries(notes).filter(([k,v])=>v&&items[k])),
@@ -503,8 +503,17 @@ $("save").onclick = async ()=>{
 		else { toast("Checklist saved ✓"); clearForm(); show("history"); }
 	} catch (err) {
 		console.error('Unable to save checklist:', err);
-		const missing = err?.code === '42P01' || /does not exist/i.test(err?.message || '') || /schema cache/i.test(err?.message || '');
-		toast(missing ? "Table missing — run section 8 of supabase-migrations.sql" : "Save failed: " + (err?.message || "unknown error"));
+		const msg = String(err?.message || '');
+		const missing = err?.code === '42P01' || /does not exist/i.test(msg) || /schema cache/i.test(msg);
+		const authFail = err?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(msg);
+		if (authFail && typeof window.akgarageForceRelogin === 'function') {
+			toast("Session expired — mag-login ulit bilang admin.");
+			window.akgarageForceRelogin();
+			const gateErr = document.getElementById('auth-gate-error');
+			if (gateErr) { gateErr.style.display = 'block'; gateErr.textContent = 'Session expired — enter the admin password to continue saving.'; }
+		} else {
+			toast(missing ? "Table missing — run section 8 of supabase-migrations.sql" : "Save failed: " + (err?.message || "unknown error"));
+		}
 	} finally {
 		$("save").disabled = false; $("save-status").textContent = "";
 	}
@@ -702,7 +711,13 @@ $("del").onclick = async ()=>{
 		await loadRecords(); toast("Deleted"); show("history");
 	} catch (error) {
 		console.error('Unable to delete checklist:', error);
-		toast("Delete failed: " + (error?.message || 'Supabase unavailable'));
+		const dmsg = String(error?.message || '');
+		if (error?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(dmsg)) {
+			toast("Session expired — mag-login ulit bilang admin.");
+			if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+		} else {
+			toast("Delete failed: " + (error?.message || 'Supabase unavailable'));
+		}
 	}
 };
 
