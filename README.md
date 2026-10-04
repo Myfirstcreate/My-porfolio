@@ -39,6 +39,14 @@ The site is configured in `vercel.json` as a static site with no-store
 caching and basic security headers. If the GitHub repository is connected to
 the Vercel project, pushes to `main` deploy automatically.
 
+Maintenance note (Oct 2026): the GitHub → Vercel webhook silently stopped
+triggering builds after commit `02720e6`, so commit `a303dc1` had to be
+deployed manually. The project link was reset with
+`vercel git disconnect` + `vercel git connect` and re-verified with a test
+push. If auto-deploys ever stop again, run the same disconnect/connect pair,
+and check the Vercel GitHub App install at github.com → Settings →
+Applications → Installed GitHub Apps → Vercel.
+
 Manual CLI deploy (only if ever needed):
 
 ```bash
