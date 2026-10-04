@@ -31,7 +31,8 @@ const server = http.createServer((req, res) => {
 	try {
 		const urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
 		let filePath = path.normalize(path.join(ROOT, urlPath));
-		if (!filePath.startsWith(ROOT)) {
+		const relativePath = path.relative(ROOT, filePath);
+		if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
 			res.writeHead(403).end('Forbidden');
 			return;
 		}

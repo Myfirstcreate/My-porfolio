@@ -8,25 +8,24 @@
 <script src="supabase-client.js"></script>
 <style>
 :root{
-  --bg:#f4f5f7;--card:#fff;--ink:#16181d;--muted:#6b7280;--line:#e5e7eb;
-  --brand:#d62828;--brand-ink:#fff;--ok:#15803d;--ok-bg:#dcfce7;--warn:#b45309;--warn-bg:#fef3c7;
-  --bad:#b91c1c;--bad-bg:#fee2e2;--na:#6b7280;--na-bg:#f3f4f6;
+  color-scheme:dark;
+  --bg:#070807;--card:#101210;--ink:#f0f3ec;--muted:#8b9388;--line:#292d29;
+  --brand:#c4f04e;--brand-ink:#070807;--ok:#4ade80;--ok-bg:#12301d;--warn:#fbbf24;--warn-bg:#3a2c0b;
+  --bad:#f87171;--bad-bg:#3b1414;--na:#9aa1ad;--na-bg:#23272f;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#0f1115;--card:#181b22;--ink:#e8eaee;--muted:#9aa1ad;--line:#2a2f3a;
-  --ok:#4ade80;--ok-bg:#12301d;--warn:#fbbf24;--warn-bg:#3a2c0b;--bad:#f87171;--bad-bg:#3b1414;--na:#9aa1ad;--na-bg:#23272f;
-}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-header{background:#111;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
-header .logo{background:var(--brand);border-radius:8px;padding:4px 8px;font-weight:800;letter-spacing:.5px}
-header h1{font-size:17px;margin:0;font-weight:600}
+header{background:#090a09;color:var(--ink);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:4px 8px;font-weight:800;letter-spacing:.5px}
+header .brand-copy{display:flex;flex-direction:column;gap:2px}
+header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.08em}
+header .subtitle{color:var(--muted);font-size:11px;letter-spacing:.04em}
 header .top-actions{margin-left:auto}
-header .back{color:#fff;opacity:.8;text-decoration:none;font-size:13px;border:1px solid #333;border-radius:8px;padding:6px 10px}
-header .back:hover{opacity:1;border-color:#555}
 nav{display:flex;gap:6px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
 nav button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit}
 nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+nav .back{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted);background:transparent;text-decoration:none;white-space:nowrap;font-size:13px;transition:color .15s,border-color .15s,background .15s}
+nav .back:hover{color:var(--ink);border-color:#697163;background:#1d221d}
 main{max-width:960px;margin:0 auto;padding:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
 .card h2{margin:0 0 12px;font-size:16px}
@@ -85,7 +84,7 @@ td.muted{white-space:pre-wrap}
 .plate{font-weight:800;letter-spacing:.5px}
 .muted{color:var(--muted);font-size:13px}
 .hidden{display:none}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#090a09;color:var(--ink);padding:10px 16px;border:1px solid var(--line);border-radius:8px;opacity:0;transition:.25s;pointer-events:none}
 .toast.show{opacity:1}
 table{width:100%;border-collapse:collapse;font-size:14px}
 td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
@@ -97,11 +96,16 @@ tr.row-overdue{background:linear-gradient(90deg,var(--bad-bg),transparent 65%);b
 tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%);box-shadow:inset 3px 0 0 var(--warn)}
 .viewer-note{margin:0 0 14px;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;color:var(--muted);font-size:12px}
 .empty-note{padding:20px;text-align:center;color:var(--muted)}
+.skip{position:absolute;left:-9999px;top:8px;z-index:40}
+.skip:focus{left:8px;background:var(--card);color:var(--ink);padding:8px 12px;border-radius:8px;border:2px solid var(--brand)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+button.name{background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
 /* ---- Pro service report ---- */
 .rp{font-size:14px}
 .rp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:3px solid var(--brand)}
 .rp-brand{display:flex;align-items:center;gap:10px}
-.rp-brand .logo{background:var(--brand);color:#fff;border-radius:8px;padding:8px 10px;font-weight:800;letter-spacing:.5px;font-size:18px}
+.rp-brand .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:8px 10px;font-weight:800;letter-spacing:.5px;font-size:18px}
 .rp-brand b{display:block;font-size:18px;letter-spacing:1.5px}
 .rp-brand small{color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:600}
 .rp-meta{display:flex;gap:18px;text-align:right}
@@ -123,11 +127,11 @@ tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%)
 .rp-table th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)}
 .rp-table tr.rp-cat td{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--brand);padding-top:12px;border-bottom:1px solid var(--line)}
 .rp-remarks{display:grid;gap:10px}
-.rp-sec{border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 14px;background:var(--card);break-inside:avoid}
+.rp-sec{border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:8px;padding:12px 14px;background:var(--card);break-inside:avoid}
 .rp-sec p{margin:0 0 4px;line-height:1.6}
 .rp-sec p:last-child{margin-bottom:0}
 .rp-h{font-weight:800;font-size:13px;letter-spacing:.6px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.rp-h i{font-style:normal;background:var(--ink);color:var(--card);border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.rp-h i{font-style:normal;background:var(--brand);color:var(--brand-ink);border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
 .rp-summary{border-left-color:var(--brand);background:var(--bg)}
 .rp-kv{display:flex;gap:10px;padding:4px 0}
 .rp-kv span{color:var(--muted);min-width:110px;font-weight:600}
@@ -143,43 +147,98 @@ tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%)
 @media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
 @media print{
   @page{size:A4;margin:12mm}
-  :root{--bg:#f5f5f5;--card:#fff;--ink:#111;--muted:#555;--line:#d4d4d4;--ok:#166534;--ok-bg:#e7f6ec;--warn:#92400e;--warn-bg:#fdf3dc;--na-bg:#eee;--na:#555}
+  :root{color-scheme:light}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   header,nav,.no-print{display:none!important}
-  body{background:#fff;color:#000}
+  body,main{background:#fff!important;color:#111!important}
   main{padding:0;max-width:none}
+  .card,.stat,.rec{background:#fff!important;color:#111!important;border-color:#d4d4d4!important;box-shadow:none!important}
+  .muted,.stat span{color:#555!important}
+  #tab-new,#tab-history,#tab-due{display:none!important}
+  #tab-detail{display:block!important}
   #tab-detail .card{padding:0;margin:0;border:0}
+  .rp .rp-meta{gap:8px}
+  .rp .rp-h{color:#172845}
+  .rp .rp-sign b{color:#172845}
+  .rp{--serif:Georgia,'Times New Roman',serif;--bg:#f7f4ee;--card:#fbf9f5;--ink:#2b2a26;--muted:#8a7f6a;--line:#e2dccd;--ok:#315c40;--ok-bg:#eef4ea;--warn:#8a6a2f;--warn-bg:#f9f1e2;--na:#6b6459;--na-bg:#f4f1ea;border-top:3px solid #a8844a;background:#fff;color:#2b2a26;font-size:12px}
+  .rp .rp-top{background:#14213a;border-radius:0;padding:16px 18px;border-bottom:2px solid #a8844a;align-items:center;margin-bottom:8px}
+  .rp .rp-brand .logo{background:#a8844a;color:#14213a;border-radius:0;font-family:var(--serif)}
+  .rp .rp-brand{flex:1;justify-content:flex-start}
+  .rp .rp-brand b{position:relative;color:#c9a96a;font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:3px;text-align:left;text-transform:uppercase;border-bottom:3px solid transparent;border-image:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%) 1;padding-bottom:8px}
+  .rp .rp-brand small,.rp .rp-meta span{color:#c9a96a}
+  .rp .rp-meta>div{min-width:166px;padding:10px 16px;text-align:center;background:#1b2b49;border:1px solid #a8844a;border-radius:10px}
+  .rp .rp-meta b{color:#fff;font-family:var(--serif);font-size:15px}
+  .rp .rp-plate{border:1px solid #a8844a;outline:3px solid #14213a;outline-offset:3px;border-radius:8px;color:#14213a;font-family:var(--serif)}
+  .rp .rp-vehicle{position:relative;padding-top:12px;margin:12px 0 10px}
+  .rp .rp-vehicle::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+  .rp .rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:500;letter-spacing:.2px}
+  .rp .rp-info{background:#e2dccd;border-color:#e2dccd;border-radius:0}
+  .rp .rp-info>div{background:#fbf9f5;padding:8px 10px}
+  .rp .rp-info>div:last-child{display:flex;align-items:center;gap:8px;min-width:0}
+  .rp .rp-info>div:last-child b{white-space:nowrap;font-family:Arial,Helvetica,sans-serif;font-size:14.5px;font-weight:700;letter-spacing:normal}
+  .rp .rp-info span{color:#8a7f6a}
+  .rp .rp-info>div:last-child span{display:inline;flex:0 0 auto}
+  .rp .rp-info b{color:#14213a;font-family:var(--serif)}
+  .rp .rp-sum div{border-radius:0;border:1px solid #e2dccd}
+  .rp .s-done,.rp .s-ok{background:#eef4ea;color:#315c40}
+  .rp .s-attn{background:#f9f1e2;color:#8a6a2f}
+  .rp .rp-sum b,.rp .rp-sum span{color:inherit}
+  .rp .rp-sum b{font-family:var(--serif)}
+  .rp .rp-title{color:#14213a;font-family:var(--serif);letter-spacing:2.5px;border-bottom:1px solid #e2dccd}
+  .rp .rp-title::before{content:"";display:inline-block;width:26px;height:2px;background:#a8844a;vertical-align:middle;margin-right:8px}
+  .rp .rp-remarks::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+  .rp .rp-table th{background:#14213a;color:#fff;border-bottom:0;letter-spacing:.8px}
+  .rp .rp-table td{border-bottom:1px solid #efeadf;color:#2b2a26}
+  .rp .rp-table td.muted{color:#6f6552}
+  .rp .rp-table tbody tr:nth-child(even) td{background:#fbf9f5}
+  .rp .rp-table tr.rp-cat td{background:#f7f4ee;color:#14213a;border-bottom:1px solid #e2dccd;box-shadow:inset 3px 0 0 #a8844a}
+  .rp .pill{border-radius:2px;text-transform:uppercase;font-size:10.5px;letter-spacing:.5px;border:1px solid transparent}
+  .rp .pill.done,.rp .pill.ok{background:#eef4ea;color:#315c40;border-color:#cfdcc8}
+  .rp .pill.attn{background:#f9f1e2;color:#8a6a2f;border-color:#e5d4ae}
+  .rp .pill.na{background:#f4f1ea;color:#6b6459;border-color:#e2dccd}
+  .rp .rp-sec{background:#fbf9f5;border-color:#e2dccd;border-left:3px solid #a8844a;border-radius:0}
+  .rp .rp-h i{background:#a8844a;color:#fff;border-radius:0}
+  .rp .rp-summary{background:#f7f4ee}
+  .rp .rp-reco{background:#f9f1e2;border-radius:0;color:#172845}
+  .rp .rp-reco span,.rp .rp-kv span,.rp .rp-sign span{color:#8a7f6a}
+  .rp .thumb{border-color:#e2dccd;border-radius:0}
+  .rp .rp-sign .line{border-color:#14213a}
+  .rp .rp-foot{position:fixed;bottom:0;left:0;right:0;margin:0;padding:8px 12px;background:#14213a!important;color:#c9d2e4!important}
+  .rp *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .toast,.lightbox{display:none!important}
   .rp-table tr{break-inside:avoid}
   .gallery{grid-template-columns:repeat(4,1fr)}
   .gallery .thumb{height:95px}
+  .rp-top{break-after:avoid}
 }
 </style>
 </head>
 <body>
 <script src="auth-gate.js"></script>
 <script>akgarageInitGate();</script>
-<header><span class="logo">AK</span><h1>AK Garage · Maintenance Checklist</h1><div class="top-actions"><a class="back" href="index.html">← Overview</a></div></header>
-<nav>
-	<button data-tab="new" class="active">+ New Checklist</button>
+<a class="skip" href="#main">Skip to main content</a>
+<header><span class="logo">AK</span><div class="brand-copy"><h1>AK GARAGE</h1><span class="subtitle">Maintenance Checklist</span></div></header>
+<nav aria-label="Main">
+	<button data-tab="new" class="active" aria-current="true">+ New Checklist</button>
 	<button data-tab="history">History</button>
 	<button data-tab="due">Due Soon</button>
+	<a class="back" href="index.html">BACK TO OVERVIEW</a>
 </nav>
-<main>
+<main id="main">
 	<div class="viewer-note" hidden>View only — ask the admin to save or edit checklists.</div>
 	<section id="tab-new">
 		<div class="editbar hidden no-print" id="editbar"><span id="edit-lbl">Editing record</span><button class="btn ghost sm" id="cancel-edit">Cancel edit</button></div>
 		<div class="card">
 			<h2>Vehicle &amp; Service Info</h2>
 			<div class="grid">
-				<div><label>Plate No.</label><input id="f-plate" placeholder="e.g. RAK A 12345" style="text-transform:uppercase"></div>
-				<div><label>Car Model</label><input id="f-model" placeholder="e.g. Nissan Patrol 2022" style="text-transform:uppercase"></div>
-				<div><label>Date</label><input id="f-date" type="date"></div>
-				<div><label>Odometer (km)</label><input id="f-km" type="number" placeholder="e.g. 45200"></div>
-				<div><label>Mechanic / Done by</label><input id="f-mech" placeholder="Name" style="text-transform:uppercase"></div>
-				<div><label>Garage / Location</label><input id="f-loc" placeholder="e.g. UAQ workshop" style="text-transform:uppercase"></div>
-				<div><label>Total Cost (AED)</label><input id="f-cost" type="number" placeholder="0"></div>
-				<div><label>Next Service (km)</label><input id="f-next" type="number" placeholder="auto +10,000"></div>
+				<div><label for="f-plate">Plate No.</label><input id="f-plate" placeholder="e.g. RAK A 12345" style="text-transform:uppercase"></div>
+				<div><label for="f-model">Car Model</label><input id="f-model" placeholder="e.g. Nissan Patrol 2022" style="text-transform:uppercase"></div>
+				<div><label for="f-date">Date</label><input id="f-date" type="date"></div>
+				<div><label for="f-km">Odometer (km)</label><input id="f-km" type="number" placeholder="e.g. 45200"></div>
+				<div><label for="f-mech">Mechanic / Done by</label><input id="f-mech" placeholder="Name" style="text-transform:uppercase"></div>
+				<div><label for="f-loc">Garage / Location</label><input id="f-loc" placeholder="e.g. UAQ workshop" style="text-transform:uppercase"></div>
+				<div><label for="f-cost">Total Cost (AED)</label><input id="f-cost" type="number" placeholder="0"></div>
+				<div><label for="f-next">Next Service (km)</label><input id="f-next" type="number" placeholder="auto +10,000"></div>
 			</div>
 		</div>
 		<div class="card">
@@ -188,12 +247,12 @@ tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%)
 				<div class="row no-print"><button class="btn ghost sm" id="all-na">Reset all</button></div>
 			</div>
 			<div class="muted" style="margin-top:6px">Tap: <b style="color:var(--ok)">Done</b> = replaced/serviced · <b style="color:var(--ok)">OK</b> = checked, fine · <b style="color:var(--warn)">Attn</b> = needs attention · <b>N/A</b> = not done. Tap the item name to add a note. Tap the camera to add a photo of the part.</div>
-			<div class="progress"><i id="prog" style="width:0"></i></div>
+			<div class="progress" role="progressbar" aria-label="Checklist progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="prog" style="width:0"></i></div>
 			<div id="checklist"></div>
 		</div>
 		<div class="card">
 			<h2>Remarks</h2>
-			<textarea id="f-remarks" placeholder="Other work done, parts used, recommendations..."></textarea>
+			<textarea id="f-remarks" aria-label="Remarks" placeholder="Other work done, parts used, recommendations..."></textarea>
 			<label style="margin-top:14px">Other Photos (receipt, old parts, before / after)</label>
 			<div class="row"><button class="cam no-print" id="gen-add" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>Add photos</button></div>
 			<div class="thumbs" id="gen-thumbs" style="margin-top:8px"></div>
@@ -208,8 +267,8 @@ tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%)
 		<div class="stats" id="stats"></div>
 		<div class="card no-print">
 			<div class="grid">
-				<div><label>Search</label><input id="q" placeholder="Plate, model, mechanic..." title="Filters records by plate, model, mechanic, or garage"></div>
-				<div><label>Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
+				<div><label for="q">Search</label><input id="q" placeholder="Plate, model, mechanic..." title="Filters records by plate, model, mechanic, or garage"></div>
+				<div><label for="flt">Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
 			</div>
 		</div>
 		<div id="list"></div>
@@ -223,6 +282,7 @@ tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%)
 			<button class="btn sm" id="edit">Edit</button>
 			<button class="btn ghost sm" id="print">Print</button>
 			<button class="btn ghost sm" id="save-file" type="button" title="Download all maintenance records as JSON backup">⬇ Save file</button>
+			<button class="btn ghost sm" id="dl" type="button" title="Save this service report as an HTML file you can open and print in Chrome or Edge">⬇ Save as file</button>
 			<button class="btn ghost sm" id="import-file-btn" type="button" title="Restore records from a JSON backup">⬆ Import file</button>
 			<button class="btn ghost sm danger" id="del">Delete</button>
 			<span class="muted" id="import-status" style="font-size:12px"></span>
@@ -232,8 +292,8 @@ tr.row-soon-due{background:linear-gradient(90deg,var(--warn-bg),transparent 65%)
 		<div class="card" id="detail"></div>
 	</section>
 </main>
-<div class="toast" id="toast"></div>
-<div class="lightbox" id="lb"><img id="lb-img" alt=""><div id="lb-cap"></div><button class="btn ghost sm" style="color:#fff;border-color:#fff">Close</button></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="lightbox" id="lb" role="dialog" aria-modal="true" aria-label="Photo preview"><img id="lb-img" alt=""><div id="lb-cap"></div><button class="btn ghost sm" id="lb-x" style="color:#fff;border-color:#fff">Close</button></div>
 <input type="file" id="picker" accept="image/*" multiple class="hidden">
 <script>
 const TABLE = 'maintenance_checks';
@@ -246,26 +306,39 @@ const ITEMS = {
 	"Detailing & Protection":["Full detail wash","Interior deep clean","Leather conditioning","Paint protection film (PPF)","Window tint","Ceramic coating","Engine bay detail","Headlight polish"]
 };
 const LBL = {done:"Done",ok:"OK",attn:"Attn",na:"N/A"};
-const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>';
+const CAM = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>';
 const localISO = d => { const p = n => String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
 const today = () => localISO(new Date());
 const $ = id => document.getElementById(id);
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = d => d ? new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+const ensureSupabase = () => {
+	if (!window.sb || typeof window.sb.from !== 'function') {
+		throw new Error('Supabase client is unavailable. Check the network connection and reload the page.');
+	}
+	return window.sb;
+};
+const asText = value => value == null ? '' : String(value);
+const asObject = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+const asNumber = value => {
+	const number = Number(value);
+	return Number.isFinite(number) ? number : 0;
+};
 
 let state = {}, notes = {}, photos = {}, genPhotos = [];
 let currentId = null, editingId = null;
 let records = [];
 
 async function loadRecords() {
-	const { data, error } = await window.sb.from(TABLE).select('*').order('created_at', { ascending: false });
+	const sb = ensureSupabase();
+	const { data, error } = await sb.from(TABLE).select('*').order('created_at', { ascending: false });
 	if (error) throw error;
-	records = (data || []).map(r => ({
-		id: r.id, plate: r.plate || '', model: r.model || '', date: r.service_date || today(),
-		km: r.km || 0, mech: r.mechanic || '', loc: r.location || '', cost: r.cost || 0,
-		next: r.next_km || 0, remarks: r.remarks || '',
-		items: r.items || {}, notes: r.notes || {}, photos: r.photos || {},
-		genPhotos: r.gen_photos || [], updated: r.updated_at || null
+	records = (Array.isArray(data) ? data : []).filter(r => r && typeof r === 'object').map(r => ({
+		id: r.id, plate: asText(r.plate), model: asText(r.model), date: asText(r.service_date) || today(),
+		km: asNumber(r.km), mech: asText(r.mechanic), loc: asText(r.location), cost: asNumber(r.cost),
+		next: asNumber(r.next_km), remarks: asText(r.remarks),
+		items: asObject(r.items), notes: asObject(r.notes), photos: asObject(r.photos),
+		genPhotos: Array.isArray(r.gen_photos) ? r.gen_photos : [], updated: asText(r.updated_at) || null
 	}));
 }
 
@@ -285,8 +358,9 @@ let pickTarget = null;
 function pick(target){ pickTarget = target; $("picker").value = ""; $("picker").click(); }
 $("picker").onchange = async e => {
 	const files = [...e.target.files]; if(!files.length) return;
-	toast("Processing photos...");
-	const urls = await Promise.all(files.map(shrink));
+	let urls;
+	try { urls = await Promise.all(files.map(shrink)); }
+	catch(error) { console.error('Unable to process selected photos:', error); toast("Could not process photo. Try another image."); return; }
 	if (pickTarget === "__gen") { genPhotos.push(...urls); renderGen(); }
 	else { (photos[pickTarget] ||= []).push(...urls);
 		if (!state[pickTarget] || state[pickTarget]==="na") state[pickTarget] = "done";
@@ -294,7 +368,7 @@ $("picker").onchange = async e => {
 	toast(urls.length + " photo" + (urls.length>1?"s":"") + " added");
 };
 function thumbsHTML(list, caption, removable){
-	return list.map((u,i)=>`<div class="thumb" data-i="${i}"><img src="${u}" alt="">${caption?`<span class="cap">${esc(caption)}</span>`:""}${removable?`<button class="x" title="Remove">×</button>`:""}</div>`).join("");
+	return list.map((u,i)=>`<div class="thumb" data-i="${i}"><img src="${u}" alt="${esc(caption||"Photo")}">${caption?`<span class="cap">${esc(caption)}</span>`:""}${removable?`<button class="x" title="Remove" aria-label="Remove photo">×</button>`:""}</div>`).join("");
 }
 function wireThumbs(box, list, caption, onRemove){
 	box.querySelectorAll(".thumb").forEach(t=>{
@@ -306,8 +380,19 @@ function renderGen(){
 	wireThumbs(box, genPhotos, "Other photo", i => { genPhotos.splice(i,1); renderGen(); });
 }
 $("gen-add").onclick = () => pick("__gen");
-function openLB(src, cap){ $("lb-img").src = src; $("lb-cap").textContent = cap||""; $("lb").classList.add("show"); }
-$("lb").onclick = () => $("lb").classList.remove("show");
+let lbReturnFocus = null;
+function openLB(src, cap){
+	lbReturnFocus = document.activeElement;
+	$("lb-img").src = src; $("lb-img").alt = cap || "Photo"; $("lb-cap").textContent = cap||"";
+	$("lb").classList.add("show"); $("lb-x").focus();
+}
+function closeLB(){
+	$("lb").classList.remove("show");
+	if (lbReturnFocus && lbReturnFocus.focus) lbReturnFocus.focus();
+}
+$("lb").onclick = event => { if (event.target === $("lb")) closeLB(); };
+$("lb-x").onclick = closeLB;
+document.addEventListener("keydown", event => { if (event.key === "Escape" && $("lb").classList.contains("show")) closeLB(); });
 
 /* ---------- Checklist form ---------- */
 function buildChecklist(){
@@ -317,14 +402,21 @@ function buildChecklist(){
 		list.forEach(name=>{
 			const ph = photos[name] || [];
 			const row = document.createElement("div"); row.className="item";
-			row.innerHTML = `<div class="name">${name}</div>
-				<div class="seg">${Object.keys(LBL).map(v=>`<button data-v="${v}">${LBL[v]}</button>`).join("")}</div>
-				<button class="cam no-print ${ph.length?"has":""}" type="button" title="Add photo">${CAM}${ph.length||""}</button>
-				<input class="note" placeholder="Note for ${name}...">
+			row.innerHTML = `<button type="button" class="name" aria-expanded="${!!notes[name]}">${name}</button>
+				<div class="seg">${Object.keys(LBL).map(v=>`<button type="button" data-v="${v}" aria-pressed="false">${LBL[v]}</button>`).join("")}</div>
+				<button class="cam no-print ${ph.length?"has":""}" type="button" title="Add photo" aria-label="Add photo for ${esc(name)}">${CAM}${ph.length||""}</button>
+				<input class="note" placeholder="Note for ${esc(name)}..." aria-label="Note for ${esc(name)}">
 				<div class="thumbs">${thumbsHTML(ph, "", true)}</div>`;
-			const setOn = () => row.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on", b.dataset.v===(state[name]||"na")));
+			const setOn = () => row.querySelectorAll(".seg button").forEach(b=>{
+				const on = b.dataset.v === (state[name] || "na");
+				b.classList.toggle("on", on);
+				b.setAttribute("aria-pressed", String(on));
+			});
 			row.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{state[name]=b.dataset.v; setOn(); progress();});
-			row.querySelector(".name").onclick=()=>row.classList.toggle("show-note");
+			row.querySelector(".name").onclick=event=>{
+				const open = row.classList.toggle("show-note");
+				event.currentTarget.setAttribute("aria-expanded", String(open));
+			};
 			row.querySelector(".cam").onclick=()=>pick(name);
 			wireThumbs(row.querySelector(".thumbs"), ph, name, i => { ph.splice(i,1); if(!ph.length) delete photos[name]; buildChecklist(); });
 			const n = row.querySelector(".note"); n.value = notes[name]||""; n.oninput=()=>notes[name]=n.value;
@@ -338,6 +430,7 @@ function progress(){
 	const all = Object.values(ITEMS).flat().length;
 	const n = Object.values(state).filter(v=>v && v!=="na").length;
 	$("prog").style.width = (n/all*100)+"%";
+	$("prog").parentElement.setAttribute("aria-valuenow", String(Math.round(n/all*100)));
 }
 const FIELDS = {plate:"f-plate",model:"f-model",date:"f-date",km:"f-km",mech:"f-mech",loc:"f-loc",cost:"f-cost",next:"f-next",remarks:"f-remarks"};
 function clearForm(){
@@ -349,15 +442,17 @@ function clearForm(){
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200);}
 
 $("save").onclick = async ()=>{
+	const sb = ensureSupabase();
 	const plate = $("f-plate").value.trim().toUpperCase();
 	if(!plate){toast("Please enter the plate no.");$("f-plate").focus();return;}
 	const items = {}; Object.entries(state).forEach(([k,v])=>{if(v&&v!=="na")items[k]=v});
-	if(!Object.keys(items).length){toast("Mark at least one item");return;}
+	const remarks = $("f-remarks").value.trim();
+	if(!Object.keys(items).length && !remarks){toast("Mark an item or enter remarks");return;}
 	const km = +$("f-km").value||0;
 	const payload = {
 		plate, model:$("f-model").value.trim(), service_date:$("f-date").value||today(), km,
 		mechanic:$("f-mech").value.trim(), location:$("f-loc").value.trim(), cost:+$("f-cost").value||0,
-		next_km:+$("f-next").value||(km?km+10000:0), remarks:$("f-remarks").value.trim(),
+		next_km:+$("f-next").value||(km?km+10000:0), remarks,
 		items,
 		notes:Object.fromEntries(Object.entries(notes).filter(([k,v])=>v&&items[k])),
 		photos:Object.fromEntries(Object.entries(photos).filter(([k,v])=>v.length&&items[k]).map(([k,v])=>[k,[...v]])),
@@ -368,9 +463,9 @@ $("save").onclick = async ()=>{
 	try {
 		let error;
 		if (editingId){
-			({ error } = await window.sb.from(TABLE).update(payload).eq('id', editingId));
+			({ error } = await sb.from(TABLE).update(payload).eq('id', editingId));
 		} else {
-			({ error } = await window.sb.from(TABLE).insert(payload));
+			({ error } = await sb.from(TABLE).insert(payload));
 		}
 		if (error) throw error;
 		await loadRecords();
@@ -450,6 +545,7 @@ $("import-file").onchange = async e => {
 	if (!file) return;
 	$("import-status").textContent = "Reading file...";
 	try {
+		const sb = ensureSupabase();
 		const parsed = JSON.parse(await file.text());
 		const incoming = Array.isArray(parsed) ? parsed : parsed.records;
 		if (!Array.isArray(incoming) || !incoming.length) throw new Error("no records found in file");
@@ -461,7 +557,7 @@ $("import-file").onchange = async e => {
 			updated_at: new Date().toISOString()
 		}));
 		if (!rows.length) throw new Error("every record needs a plate no.");
-		const { error } = await window.sb.from(TABLE).insert(rows).select();
+		const { error } = await sb.from(TABLE).insert(rows).select();
 		if (error) throw error;
 		await loadRecords(); renderHistory();
 		$("import-status").textContent = "";
@@ -574,9 +670,15 @@ $("ph-x").onclick = ()=>$("printhelp").classList.add("hidden");
 $("back").onclick = ()=>show("history");
 $("del").onclick = async ()=>{
 	if (!confirm("Delete this checklist?")) return;
-	const { error } = await window.sb.from(TABLE).delete().eq('id', currentId);
-	if (error) { console.error('Unable to delete checklist:', error); toast("Delete failed: " + error.message); return; }
-	await loadRecords(); toast("Deleted"); show("history");
+	try {
+		const sb = ensureSupabase();
+		const { error } = await sb.from(TABLE).delete().eq('id', currentId);
+		if (error) { console.error('Unable to delete checklist:', error); toast("Delete failed: " + error.message); return; }
+		await loadRecords(); toast("Deleted"); show("history");
+	} catch (error) {
+		console.error('Unable to delete checklist:', error);
+		toast("Delete failed: " + (error?.message || 'Supabase unavailable'));
+	}
 };
 
 function addMonths(dateStr, months) {
@@ -619,7 +721,12 @@ function renderDue(){
 
 function show(tab){
 	["new","history","due","detail"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==tab));
-	document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab||(tab==="detail"&&b.dataset.tab==="history")));
+	document.querySelectorAll("nav button").forEach(b=>{
+		const active = b.dataset.tab===tab || (tab==="detail" && b.dataset.tab==="history");
+		b.classList.toggle("active", active);
+		if (active) b.setAttribute("aria-current", "true");
+		else b.removeAttribute("aria-current");
+	});
 	if(tab==="history") renderHistory(); if(tab==="due") renderDue();
 	window.scrollTo(0,0);
 }
@@ -641,16 +748,21 @@ $("f-date").value = today(); buildChecklist(); renderGen();
 		renderHistory();
 	} catch (error) {
 		console.error('Unable to load maintenance records from Supabase:', error);
-		$("list").innerHTML = '<div class="empty-note">Unable to load — run section 8 of supabase-migrations.sql in Supabase.</div>';
-	}
+	const message = error?.message || 'Unknown error';
+	const missingTable = error?.code === '42P01' || /does not exist|schema cache/i.test(message);
+	$("list").innerHTML = `<div class="empty-note">${missingTable
+		? 'Maintenance table is missing — run section 8 of supabase-migrations.sql in Supabase.'
+		: `Unable to load maintenance records: ${esc(message)}`}</div>`;
+}
 	// Viewers (team password) cannot save, edit, or delete — the admin token
 	// guards this in the database too, so hiding the buttons is cosmetic.
-	if (!window.akgarageIsAdmin()) {
-		document.querySelector('.viewer-note').hidden = false;
+	if (typeof window.akgarageIsAdmin !== 'function' || !window.akgarageIsAdmin()) {
+		const viewerNote = document.querySelector('.viewer-note');
+		if (viewerNote) viewerNote.hidden = false;
 		["save","edit","del","gen-add","import-file-btn"].forEach(id => { const el = $(id); if (el) el.classList.add("hidden"); });
 	}
 })();
-window.addEventListener('visibilitychange', () => { if (!document.hidden) loadRecords().then(renderHistory).catch(()=>{}); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRecords().then(renderHistory).catch(()=>{}); });
 </script>
 </body>
 </html>

@@ -59,9 +59,7 @@
 
 	window.addExpiryReportButton = function (options) {
 		var head = document.querySelector(options.headSelector);
-		if (!head || !head.querySelector('.export-report-btn')) {
-			if (!head) return;
-		}
+		if (!head || head.querySelector('.export-report-btn')) return;
 		var button = document.createElement('button');
 		button.type = 'button';
 		button.className = 'export-report-btn';

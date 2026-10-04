@@ -56,46 +56,72 @@ $$;
 --    valid token — so browser DevTools cannot bypass it.
 -- =============================================================================
 
--- Config table: stores the admin password hash (and flags the setup as done).
+-- Config table: stores only the admin password hash. No credential or bearer
+-- token is seeded in this public migration file.
 create table if not exists public.app_config (
 	key text primary key,
 	value text not null
 );
 
--- The hash must not be readable by the public anon role (a 6-digit password's
--- hash can be brute-forced instantly). RLS with no policies = deny all.
+-- Config and session rows are available only to these SECURITY DEFINER
+-- functions. RLS with no policies denies direct anon access.
 alter table public.app_config enable row level security;
-
--- Store SHA-256('060720') as the admin password hash. Re-run this line anytime
--- you want to change the admin password (replace the hash):
---   select sha256(convert_to('NEW_PASSWORD', 'utf8'));
 insert into public.app_config (key, value)
-values
-	('admin_password_sha256', '6b4cb38283006994a72c3bcb8ca2e8808e18e0556a87f841d382d671662a0589'),
-	('admin_token_sha256', '6b4cb38283006994a72c3bcb8ca2e8808e18e0556a87f841d382d671662a0589')
-on conflict (key) do update set value = excluded.value;
+values ('admin_password_sha256', '')
+on conflict (key) do nothing;
 
--- Login check: returns true only when the password matches the stored hash.
--- Anyone can call it (it is a login form), but it reveals nothing else.
-create or replace function public.check_admin_password(candidate text)
-returns boolean
-language sql
+-- Disable the previously published password/token hash on existing installs.
+update public.app_config
+set value = ''
+where key = 'admin_password_sha256'
+  and value = '6b4cb38283006994a72c3bcb8ca2e8808e18e0556a87f841d382d671662a0589';
+delete from public.app_config where key = 'admin_token_sha256';
+
+create table if not exists public.admin_sessions (
+	token_hash text primary key,
+	expires_at timestamptz not null
+);
+alter table public.admin_sessions enable row level security;
+revoke all on public.admin_sessions from public, anon, authenticated;
+revoke all on public.app_config from public, anon, authenticated;
+
+-- Login issues a random opaque session token; only its hash is stored.
+-- Password hashing uses SHA-256 because the configured password must be
+-- generated from at least 32 random bytes (see README setup instructions).
+drop function if exists public.check_admin_password(text);
+create or replace function public.login_admin(candidate text)
+returns text
+language plpgsql
 security definer
 set search_path = public
 as $$
-	select exists (
-		select 1 from public.app_config
-		where key = 'admin_password_sha256'
-		  and value = encode(sha256(convert_to(coalesce(candidate, ''), 'utf8')), 'hex')
-	);
+declare
+	stored_hash text;
+	session_token text;
+begin
+	select value into stored_hash
+	from public.app_config
+	where key = 'admin_password_sha256';
+
+	if stored_hash is null
+		or stored_hash = ''
+		or stored_hash <> encode(sha256(convert_to(coalesce(candidate, ''), 'utf8')), 'hex') then
+		return null;
+	end if;
+
+	session_token := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+	delete from public.admin_sessions where expires_at <= now();
+	insert into public.admin_sessions (token_hash, expires_at)
+	values (encode(sha256(convert_to(session_token, 'utf8')), 'hex'), now() + interval '30 days');
+	return session_token;
+end;
 $$;
 
-grant execute on function public.check_admin_password(text) to anon;
-grant select on public.app_config to anon;
+revoke all on function public.login_admin(text) from public, authenticated;
+grant execute on function public.login_admin(text) to anon;
 
 -- Every write must present the admin token; readers need nothing.
--- security definer + owned-by-postgres: this function must read app_config even
--- though RLS denies the anon role (otherwise admin writes would fail too).
+-- The raw token is never stored in the database or source repository.
 create or replace function public.is_ak_admin()
 returns boolean
 language sql
@@ -104,14 +130,21 @@ security definer
 set search_path = public
 as $$
 	select exists (
-		select 1 from public.app_config
-		where key = 'admin_token_sha256'
-		  and value = coalesce(
+		select 1
+		from public.admin_sessions
+		where token_hash = encode(
+			sha256(convert_to(coalesce(
 				nullif(current_setting('request.headers', true)::json ->> 'x-ak-admin-token', ''),
 				''
-		  )
+			), 'utf8')),
+			'hex'
+		)
+		  and expires_at > now()
 	);
 $$;
+
+revoke all on function public.is_ak_admin() from public, authenticated;
+grant execute on function public.is_ak_admin() to anon;
 
 -- Replace ALL existing policies on the three tables. Reads stay open for the
 -- whole team; writes (insert/update/delete) now require the admin token.

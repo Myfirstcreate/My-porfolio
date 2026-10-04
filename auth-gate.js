@@ -4,11 +4,9 @@
 //
 // How it is enforced:
 //   - The viewer password is checked here in the browser.
-//   - The admin password is verified by Supabase (rpc check_admin_password —
-//     see supabase-migrations.sql, section 3); only its SHA-256 hash is stored.
-//   - After an admin login, every database request carries an admin token and
-//     the database rejects writes from anyone without it. So even clearing
-//     these flags in DevTools cannot change real records.
+//   - Supabase verifies the admin password and issues a random expiring
+//     session token (see supabase-migrations.sql, section 3).
+//   - The database stores only a hash of that token and checks it on writes.
 (function () {
 	var AUTH_KEY = 'akgarage_auth'; // 'viewer' | 'admin' (legacy value: '1')
 	var TOKEN_KEY = 'akgarage_admin_token';
@@ -114,80 +112,13 @@
 		}
 	};
 
-	// SHA-256 hex of a UTF-8 string. Uses the browser's crypto when available
-	// (https / localhost) and falls back to a compact implementation elsewhere,
-	// so admin login works on any device.
-	function sha256Hex(text) {
-		if (window.crypto && crypto.subtle && crypto.subtle.digest) {
-			return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (hash) {
-				return Array.prototype.map.call(new Uint8Array(hash), function (byte) {
-					return ('0' + byte.toString(16)).slice(-2);
-				}).join('');
-			});
-		}
-		return Promise.resolve(sha256HexFallback(text));
-	}
-	function sha256HexFallback(ascii) {
-		// Public-domain SHA-256 (geraintluff/sha256.js, CC0).
-		function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
-		var maxWord = Math.pow(2, 32);
-		var result = '';
-		var words = [];
-		var asciiBitLength = ascii.length * 8;
-		var hash = [];
-		var k = [];
-		var primeCounter = 0;
-		var isComposite = {};
-		for (var candidate = 2; primeCounter < 64; candidate++) {
-			if (!isComposite[candidate]) {
-				for (var i = 0; i < 313; i += candidate) isComposite[i] = candidate;
-				hash[primeCounter] = (Math.pow(candidate, 0.5) * maxWord) | 0;
-				k[primeCounter++] = (Math.pow(candidate, 1 / 3) * maxWord) | 0;
-			}
-		}
-		ascii += '\x80';
-		while (ascii.length % 64 - 56) ascii += '\x00';
-		for (i = 0; i < ascii.length; i++) {
-			var charCode = ascii.charCodeAt(i);
-			if (charCode >> 8) return '';
-			words[i >> 2] |= charCode << ((3 - i) % 4) * 8;
-		}
-		words[words.length] = (asciiBitLength / maxWord) | 0;
-		words[words.length] = asciiBitLength;
-		for (var j = 0; j < words.length;) {
-			var w = words.slice(j, j += 16);
-			var oldHash = hash;
-			hash = hash.slice(0, 8);
-			for (var iteration = 0; iteration < 64; iteration++) {
-				var w15 = w[iteration - 15], w2 = w[iteration - 2];
-				var a = hash[0], e = hash[4];
-				var temp1 = hash[7]
-					+ (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
-					+ ((e & hash[5]) ^ ((~e) & hash[6]))
-					+ k[iteration]
-					+ (w[iteration] = (iteration < 16) ? w[iteration] : (w[iteration - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[iteration - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
-				var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
-				hash = [(temp1 + temp2) | 0].concat(hash);
-				hash[4] = (hash[4] + temp1) | 0;
-			}
-			for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
-		}
-		for (i = 0; i < 8; i++) {
-			for (j = 3; j + 1; j--) {
-				var byte = (hash[i] >> (j * 8)) & 255;
-				result += ((byte < 16) ? '0' : '') + byte.toString(16);
-			}
-		}
-		return result;
-	}
-
 	window.akgarageVerifyAdmin = function (password) {
 		if (!window.sb || typeof window.sb.rpc !== 'function') {
 			return Promise.reject(new Error('Supabase client not loaded'));
 		}
-		return window.sb.rpc('check_admin_password', { candidate: String(password || '') }).then(function (result) {
+		return window.sb.rpc('login_admin', { candidate: String(password || '') }).then(function (result) {
 			if (result.error) throw result.error;
-			return result.data === true;
+			return typeof result.data === 'string' ? result.data : '';
 		});
 	};
 
@@ -230,11 +161,9 @@
 			showError(errorEl, 'Enter a password to continue.');
 			return false;
 		}
-		sha256Hex(value).then(function (token) {
-			return window.akgarageVerifyAdmin(value).then(function (isAdmin) {
-				if (isAdmin) finish('admin', token);
-				else showError(errorEl, 'Wrong password. Try again.');
-			});
+		window.akgarageVerifyAdmin(value).then(function (token) {
+			if (token) finish('admin', token);
+			else showError(errorEl, 'Wrong password. Try again.');
 		}).catch(function (error) {
 			if (error && (error.code === 'PGRST202' || /not found/i.test(error.message || ''))) {
 				showError(errorEl, 'Admin login is not set up yet. Run supabase-migrations.sql (section 3) in the Supabase SQL Editor first.');
