@@ -15,6 +15,12 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+/* Car backdrop shared with the overview page (hidden in print). */
+.bg-media{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;opacity:.16;-webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 44%,transparent 78%);mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 44%,transparent 78%)}
+.bg-media::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(7,8,7,.4),rgba(7,8,7,.15) 45%,transparent 75%)}
+.bg-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:74% 50%}
+@media (max-width:900px){.bg-media{opacity:.12}}
+header,nav,main{position:relative;z-index:1}
 header{background:#090a09;color:var(--ink);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
 header .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:4px 8px;font-weight:800;letter-spacing:.5px}
 header .brand-copy{display:flex;flex-direction:column;gap:2px}
@@ -226,7 +232,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
   @page{size:A4;margin:12mm}
   :root{color-scheme:light}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  header,nav,.no-print{display:none!important}
+  header,nav,.bg-media,.no-print{display:none!important}
   body,main{background:#fff!important;color:#111!important}
   main{padding:0;max-width:none}
   .card,.stat,.rec{background:#fff!important;color:#111!important;border-color:#d4d4d4!important;box-shadow:none!important}
@@ -247,6 +253,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 <body>
 <script src="auth-gate.js"></script>
 <script>akgarageInitGate();</script>
+<div class="bg-media" aria-hidden="true"><img class="bg-photo" src="assets/hero-car.jpg?v=1" alt=""></div>
 <a class="skip" href="#main">Skip to main content</a>
 <header><span class="logo">AK</span><div class="brand-copy"><h1>AK GARAGE</h1><span class="subtitle">Maintenance Checklist</span></div></header>
 <nav aria-label="Main">
