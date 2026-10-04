@@ -311,13 +311,13 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 			<button class="btn sm" id="edit">Edit</button>
 			<button class="btn ghost sm" id="print">Print</button>
 			<button class="btn ghost sm" id="save-file" type="button" title="Download all maintenance records as JSON backup">⬇ Save file</button>
-			<button class="btn ghost sm" id="dl" type="button" title="Save this service report as an HTML file you can open and print in Chrome or Edge">⬇ Save as file</button>
+			<button class="btn ghost sm" id="dl" type="button" title="Download this service report directly as a PDF">⬇ Save as PDF</button>
 			<button class="btn ghost sm" id="import-file-btn" type="button" title="Restore records from a JSON backup">⬆ Import file</button>
 			<button class="btn ghost sm danger" id="del">Delete</button>
 			<span class="muted" id="import-status" style="font-size:12px"></span>
 			<input type="file" id="import-file" accept="application/json,.json" class="hidden">
 		</div>
-		<div class="editbar hidden no-print" id="printhelp"><span>Hindi ma-open ang print dito sa preview. Pindutin ang <b>Save as file</b>, buksan ang file sa Chrome o Edge, at automatic na lalabas ang Print (pwede ring "Save as PDF").</span><button class="btn ghost sm" id="ph-x">OK</button></div>
+		<div class="editbar hidden no-print" id="printhelp"><span>Hindi ma-open ang print dito sa preview. Pindutin ang <b>Save as PDF</b> — diretso na bababa ang PDF file nito.</span><button class="btn ghost sm" id="ph-x">OK</button></div>
 		<div class="card" id="detail"></div>
 	</section>
 </main>
@@ -647,7 +647,7 @@ function openDetail(id){
 	<div class="rp">
 		<div class="rp-top">
 			<div class="rp-brand"><b>Vehicle Service Report</b></div>
-			<div class="rp-meta"><div><span>Report No.</span><b>${repNo}</b></div><div><span>Service Date</span><b>${fmt(r.date)}</b></div></div>
+			<div class="rp-meta"><div><span>Service Date</span><b>${fmt(r.date)}</b></div></div>
 		</div>
 		<div class="rp-vehicle">
 			<div class="rp-plate">${esc(r.plate)}</div>
@@ -685,8 +685,19 @@ function doPrint(){
 	// If the print dialog was blocked (e.g. inside an app preview), print() returns instantly
 	if (failed || performance.now() - t < 120) $("printhelp").classList.remove("hidden");
 }
-function saveReport(){
-	const r = records.find(x=>String(x.id)===String(currentId)); if(!r) return;
+function loadHtml2pdf(){
+	if (window.html2pdf) return Promise.resolve();
+	return new Promise((resolve, reject)=>{
+		const s = document.createElement("script");
+		s.src = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
+		s.onload = ()=>resolve();
+		s.onerror = ()=>reject(new Error("html2pdf CDN unavailable"));
+		document.head.appendChild(s);
+	});
+}
+function downloadReportHTML(r, fname){
+	// Fallback used when the PDF library cannot load: the original
+	// auto-printing HTML report.
 	const css = document.querySelector("style").textContent;
 	const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Service Report ${esc(r.plate)} ${r.date}</title><style>${css}
@@ -696,10 +707,56 @@ body{background:#fff}main{padding:24px}.card{border:0}</style></head>
 	const blob = new Blob([html], {type:"text/html"});
 	const a = document.createElement("a");
 	a.href = URL.createObjectURL(blob);
-	a.download = `AK-Garage-Report_${r.plate.replace(/\s+/g,"-")}_${r.date}.html`;
+	a.download = fname + ".html";
 	document.body.appendChild(a); a.click(); a.remove();
 	setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
-	toast("Report saved ✓");
+}
+async function saveReport(){
+	const r = records.find(x=>String(x.id)===String(currentId)); if(!r) return;
+	const rpEl = $("detail").querySelector(".rp"); if(!rpEl) return;
+	const fname = `AK-Garage-Report_${r.plate.replace(/\s+/g,"-")}_${r.date}`;
+	const btn = $("dl");
+	try { await loadHtml2pdf(); }
+	catch(err){
+		console.error("PDF library failed to load:", err);
+		downloadReportHTML(r, fname);
+		toast("PDF unavailable — HTML report downloaded instead");
+		return;
+	}
+	if (btn) btn.disabled = true;
+	toast("Preparing PDF…");
+	// Off-screen copy at A4 content width (703px = 186mm beside 12mm page
+	// margins), kept inside #tab-detail so the navy/gold report theme applies.
+	const host = document.createElement("div");
+	host.style.cssText = "position:fixed;left:-10000px;top:0;width:703px;background:#fff";
+	const card = document.createElement("div");
+	card.style.cssText = "max-width:703px;margin:0;padding:0;border:0;box-shadow:none;background:#fff";
+	card.appendChild(rpEl.cloneNode(true));
+	host.appendChild(card);
+	document.getElementById("tab-detail").appendChild(host);
+	try {
+		const pdf = await html2pdf().set({
+			margin: [10, 12, 10, 12],
+			image: { type: "jpeg", quality: 0.97 },
+			html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 703 },
+			pagebreak: { mode: ["css","legacy"], avoid: ["tr",".rp-sign",".rp-sec",".gallery",".rp-info",".rp-sum"] },
+			jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+		}).from(card).toPdf().get("pdf");
+		const blob = pdf.output("blob");
+		const a = document.createElement("a");
+		a.href = URL.createObjectURL(blob);
+		a.download = fname + ".pdf";
+		document.body.appendChild(a); a.click(); a.remove();
+		setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+		toast("PDF saved ✓");
+	} catch(err){
+		console.error("PDF export failed:", err);
+		downloadReportHTML(r, fname);
+		toast("PDF failed — HTML report downloaded instead");
+	} finally {
+		setTimeout(()=>host.remove(), 1500);
+		if (btn) btn.disabled = false;
+	}
 }
 $("print").onclick = doPrint;
 $("dl") && ($("dl").onclick = saveReport);
