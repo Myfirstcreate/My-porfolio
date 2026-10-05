@@ -59,12 +59,19 @@
 
 	window.addExpiryReportButton = function (options) {
 		var head = document.querySelector(options.headSelector);
-		if (!head || head.querySelector('.export-report-btn')) return;
-		var button = document.createElement('button');
-		button.type = 'button';
-		button.className = 'export-report-btn';
-		button.textContent = '\u2B07 Export report';
+		if (!head) return;
+		// Pages may ship the button in their own markup — reuse that button and
+		// always attach the click handler, otherwise it looks dead when clicked.
+		var button = head.querySelector('.export-report-btn') || document.querySelector('.export-report-btn');
+		if (!button) {
+			button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'export-report-btn';
+			button.textContent = '\u2B07 Export report';
+			head.appendChild(button);
+		}
+		if (button.dataset.akExpiryReport === '1') return;
+		button.dataset.akExpiryReport = '1';
 		button.addEventListener('click', function () { window.exportExpiryReport(options); });
-		head.appendChild(button);
 	};
 })();

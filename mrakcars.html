@@ -51,11 +51,20 @@
 		.field input, .field select { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:4px; outline:0; color:var(--text); background:#080a08; font:12px 'DM Mono',monospace; }
 		.field input[type="file"] { padding:6px; }
 		.field input:focus, .field select:focus { border-color:var(--lime); }
+		.field input.invalid { border-color:var(--red); }
+		.field-error { margin:7px 0 0; color:var(--red); font:10px 'DM Mono',monospace; text-transform:uppercase; }
 		.field select { cursor:pointer; }
 		.submit { align-self:end; padding:8px 12px; border:1px solid var(--lime); border-radius:4px; color:var(--black); background:var(--lime); font:10px 'DM Mono',monospace; font-weight:500; cursor:pointer; text-transform:uppercase; }
 		.submit:hover { background:#d8ff70; }
+		.submit:disabled { opacity:.55; cursor:not-allowed; }
 		.records-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
 		.records-head h2 { margin:0; font-size:14px; }
+		.records-tools { display:flex; align-items:center; gap:10px; }
+		.search-field { display:flex; align-items:center; gap:7px; padding:7px 10px; border:1px solid var(--line); border-radius:4px; background:#080a08; }
+		.search-field:focus-within { border-color:var(--lime); }
+		.search-field svg { width:13px; height:13px; color:var(--muted); flex:none; }
+		.search-field input { width:220px; border:0; outline:0; color:var(--text); background:transparent; font:11px 'DM Mono',monospace; }
+		.search-field input::placeholder { color:#5d655b; letter-spacing:.06em; text-transform:uppercase; }
 		.table-wrap { overflow:auto; border:1px solid var(--line); border-radius:6px; background:rgba(16,18,16,.92); }
 		table { width:100%; min-width:700px; border-collapse:collapse; }
 		th { padding:12px 15px; color:#697268; border-bottom:1px solid var(--line); font:10px 'DM Mono',monospace; letter-spacing:.1em; text-align:left; text-transform:uppercase; }
@@ -85,7 +94,7 @@
 		.footnote { display:flex; justify-content:space-between; gap:15px; margin-top:13px; color:var(--muted); font:10px 'DM Mono',monospace; }
 		.viewer-note { margin:12px 0 0; padding:9px 12px; border:1px dashed #3c4439; border-radius:4px; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
 		@media(max-width:850px) { .form-grid { grid-template-columns:repeat(2,1fr); } }
-		@media(max-width:650px) { .shell { padding:25px 15px 40px; } .intro { align-items:start; flex-direction:column; } .intro p { max-width:none; } .stats { grid-template-columns:1fr; gap:9px; } .form-grid { grid-template-columns:1fr; } .form-head { align-items:start; flex-direction:column; } .submit { width:100%; } }
+		@media(max-width:650px) { .shell { padding:25px 15px 40px; } .intro { align-items:start; flex-direction:column; } .intro p { max-width:none; } .stats { grid-template-columns:1fr; gap:9px; } .form-grid { grid-template-columns:1fr; } .form-head { align-items:start; flex-direction:column; } .submit { width:100%; } .records-head { align-items:start; flex-direction:column; gap:10px; } .records-tools { width:100%; flex-wrap:wrap; } .search-field { flex:1 1 100%; } .search-field input { width:100%; } }
 	</style>
 </head>
 <body>
@@ -115,13 +124,13 @@
 				<div class="field"><label for="year">Year</label><input id="year" name="year" type="number" min="1900" max="2099" placeholder="2024" required></div>
 				<div class="field"><label for="code">Code</label><input id="code" name="code" type="text" placeholder="AK-025" required></div>
 				<div class="field"><label for="plate">Plate No.</label><input id="plate" name="plate" type="text" placeholder="AK 025 GT" required></div>
-				<div class="field"><label for="chassis">Chassis</label><input id="chassis" name="chassis" type="text" placeholder="WBA123456789" required></div>
+				<div class="field"><label for="chassis">Chassis</label><input id="chassis" name="chassis" type="text" placeholder="WBA123456789" required><p class="field-error" id="chassis-error" hidden></p></div>
 				<div class="field"><label for="expiry">Expiry date</label><input id="expiry" name="expiry" type="date" required></div>
 				<div class="field"><label for="car-photo">Car picture</label><input id="car-photo" name="car-photo" type="file" accept="image/*"></div>
 				<button class="submit" id="submit-record" type="submit"><i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add record</button>
 			</div>
 		</form>
-		<div class="records-head" id="registration-records-heading"><h2>Registration records</h2><span class="mono" id="record-count">00 RECORDS</span><button type="button" class="export-report-btn" id="export-report">⬇ Export report</button></div>
+		<div class="records-head" id="registration-records-heading"><h2>Registration records</h2><div class="records-tools"><label class="search-field" for="record-search"><i data-lucide="search" aria-hidden="true"></i><input id="record-search" type="search" placeholder="Search plate, code, chassis" autocomplete="off"></label><span class="mono" id="record-count">00 RECORDS</span><button type="button" class="export-report-btn" id="export-report">⬇ Export report</button></div></div>
 		<div class="expiry-banner" id="expiry-banner" hidden></div>
 		<div class="table-wrap">
 			<table>
@@ -144,9 +153,12 @@
 		const recordsHeading = document.getElementById('registration-records-heading');
 		const formTitle = document.getElementById('form-title');
 		const submitRecord = document.getElementById('submit-record');
+		const chassisError = document.getElementById('chassis-error');
+		const searchInput = document.getElementById('record-search');
 		const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 		let editingId = null;
 		let storedRecords = [];
+		let searchQuery = '';
 		async function loadRecords() {
 			const { data, error } = await window.sb.from(TABLE).select('*').order('code');
 			if (error) throw error;
@@ -175,10 +187,53 @@
 			});
 		}
 
-		function updateLabels() {
-			recordCount.textContent = `${String(records.children.length).padStart(2, '0')} RECORDS`;
-			footnote.firstElementChild.textContent = records.children.length ? `${records.children.length} RECORD${records.children.length === 1 ? '' : 'S'} ADDED` : 'NO RECORDS ADDED';
-			footnote.lastElementChild.textContent = 'READY FOR NEW ENTRY';
+		function updateLabels(shownCount = records.children.length) {
+			const total = storedRecords.length;
+			recordCount.textContent = searchQuery
+				? `${String(shownCount).padStart(2, '0')} / ${String(total).padStart(2, '0')} RECORDS`
+				: `${String(shownCount).padStart(2, '0')} RECORDS`;
+			footnote.firstElementChild.textContent = total ? `${total} RECORD${total === 1 ? '' : 'S'} ADDED` : 'NO RECORDS ADDED';
+			footnote.lastElementChild.textContent = searchQuery ? 'FILTERED VIEW' : 'READY FOR NEW ENTRY';
+		}
+
+		function normalizeChassis(value) {
+			return String(value ?? '').trim().replace(/\s+/g, '').toUpperCase();
+		}
+
+		// A chassis (VIN) identifies one car, so the same value must never be saved
+		// twice — casing and extra spaces are ignored when comparing.
+		function findChassisMatch(chassis, excludeId) {
+			const key = normalizeChassis(chassis);
+			if (!key) return null;
+			return storedRecords.find((item) => {
+				if (excludeId != null && String(item.id) === String(excludeId)) return false;
+				return normalizeChassis(item.chassis) === key;
+			}) || null;
+		}
+
+		function showChassisError(message) {
+			if (!chassisError) return;
+			chassisError.textContent = message;
+			chassisError.hidden = false;
+			form.elements.chassis.classList.add('invalid');
+		}
+
+		function clearChassisError() {
+			if (!chassisError) return;
+			chassisError.hidden = true;
+			chassisError.textContent = '';
+			form.elements.chassis.classList.remove('invalid');
+		}
+
+		function matchesSearch(record) {
+			if (!searchQuery) return true;
+			return [record.brand, record.year, record.code, record.plate, record.chassis].some((value) => String(value ?? '').toLowerCase().includes(searchQuery));
+		}
+
+		function clearSearch() {
+			if (!searchQuery) return;
+			searchQuery = '';
+			if (searchInput) searchInput.value = '';
 		}
 
 		function escapeHtml(value) {
@@ -249,6 +304,7 @@
 			formTitle.textContent = 'Add registration record';
 			submitRecord.innerHTML = '<i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add record';
 			form.reset();
+			clearChassisError();
 			lucide.createIcons();
 		}
 
@@ -263,13 +319,20 @@
 
 		function renderStoredRecords() {
 			records.innerHTML = '';
-			storedRecords
+			const visible = storedRecords.filter(matchesSearch);
+			visible
 				.map((record, index) => ({ record, index }))
-				.sort((left, right) => getStatusRank(left.record.expiry) - getStatusRank(right.record.expiry) || left.index - right.index)					.forEach(({ record }) => addRecord(record));
-				updateSummary();
-				updateLabels();
-				updateExpiryBanner();
+				.sort((left, right) => getStatusRank(left.record.expiry) - getStatusRank(right.record.expiry) || left.index - right.index)
+				.forEach(({ record }) => addRecord(record));
+			if (!visible.length) {
+				const emptyRow = document.createElement('tr');
+				emptyRow.innerHTML = `<td colspan="9" style="text-align:center;padding:20px;color:#8b9388;font:10px 'DM Mono',monospace;text-transform:uppercase;">${storedRecords.length ? `No records match "${escapeHtml(searchQuery)}"` : 'No records yet'}</td>`;
+				records.appendChild(emptyRow);
 			}
+			updateSummary();
+			updateLabels(visible.length);
+			updateExpiryBanner();
+		}
 
 		function updateExpiryBanner() {
 			const banner = document.getElementById('expiry-banner');
@@ -306,9 +369,16 @@
 		}
 
 		function updateSummary() {
-			registeredCount.textContent = String(records.children.length).padStart(2, '0');
-			expiringCount.textContent = String(records.querySelectorAll('.status.soon').length).padStart(2, '0');
-			expiredCount.textContent = String(records.querySelectorAll('.status.expired').length).padStart(2, '0');
+			// Stat cards always reflect the full dataset, even while the table is filtered.
+			let expiring = 0, expired = 0;
+			storedRecords.forEach((record) => {
+				const rank = getStatusRank(record.expiry);
+				if (rank === 0) expired++;
+				else if (rank === 1) expiring++;
+			});
+			registeredCount.textContent = String(storedRecords.length).padStart(2, '0');
+			expiringCount.textContent = String(expiring).padStart(2, '0');
+			expiredCount.textContent = String(expired).padStart(2, '0');
 		}
 
 		// One-time: if the shared table is empty and this device has old localStorage
@@ -343,49 +413,76 @@
 			if (note) note.hidden = false;
 		})();
 
+		if (searchInput) searchInput.addEventListener('input', () => {
+			searchQuery = searchInput.value.trim().toLowerCase();
+			renderStoredRecords();
+		});
+
+		form.elements.chassis.addEventListener('input', clearChassisError);
+
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
-			const formData = new FormData(form);
-			const photoFile = formData.get('car-photo');
-			const editingItem = editingId ? storedRecords.find((item) => String(item.id) === String(editingId)) : null;
-			const photo = photoFile instanceof File && photoFile.size ? await compressPhoto(photoFile) : editingItem?.photo || '';
-			const record = {
-				brand: formData.get('car-brand'),
-				year: formData.get('year'),
-				code: formData.get('code'),
-				plate: formData.get('plate'),
-				chassis: formData.get('chassis'),
-				expiry: formData.get('expiry'),
-				photo,
-				maintenance: editingItem?.maintenance || ''
-			};
+			if (submitRecord.disabled) return;
+			submitRecord.disabled = true;
 			try {
-				if (editingId) {
-					const { error, count } = await window.sb.from(TABLE).update(record, { count: 'exact' }).eq('id', editingId);
-					// Row Level Security silently skips rows when the admin session token is
-					// missing or expired: the request "succeeds" but changes 0 rows.
-					if (!error && !count) throw Object.assign(new Error('row-level security blocked the update — admin session expired or missing'), { code: '42501' });
-					if (error) throw error;
-				} else {
-					const { error } = await window.sb.from(TABLE).insert(record);
-					if (error) throw error;
+				const formData = new FormData(form);
+				const chassis = normalizeChassis(formData.get('chassis'));
+				const chassisMatch = findChassisMatch(chassis, editingId);
+				if (chassisMatch) {
+					showChassisError(`Chassis already on record — ${chassisMatch.brand || 'saved car'} · plate ${chassisMatch.plate || '--'} · code ${chassisMatch.code || '--'}`);
+					form.elements.chassis.focus();
+					form.elements.chassis.select();
+					return;
 				}
-				await loadRecords();
-				renderStoredRecords();
-				resetFormMode();
-				recordsHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			} catch (error) {
-				console.error('Unable to save registration record:', error);
-				const missingTable = error?.code === 'PGRST205' || /could not find the table/i.test(error?.message || '');
-				const authFail = error?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(error?.message || '');
-				if (authFail) {
-					window.alert('Session expired — enter the admin password to save changes.');
-					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
-				} else {
-					window.alert(missingTable
-						? 'The mr_ak_cars table is missing in Supabase. Open supabase-migrations.sql from this project and run it in the Supabase SQL Editor, then try again.'
-						: 'The record could not be saved. Please check your connection and try again.');
+				clearChassisError();
+				const photoFile = formData.get('car-photo');
+				const editingItem = editingId ? storedRecords.find((item) => String(item.id) === String(editingId)) : null;
+				const photo = photoFile instanceof File && photoFile.size ? await compressPhoto(photoFile) : editingItem?.photo || '';
+				const record = {
+					brand: formData.get('car-brand'),
+					year: formData.get('year'),
+					code: formData.get('code'),
+					plate: formData.get('plate'),
+					chassis,
+					expiry: formData.get('expiry'),
+					photo,
+					maintenance: editingItem?.maintenance || ''
+				};
+				try {
+					if (editingId) {
+						const { error, count } = await window.sb.from(TABLE).update(record, { count: 'exact' }).eq('id', editingId);
+						// Row Level Security silently skips rows when the admin session token is
+						// missing or expired: the request "succeeds" but changes 0 rows.
+						if (!error && !count) throw Object.assign(new Error('row-level security blocked the update — admin session expired or missing'), { code: '42501' });
+						if (error) throw error;
+					} else {
+						const { error } = await window.sb.from(TABLE).insert(record);
+						if (error) throw error;
+					}
+					await loadRecords();
+					clearSearch();
+					renderStoredRecords();
+					resetFormMode();
+					recordsHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				} catch (error) {
+					console.error('Unable to save registration record:', error);
+					const missingTable = error?.code === 'PGRST205' || /could not find the table/i.test(error?.message || '');
+					const authFail = error?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(error?.message || '');
+					const duplicateChassis = error?.code === '23505' || /duplicate key|unique/i.test(error?.message || '');
+					if (authFail) {
+						window.alert('Session expired — enter the admin password to save changes.');
+						if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+					} else if (duplicateChassis) {
+						showChassisError('This chassis already exists — open the existing record instead.');
+						form.elements.chassis.focus();
+					} else {
+						window.alert(missingTable
+							? 'The mr_ak_cars table is missing in Supabase. Open supabase-migrations.sql from this project and run it in the Supabase SQL Editor, then try again.'
+							: 'The record could not be saved. Please check your connection and try again.');
+					}
 				}
+			} finally {
+				submitRecord.disabled = false;
 			}
 		});
 		window.addExpiryReportButton({
