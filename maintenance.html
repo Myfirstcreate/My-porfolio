@@ -187,10 +187,11 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
    #tab-detail .rp .rp-table td.muted{color:#6f6552}
    #tab-detail .rp .rp-table tbody tr:nth-child(even) td{background:#fbf9f5}
    #tab-detail .rp .rp-table tr.rp-cat td{background:#f7f4ee;color:#14213a;border-bottom:1px solid #e2dccd;box-shadow:inset 3px 0 0 #a8844a}
-   #tab-detail .rp .pill{border-radius:2px;text-transform:uppercase;font-size:10.5px;letter-spacing:.5px;border:1px solid transparent}
-   #tab-detail .rp .pill.done, #tab-detail .rp .pill.ok{background:#eef4ea;color:#315c40;border-color:#cfdcc8}
-   #tab-detail .rp .pill.attn{background:#f9f1e2;color:#8a6a2f;border-color:#e5d4ae}
-   #tab-detail .rp .pill.na{background:#f4f1ea;color:#6b6459;border-color:#e2dccd}
+   /* STATUS column reads as plain text — no badge box, border or fill. */
+   #tab-detail .rp .pill{background:none;border:0;border-radius:0;padding:0;text-transform:uppercase;font-size:10.5px;font-weight:700;letter-spacing:.5px}
+   #tab-detail .rp .pill.done, #tab-detail .rp .pill.ok{background:none;color:#315c40}
+   #tab-detail .rp .pill.attn{background:none;color:#8a6a2f}
+   #tab-detail .rp .pill.na{background:none;color:#6b6459}
    #tab-detail .rp .rp-sec{background:#fbf9f5;border-color:#e2dccd;border-left:3px solid #a8844a;border-radius:0}
    #tab-detail .rp .rp-h i{background:#a8844a;color:#fff;border-radius:0}
    #tab-detail .rp .rp-summary{background:#f7f4ee}
