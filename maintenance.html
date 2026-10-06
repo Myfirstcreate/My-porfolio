@@ -641,6 +641,15 @@ function openDetail(id){
 	const r = records.find(x=>String(x.id)===String(id)); if(!r) return; currentId=id;
 	const vals = Object.values(r.items);
 	const cnt = k => vals.filter(v=>v===k).length;
+	// Only show the tally chips that actually have items behind them — a record
+	// with an untouched checklist keeps the report free of "0 Serviced" rows.
+	const nDone = cnt("done"), nOk = cnt("ok"), nAttn = cnt("attn");
+	const sum = (nDone||nOk||nAttn) ? `
+		<div class="rp-sum">
+			${nDone?`<div class="s-done"><b>${nDone}</b><span>Serviced</span></div>`:""}
+			${nOk?`<div class="s-ok"><b>${nOk}</b><span>Checked OK</span></div>`:""}
+			${nAttn?`<div class="s-attn"><b>${nAttn}</b><span>Needs Attention</span></div>`:""}
+		</div>` : "";
 	const rows = Object.entries(ITEMS).map(([cat,list])=>{
 		const got = list.filter(n=>r.items[n]); if(!got.length) return "";
 		return `<tr class="rp-cat"><td colspan="3">${cat}</td></tr>` +
@@ -664,11 +673,7 @@ function openDetail(id){
 			<div><span>Odometer</span><b>${r.km?r.km.toLocaleString()+" km":"—"}</b></div>
 			<div><span>Chassis No.</span><b>${esc(r.chassis||"—")}</b></div>
 		</div>
-		<div class="rp-sum">
-			<div class="s-done"><b>${cnt("done")}</b><span>Serviced</span></div>
-			<div class="s-ok"><b>${cnt("ok")}</b><span>Checked OK</span></div>
-			<div class="s-attn"><b>${cnt("attn")}</b><span>Needs Attention</span></div>
-		</div>
+		${sum}
 		${rows?`<h3 class="rp-title">Inspection Checklist</h3><table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`:""}
 		${r.remarks?`<h3 class="rp-title">Technician Report</h3><div class="rp-remarks">${formatRemarks(r.remarks)}</div>`:""}
 		${all.length?`<h3 class="rp-title">Photos (${all.length})</h3><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div>`:""}
