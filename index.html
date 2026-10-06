@@ -180,7 +180,7 @@
         </aside>
         <main>
             <header class="topbar">
-                <div><p class="eyebrow" id="current-date">Loading date...</p><h1>Good day, Boss AK</h1></div>
+                <div><p class="eyebrow" id="current-date">Loading date...</p><h1 id="greeting">Good day, Boss AK</h1></div>
                 <div class="top-actions"><span class="date" id="last-sync">LAST SYNC --:--:--</span><button class="icon-button" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-badge" id="expiry-notif-badge" hidden></span></button><div class="avatar">AS</div></div>
             </header>
             <section class="metrics record-metrics" aria-label="Car record metrics">
@@ -223,6 +223,7 @@
         lucide.createIcons();
         const currentDate = document.getElementById('current-date');
         const lastSync = document.getElementById('last-sync');
+        const greeting = document.getElementById('greeting');
         const dateFormatter = new Intl.DateTimeFormat('en-GB', {
             weekday: 'long',
             day: '2-digit',
@@ -236,10 +237,19 @@
             hour12: false
         });
 
+        // Greeting follows the local clock: morning before noon, afternoon until 18:00, evening after.
+        function greetingFor(date) {
+            const hour = date.getHours();
+            if (hour < 12) return 'Good morning, Boss AK';
+            if (hour < 18) return 'Good afternoon, Boss AK';
+            return 'Good evening, Boss AK';
+        }
+
         function updateDateAndTime() {
             const now = new Date();
             currentDate.textContent = dateFormatter.format(now).replace(',', ' /');
             lastSync.textContent = `LAST SYNC ${timeFormatter.format(now)}`;
+            if (greeting) greeting.textContent = greetingFor(now);
         }
 
         updateDateAndTime();
