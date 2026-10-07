@@ -99,7 +99,7 @@
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
 			const daysToExpiry = Math.round((expiryTime - today.getTime()) / 86400000);
-			return daysToExpiry < 0 ? 0 : daysToExpiry < 30 ? 1 : 2;
+			return daysToExpiry < 0 ? 0 : daysToExpiry <= 30 ? 1 : 2;
 		}
 		function renderStoredRecords() {
 			records.innerHTML = '';
@@ -113,12 +113,12 @@
 				const today = new Date();
 				today.setHours(0, 0, 0, 0);
 				const daysToExpiry = hasExpiry ? Math.round((expiryTime - today.getTime()) / 86400000) : null;
-				const status = !hasExpiry ? 'UNKNOWN' : daysToExpiry < 0 ? 'EXPIRED' : daysToExpiry < 30 ? 'WARNING' : 'ACTIVE';
+				const status = !hasExpiry ? 'UNKNOWN' : daysToExpiry < 0 ? 'EXPIRED' : daysToExpiry <= 30 ? 'WARNING' : 'ACTIVE';
 				const statusClass = status.toLowerCase();
 				if (statusClass === 'warning') row.classList.add('row-soon');
 				else if (statusClass === 'expired') row.classList.add('row-expired');
 				row.dataset.id = item.id || '';
-				row.innerHTML = `<td>${escapeHtml(item.brand)}</td><td>${escapeHtml(item.model)}</td><td class="code">${escapeHtml(item.code)}</td><td class="plate">${escapeHtml(item.plate)}</td><td>${escapeHtml(item.emirates)}</td><td class="code">${escapeHtml(item.chassis)}</td><td class="expiry">${hasExpiry ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(expiryTime) : '--'}</td><td class="days-left">${!hasExpiry ? '--' : daysToExpiry < 0 ? `${Math.abs(daysToExpiry)} days ago` : `${daysToExpiry} days`}</td><td><span class="expiry-status ${statusClass}">${status}</span><button class="edit" type="button">Edit</button><a class="maint-link" href="maintenance.html?plate=${encodeURIComponent(String(item.plate || ''))}" title="Open maintenance history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Maintenance</a><button class="erase" type="button">Erase</button></td>`;
+				row.innerHTML = `<td>${escapeHtml(item.brand)}</td><td>${escapeHtml(item.model)}</td><td class="code">${escapeHtml(item.code)}</td><td class="plate">${escapeHtml(item.plate)}</td><td>${escapeHtml(item.emirates)}</td><td class="code">${escapeHtml(item.chassis)}</td><td class="expiry">${hasExpiry ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(expiryTime) : '--'}</td><td class="days-left">${!hasExpiry ? '--' : daysToExpiry < 0 ? `${Math.abs(daysToExpiry)} days ago` : `${daysToExpiry} days`}</td><td><span class="expiry-status ${statusClass}">${status}</span><button class="edit" type="button">Edit</button><a class="maint-link" href="maintenance.html?code=${encodeURIComponent(String(item.code || ''))}&amp;plate=${encodeURIComponent(String(item.plate || ''))}" title="Open maintenance history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Maintenance</a><button class="erase" type="button">Erase</button></td>`;
 				row.querySelector('.edit').addEventListener('click', () => {
 					editingIndex = index;
 					editingId = item.id || null;

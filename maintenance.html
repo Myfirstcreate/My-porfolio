@@ -362,9 +362,20 @@ const asNumber = value => {
 	return Number.isFinite(number) ? number : 0;
 };
 
+/* ---------- Car identity (code + plate) ----------
+   Car records keep the code and the number apart ("M" + "8887") while
+   maintenance rows keep one plate string ("DXB M 8887"). Both collapse to
+   the same key, so a car row's Maintenance link can only ever open that car —
+   never another code that happens to share the number (K 8887, D 8887, ...). */
+const carKey = value => String(value ?? '').toUpperCase().replace(/\bDXB\b/g, '').replace(/[^A-Z0-9]/g, '');
+const recordKey = record => carKey(record && record.plate);
+const linkLabel = (code, plate) => [String(code || '').toUpperCase().trim(), String(plate || '').trim()].filter(Boolean).join(' ');
+
 let state = {}, notes = {}, photos = {}, genPhotos = [];
 let currentId = null, editingId = null;
 let records = [];
+// Set when History is opened from a car row's "Maintenance" link (code + plate).
+let carLink = null;
 
 async function loadRecords() {
 	const sb = ensureSupabase();
@@ -551,17 +562,22 @@ $("edit").onclick = ()=>startEdit(currentId);
 function photoCount(r){ return Object.values(r.photos||{}).flat().length + (r.genPhotos||[]).length; }
 function renderHistory(){
 	const q = $("q").value.toLowerCase(), f = $("flt").value;
-	const rs = records.filter(r=>[r.plate,r.model,r.chassis,r.mech,r.loc].join(" ").toLowerCase().includes(q))
-					.filter(r=>!f || Object.values(r.items).includes("attn"));
+	// A car row's "Maintenance" link locks this list to that exact car, so a
+	// record stored under another code with the same number never shows up
+	// here. Typing in the search box releases the lock back to free-text search.
+	const rs = records.filter(r=>carLink
+					? recordKey(r) === carLink.key
+					: [r.plate,r.model,r.chassis,r.mech,r.loc].join(" ").toLowerCase().includes(q))
+				.filter(r=>!f || Object.values(r.items).includes("attn"));
 	const attn = records.reduce((a,r)=>a+Object.values(r.items).filter(v=>v==="attn").length,0);
-	const cars = new Set(records.map(r=>r.plate)).size;
+	const cars = new Set(records.map(recordKey)).size;
 	const cost = records.reduce((a,r)=>a+(r.cost||0),0);
 	$("stats").innerHTML = `
 		<div class="stat"><b>${records.length}</b><span>Service records</span></div>
 		<div class="stat"><b>${cars}</b><span>Vehicles</span></div>
 		<div class="stat"><b style="color:var(--warn)">${attn}</b><span>Items need attention</span></div>
 		<div class="stat"><b>AED ${cost.toLocaleString()}</b><span>Total spent</span></div>`;
-	$("list").innerHTML = rs.length ? rs.map(r=>{
+	$("list").innerHTML = (carLink ? `<div class="muted" style="margin:0 0 8px">Showing only <b>${esc(carLink.label)}</b> · <a href="#" id="car-link-clear">show all records</a></div>` : "") + (rs.length ? rs.map(r=>{
 		const v = Object.values(r.items), a = v.filter(x=>x==="attn").length, pc = photoCount(r);
 		return `<div class="rec" data-id="${r.id}">
 			<div class="top"><span class="plate">${esc(r.plate)}</span><span class="muted">${fmt(r.date)}${r.updated?" · edited":""}</span></div>
@@ -571,10 +587,12 @@ function renderHistory(){
 				${v.filter(x=>x==="ok").length?`<span class="pill ok">${v.filter(x=>x==="ok").length} checked OK</span>`:""}
 				${a?`<span class="pill attn">${a} needs attention</span>`:""}
 				${pc?`<span class="pill na">${pc} photo${pc>1?"s":""}</span>`:""}
-			</div></div>`}).join("") : `<div class="empty-note">No records found — save your first checklist.</div>`;
+			</div></div>`}).join("") : `<div class="empty-note">${carLink ? `No maintenance records yet for ${esc(carLink.label)} — open “+ New checklist” to add the first one.` : "No records found — save your first checklist."}</div>`);
 	document.querySelectorAll(".rec").forEach(e=>e.onclick=()=>openDetail(e.dataset.id));
+	const carLinkClear = $("car-link-clear");
+	if (carLinkClear) carLinkClear.onclick = event => { event.preventDefault(); carLink = null; $("q").value = ""; renderHistory(); };
 }
-$("q").oninput = renderHistory; $("flt").onchange = renderHistory;
+$("q").oninput = () => { carLink = null; renderHistory(); }; $("flt").onchange = renderHistory;
 
 $("save-file").onclick = () => {
 	if (!records.length) { toast("No records to save yet"); return; }
@@ -823,7 +841,7 @@ function dateStatus(lastDate) {
 }
 function renderDue(){
 	const latest = {};
-	records.forEach(r=>{ if(!latest[r.plate] || (r.date||"")>(latest[r.plate].date||"")) latest[r.plate]=r; });
+	records.forEach(r=>{ const key = recordKey(r); if(!latest[key] || (r.date||"")>(latest[key].date||"")) latest[key]=r; });
 	const arr = Object.values(latest);
 	$("due").innerHTML = arr.length ? `<table><thead><tr><th>Plate</th><th>Last service</th><th>Last km</th><th>Next due (km)</th><th>Next due (3 months)</th><th>Open issues</th></tr></thead><tbody>${
 		arr.map(r=>{const a=Object.entries(r.items).filter(([k,v])=>v==="attn").map(([k])=>k);
@@ -849,11 +867,26 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.
 
 $("f-date").value = today(); buildChecklist(); renderGen();
 
-// Deep link: maintenance.html?plate=XXX opens History filtered to that plate.
-(function openPlateHistory() {
-	const plateParam = new URLSearchParams(location.search).get('plate');
-	if (!plateParam) return;
-	$("q").value = plateParam.toUpperCase();
+// Deep link from a car row: maintenance.html?code=M&plate=8887 opens History
+// locked to that exact car. Older ?plate=-only links still work, including a
+// stored plate like "DXB E 8887".
+(function openCarHistory() {
+	const params = new URLSearchParams(location.search);
+	let code = (params.get('code') || '').trim();
+	let plate = (params.get('plate') || '').trim();
+	if (!code && !plate) return;
+	if (!code) {
+		// Legacy ?plate=-only links. A stored plate may already carry the code
+		// ("DXB E 8887"); a bare number has no car identity to lock onto, so it
+		// falls back to the plain search box instead of an empty list.
+		const parts = plate.replace(/\bDXB\b/gi, ' ').trim().split(/\s+/).filter(Boolean);
+		if (parts.length > 1) { code = parts[0]; plate = parts.slice(1).join(''); }
+		else if (!/[A-Z]/i.test(plate)) { $("q").value = plate.toUpperCase(); show("history"); return; }
+	}
+	const key = carKey(code + plate);
+	if (!key) return;
+	carLink = { key, label: linkLabel(code, plate) || plate.toUpperCase() };
+	$("q").value = carLink.label;
 	show("history");
 })();
 
