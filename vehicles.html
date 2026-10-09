@@ -11,7 +11,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="supabase-client.js"></script>
 	<style>
-		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --amber:#ffad62; --blue:#79b9ff; }
+		:root { --black:#070807; --panel:#101210; --line:#292d29; --text:#f0f3ec; --muted:#8b9388; --lime:#c4f04e; --amber:#ffad62; --blue:#79b9ff; --card-w:clamp(248px,34vw,500px); }
 		* { box-sizing:border-box; }
 		body { margin:0; min-height:100vh; color:var(--text); background:radial-gradient(circle at 89% 0,#172016 0,transparent 24%),var(--black); font-family:'Space Grotesk',sans-serif; }
 		/* Car backdrop shared with the overview page. */
@@ -43,32 +43,70 @@
 		.filter:hover,.filter.active { color:var(--black); background:var(--lime); border-color:var(--lime); }
 		.search { display:flex; align-items:center; gap:8px; min-width:205px; padding:9px 11px; border:1px solid var(--line); border-radius:4px; color:var(--muted); }
 		.search svg { width:14px; } .search input { width:100%; border:0; outline:0; color:var(--text); background:transparent; font:11px 'DM Mono',monospace; }
-		.vehicles { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
+
+		/* ---------- Cinematic coverflow showcase ---------- */
+		.showcase { position:relative; margin-top:26px; }
+		/* overflow:clip (not hidden) — a hidden box is a scroll container, so focusing
+		   a card could scroll the fan sideways and leave it misaligned. */
+		.stage { position:relative; height:clamp(340px,calc(var(--card-w) * 1.5),78vh); overflow:hidden; overflow:clip; perspective:1500px; perspective-origin:50% 36%; touch-action:pan-y; -webkit-mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%); mask-image:linear-gradient(to right,transparent 0,#000 5%,#000 95%,transparent 100%); }
+		/* The 3D container must never swallow clicks meant for a card: in the
+		   preserve-3d stacking order it can sit in front of its own children. */
+		.deck { position:absolute; inset:0; transform-style:preserve-3d; pointer-events:none; }
+		.deck-card { position:absolute; top:0; left:50%; width:var(--card-w); height:100%; pointer-events:auto; overflow:hidden; border:1px solid #23281f; border-radius:16px; background:#0b0d0b; box-shadow:0 28px 65px rgba(0,0,0,.6); transform:translate(-50%,0) translateZ(-520px) scale(.6); transform-origin:50% 62%; opacity:0; cursor:pointer; transition:transform .58s cubic-bezier(.22,.61,.36,1),opacity .5s ease,filter .5s ease,border-color .4s ease; }
+		.deck-card[data-state="far"] { pointer-events:none; }
+		.deck-card[data-active="true"] { border-color:#39402f; }
+		.deck-card:focus-visible { outline:2px solid var(--lime); outline-offset:4px; }
+		.deck-media { position:absolute; inset:0; background-position:center; background-size:cover; filter:saturate(.74) contrast(1.06); transition:filter .5s ease; }
+		.deck-media.e30,.deck-media.porsche,.deck-media.nissan { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
+		.deck-media::before { content:''; position:absolute; inset:0; background:linear-gradient(155deg,hsl(var(--tint,140) 64% 48% / .46),transparent 46%,hsl(calc(var(--tint,140) + 48) 58% 26% / .5)); mix-blend-mode:overlay; }
+		.deck-media.has-photo::before { opacity:.35; }
+		.deck-media::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(5,7,5,.18) 0%,rgba(5,7,5,.34) 38%,rgba(6,8,6,.82) 68%,rgba(6,8,6,.97) 100%); }
+		.deck-card[data-active="true"] .deck-media { filter:saturate(.95) contrast(1.02); }
+		.deck-badge { position:absolute; top:14px; width:31px; height:31px; display:grid; place-items:center; border-radius:9px; color:var(--text); background:rgba(10,12,10,.5); backdrop-filter:blur(6px); opacity:0; transform:scale(.86); transition:opacity .45s ease,transform .45s ease; }
+		.deck-badge svg { width:15px; height:15px; }
+		.deck-badge.star { left:14px; } .deck-badge.star svg { color:var(--lime); }
+		.deck-badge.add { right:14px; }
+		.deck-card[data-active="true"] .deck-badge { opacity:1; transform:none; }
+		.deck-info { position:absolute; left:0; right:0; bottom:0; padding:16px 18px 18px; opacity:0; transform:translateY(15px); transition:opacity .45s ease .06s,transform .45s ease .06s; }
+		.deck-card[data-active="true"] .deck-info { opacity:1; transform:none; }
+		/* Faded panels on the side cards must not swallow clicks. */
+		.deck-card:not([data-active="true"]) .deck-info { pointer-events:none; }
+		.deck-info h2 { margin:0; font-size:20px; letter-spacing:-.045em; }
+		.deck-line { margin:9px 0 0; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.05em; text-transform:uppercase; }
+		.deck-desc { margin:8px 0 0; color:#c8cfbe; font-size:11.5px; line-height:1.45; }
+		.deck-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:13px; padding-top:11px; border-top:1px solid rgba(240,243,236,.12); }
+		.deck-foot .status { padding:5px 7px; border:1px solid #4f6230; border-radius:3px; color:var(--lime); font:9px 'DM Mono',monospace; text-transform:uppercase; white-space:nowrap; }
+		.deck-foot .status.amber { color:var(--amber); border-color:#68472d; } .deck-foot .status.blue { color:var(--blue); border-color:#34516e; }
+		.view-button { display:flex; align-items:center; gap:5px; padding:0; border:0; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; white-space:nowrap; }
+		.view-button:hover { color:var(--text); } .view-button svg { width:13px; }
 		.empty-vehicles { grid-column:1/-1; padding:58px 25px; border:1px dashed #3c4439; border-radius:6px; color:var(--muted); background:rgba(16,18,16,.72); text-align:center; }
 		.empty-vehicles svg { width:28px; height:28px; margin-bottom:13px; color:var(--lime); }
 		.empty-vehicles h2 { margin:0 0 8px; color:var(--text); font-size:18px; }
 		.empty-vehicles p { margin:0; font-size:12px; }
-		.card { overflow:hidden; border:1px solid var(--line); border-radius:6px; background:rgba(16,18,16,.92); }
-		.card:hover { border-color:#56634d; }
-		.cover { height:155px; background-position:center; background-size:cover; filter:saturate(.72); }
-		.cover.has-photo { filter:none; }
-		.e30 { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
-		.porsche { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
-		.nissan { background-image:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85'); }
-		.card-body { padding:17px 18px 19px; }
-		.card-title { display:flex; justify-content:space-between; align-items:start; gap:12px; }
-		h2 { margin:0; font-size:19px; letter-spacing:-.04em; } .card-title small { color:var(--muted); font:10px 'DM Mono',monospace; }
-		.status { padding:5px 7px; border:1px solid #4f6230; border-radius:3px; color:var(--lime); font:9px 'DM Mono',monospace; text-transform:uppercase; white-space:nowrap; }
-		.status.amber { color:var(--amber); border-color:#68472d; } .status.blue { color:var(--blue); border-color:#34516e; }
-		.details { width:100%; margin:17px 0; border-collapse:collapse; border-top:1px solid #20241f; border-bottom:1px solid #20241f; }
-		.details th, .details td { padding:8px 0; border-bottom:1px solid #20241f; text-align:left; font-size:12px; }
-		.details tr:last-child th, .details tr:last-child td { border-bottom:0; }
-		.details th { width:42%; color:var(--muted); font:9px 'DM Mono',monospace; text-transform:uppercase; }
-		.card-footer { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font:9px 'DM Mono',monospace; }
+
+		/* Bottom console bar (slideshow controls) */
+		.console { display:flex; align-items:center; gap:12px; width:min(580px,100%); margin:22px auto 0; padding:9px 13px; border:1px solid #262b24; border-radius:999px; background:rgba(12,14,12,.88); backdrop-filter:blur(10px); box-shadow:0 16px 42px rgba(0,0,0,.5); }
+		.console[hidden] { display:none; }
+		.play-btn { width:38px; height:38px; flex:none; display:grid; place-items:center; border:0; border-radius:50%; color:var(--black); background:var(--lime); cursor:pointer; }
+		.play-btn:hover { background:#d4ff62; } .play-btn svg { width:16px; height:16px; }
+		.play-btn .icon-play,.play-btn .icon-pause { display:grid; place-items:center; }
+		.play-btn .icon-pause { display:none; } .play-btn.playing .icon-play { display:none; } .play-btn.playing .icon-pause { display:grid; }
+		.nav-btn { width:34px; height:34px; flex:none; display:grid; place-items:center; border:1px solid var(--line); border-radius:50%; color:var(--muted); background:transparent; cursor:pointer; }
+		.nav-btn:hover { color:var(--text); border-color:var(--lime); } .nav-btn svg { width:15px; height:15px; }
+		.now-playing { display:flex; align-items:center; gap:11px; flex:1; min-width:0; }
+		.now-thumb { width:36px; height:36px; flex:none; border:1px solid #2d3329; border-radius:10px; background-position:center; background-size:cover; }
+		.now-text { min-width:0; }
+		.now-text strong { display:block; font-size:13px; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+		.now-text small { display:block; margin-top:3px; color:var(--muted); font:10px 'DM Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+		.counter { flex:none; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.08em; }
+
+		.like-rail { position:fixed; right:24px; top:50%; z-index:2; display:grid; justify-items:center; gap:6px; padding:13px 10px; border:1px solid #23281f; border-radius:999px; color:var(--muted); background:rgba(12,14,12,.72); backdrop-filter:blur(8px); transform:translateY(-50%); }
+		.like-rail[hidden] { display:none; }
+		.like-rail svg { width:24px; height:24px; }
+		.like-rail strong { color:var(--text); font:600 13px 'Space Grotesk',sans-serif; }
+		.like-rail small { color:var(--muted); font:8px 'DM Mono',monospace; letter-spacing:.1em; text-transform:uppercase; writing-mode:vertical-rl; }
+
 		.viewer-note { margin:12px 0 0; padding:9px 12px; border:1px dashed #3c4439; border-radius:4px; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
-		.view { display:flex; align-items:center; gap:5px; color:var(--lime); } .view svg { width:13px; }
-		.view-button { display:flex; align-items:center; gap:5px; padding:0; border:0; color:var(--lime); background:transparent; font:9px 'DM Mono',monospace; cursor:pointer; }
-		.view-button:hover { color:var(--text); } .view-button svg { width:13px; }
 		.detail-modal { position:fixed; inset:0; z-index:10; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.72); }
 		.detail-modal[hidden] { display:none; }
 		.detail-panel { width:min(620px,100%); max-height:90vh; overflow:auto; padding:24px; border:1px solid #46503f; border-radius:7px; background:#101210; box-shadow:0 18px 55px rgba(0,0,0,.5); }
@@ -87,8 +125,9 @@
 		.detail-actions button { padding:10px 14px; border:1px solid var(--line); border-radius:4px; color:var(--muted); background:transparent; font:10px 'DM Mono',monospace; cursor:pointer; text-transform:uppercase; }
 		.detail-actions .save-detail { color:var(--black); border-color:var(--lime); background:var(--lime); }
 		@media(max-width:560px) { .detail-panel { padding:18px; } .detail-info { grid-template-columns:1fr 1fr; } }
-		@media(max-width:850px) { .shell { padding:25px 20px 40px; } .vehicles { grid-template-columns:repeat(2,1fr); } .stats { grid-template-columns:repeat(2,1fr); } }
-		@media(max-width:560px) { .intro,.toolbar { align-items:start; flex-direction:column; } .intro p { max-width:none; } .vehicles { grid-template-columns:1fr; } .search { width:100%; } .filters { flex-wrap:wrap; } }
+		@media(max-width:850px) { .shell { padding:25px 20px 40px; } .stats { grid-template-columns:repeat(2,1fr); } :root { --card-w:clamp(212px,52vw,312px); } .like-rail { right:10px; padding:10px 7px; } }
+		@media(max-width:560px) { .intro,.toolbar { align-items:start; flex-direction:column; } .intro p { max-width:none; } .search { width:100%; } .filters { flex-wrap:wrap; } .console { gap:9px; padding:8px 10px; } .counter { display:none; } .like-rail { top:auto; bottom:20px; transform:none; } }
+		@media (prefers-reduced-motion:reduce) { .deck-card,.deck-info,.deck-badge,.deck-media { transition-duration:.01ms; } }
 	</style>
 </head>
 <body>
@@ -111,10 +150,33 @@
 			<div class="stat"><label>Awaiting pickup</label><strong>00</strong><span>NO VEHICLES READY</span></div>
 			<div class="stat"><label>Avg. build value</label><strong>--</strong><span>NO VEHICLE DATA</span></div>
 		</section>
-		<div class="toolbar"><div class="filters"><button class="filter active">ALL VEHICLES</button><button class="filter">IN GARAGE</button><button class="filter">DELIVERED</button></div><label class="search"><i data-lucide="search"></i><input id="vehicle-search" type="search" placeholder="Search vehicles"></label></div>
-		<section class="vehicles" aria-label="Vehicle registry">
-			<div id="vehicle-empty-state" class="empty-vehicles"><i data-lucide="car-front"></i><h2>No vehicles yet</h2><p>Future vehicles will appear here when they are added.</p></div>
+		<div class="toolbar">
+			<div class="filters">
+				<button class="filter active" type="button" data-filter="all">ALL VEHICLES</button>
+				<button class="filter" type="button" data-filter="expiring">EXPIRING SOON</button>
+				<button class="filter" type="button" data-filter="expired">EXPIRED</button>
+			</div>
+			<label class="search"><i data-lucide="search"></i><input id="vehicle-search" type="search" placeholder="Search vehicles"></label>
+		</div>
+		<section class="showcase" aria-label="Vehicle registry">
+			<div class="stage" id="stage">
+				<div class="deck" id="deck"></div>
+			</div>
+			<div class="console" id="console" hidden>
+				<button class="nav-btn" id="prev-vehicle" type="button" aria-label="Previous vehicle"><i data-lucide="chevron-left"></i></button>
+				<button class="play-btn" id="toggle-play" type="button" aria-label="Start slideshow" aria-pressed="false"><span class="icon-play"><i data-lucide="play"></i></span><span class="icon-pause"><i data-lucide="pause"></i></span></button>
+				<div class="now-playing">
+					<span class="now-thumb" id="now-thumb" aria-hidden="true"></span>
+					<span class="now-text"><strong id="now-title">--</strong><small id="now-meta">--</small></span>
+				</div>
+				<span class="counter" id="now-counter">000 / 000</span>
+				<button class="nav-btn" id="next-vehicle" type="button" aria-label="Next vehicle"><i data-lucide="chevron-right"></i></button>
+			</div>
+			<div class="empty-vehicles" id="vehicle-empty-state"><i data-lucide="car-front"></i><h2>No vehicles yet</h2><p>Future vehicles will appear here when they are added.</p></div>
 		</section>
+	</div>
+	<div class="like-rail" id="like-rail" title="Vehicles in this view" hidden>
+		<i data-lucide="thumbs-up"></i><strong id="like-count">000</strong><small>in view</small>
 	</div>
 	<div class="detail-modal" id="detail-modal" hidden>
 		<section class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
@@ -128,7 +190,21 @@
 	<script>
 		lucide.createIcons();
 		const TABLE = 'mr_ak_cars';
-		const vehicleSection = document.querySelector('.vehicles');
+		const COVER_IMAGE = "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85";
+		const EXPIRING_DAYS = 30;
+		const VISIBLE_SPAN = 3;
+		const SLIDESHOW_MS = 4500;
+		const deck = document.getElementById('deck');
+		const stage = document.getElementById('stage');
+		const consoleBar = document.getElementById('console');
+		const likeRail = document.getElementById('like-rail');
+		const likeCount = document.getElementById('like-count');
+		const emptyState = document.getElementById('vehicle-empty-state');
+		const nowTitle = document.getElementById('now-title');
+		const nowMeta = document.getElementById('now-meta');
+		const nowThumb = document.getElementById('now-thumb');
+		const nowCounter = document.getElementById('now-counter');
+		const playButton = document.getElementById('toggle-play');
 		const vehicleStats = document.querySelectorAll('.stat strong');
 		const detailModal = document.getElementById('detail-modal');
 		const detailTitle = document.getElementById('detail-title');
@@ -140,8 +216,15 @@
 		const detailExpiry = document.getElementById('detail-expiry');
 		const maintenanceInput = document.getElementById('maintenance-input');
 		const vehicleSearch = document.getElementById('vehicle-search');
+		const filterButtons = document.querySelectorAll('.filter');
 		let selectedRecordId = null;
 		let storedRecords = [];
+		let visibleRecords = [];
+		let cards = [];
+		let activeIndex = 0;
+		let slideshowTimer = null;
+		let dragStartX = null;
+		let dragged = false;
 		async function loadRecords() {
 			const { data, error } = await window.sb.from(TABLE).select('*').order('code');
 			if (error) throw error;
@@ -156,6 +239,43 @@
 			if (lower.includes('nissan')) return 'nissan';
 			return 'e30';
 		}
+		// Stable colour grade per car so repeated stock photos still read as distinct cards.
+		function getTint(item) {
+			const seed = String(item.plate || '') + String(item.code || '') + String(item.brand || '');
+			let hash = 0;
+			for (let index = 0; index < seed.length; index += 1) hash = (hash * 31 + seed.charCodeAt(index)) % 360;
+			return hash;
+		}
+		function daysUntil(dateValue) {
+			if (!dateValue) return null;
+			const target = new Date(dateValue);
+			if (Number.isNaN(target.getTime())) return null;
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			target.setHours(0, 0, 0, 0);
+			return Math.round((target - today) / 86400000);
+		}
+		function getExpiryState(item) {
+			const days = daysUntil(item.expiry);
+			if (days === null) return 'unknown';
+			if (days < 0) return 'expired';
+			if (days <= EXPIRING_DAYS) return 'expiring';
+			return 'active';
+		}
+		function expiryLabel(item) {
+			const state = getExpiryState(item);
+			if (state === 'expired') return 'EXPIRED';
+			if (state === 'expiring') return 'EXPIRING SOON';
+			if (state === 'active') return 'ACTIVE';
+			return 'NO EXPIRY';
+		}
+		function daysText(item) {
+			const days = daysUntil(item.expiry);
+			if (days === null) return 'Expiry date not on record';
+			if (days < 0) return `${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} expired`;
+			if (days === 0) return 'Expires today';
+			return `${days} day${days === 1 ? '' : 's'} to expiry`;
+		}
 		function openDetails(id) {
 			const item = storedRecords.find((record) => String(record.id) === String(id));
 			if (!item) return;
@@ -169,86 +289,238 @@
 			detailExpiry.textContent = item.expiry || '--';
 			maintenanceInput.value = item.maintenance || '';
 			detailModal.hidden = false;
+			stopSlideshow();
 			maintenanceInput.focus();
 		}
 		function closeDetails() {
 			detailModal.hidden = true;
 			selectedRecordId = null;
 		}
-		function ensureEmptyState() {
-			let emptyState = document.getElementById('vehicle-empty-state');
-			if (!emptyState) {
-				// A previous render wiped the section, taking the placeholder with it.
-				emptyState = document.createElement('div');
-				emptyState.id = 'vehicle-empty-state';
-				emptyState.className = 'empty-vehicles';
-				emptyState.innerHTML = '<i data-lucide="car-front"></i><h2>No vehicles yet</h2><p>Future vehicles will appear here when they are added.</p>';
-				lucide.createIcons();
-			}
-			return emptyState;
+		function getFilter() {
+			const active = document.querySelector('.filter.active');
+			return active ? active.dataset.filter : 'all';
 		}
-		function renderVehicles() {
-			const items = storedRecords;
+		function matchesFilter(item, filter) {
+			if (filter === 'expiring') return getExpiryState(item) === 'expiring';
+			if (filter === 'expired') return getExpiryState(item) === 'expired';
+			return true;
+		}
+		function buildCard(item, index) {
+			const article = document.createElement('article');
+			article.className = 'deck-card';
+			article.dataset.index = String(index);
+			article.dataset.recordId = String(item.id);
+			article.setAttribute('role', 'group');
+			article.setAttribute('aria-label', `${item.brand || 'Vehicle'} — ${item.code || '--'} ${item.plate || ''}`);
+			article.tabIndex = -1;
+			article.style.setProperty('--tint', String(getTint(item)));
+			const coverClass = getCoverClass(item.brand);
+			const expiryState = getExpiryState(item);
+			const statusClass = expiryState === 'expired' ? 'status amber' : expiryState === 'expiring' ? 'status blue' : 'status';
+			article.innerHTML = `
+				<div class="deck-media ${coverClass}${item.photo ? ' has-photo' : ''}"></div>
+				<span class="deck-badge star" aria-hidden="true"><i data-lucide="star"></i></span>
+				<span class="deck-badge add" aria-hidden="true"><i data-lucide="plus"></i></span>
+				<div class="deck-info">
+					<h2>${escapeHtml(item.brand || 'Vehicle')}</h2>
+					<p class="deck-line">Code ${escapeHtml(item.code || '--')} &middot; Plate ${escapeHtml(item.plate || '--')} &middot; ${escapeHtml(item.year || '--')}</p>
+					<p class="deck-desc">${escapeHtml(item.chassis ? `Chassis ${item.chassis}` : 'Chassis not on record')} &middot; ${escapeHtml(daysText(item))}</p>
+					<div class="deck-foot">
+						<span class="${statusClass}">${expiryLabel(item)}</span>
+						<button class="view-button" type="button" data-record-id="${escapeHtml(item.id)}">View details <i data-lucide="arrow-right"></i></button>
+					</div>
+				</div>`;
+			return article;
+		}
+		function paintDeck() {
+			cards.forEach((card, index) => {
+				// Circular fan: the last records sit left of the first one, so the
+				// focus card always has neighbours on both sides.
+				let offset = index - activeIndex;
+				if (offset > cards.length / 2) offset -= cards.length;
+				if (offset < -cards.length / 2) offset += cards.length;
+				const distance = Math.abs(offset);
+				const state = distance > VISIBLE_SPAN ? 'far' : String(distance);
+				const previous = card.dataset.state;
+				const changed = previous !== state;
+				if (changed) card.dataset.state = state;
+				if (state === 'far') {
+					if (changed) {
+						card.style.transform = 'translate(-50%,0) translateZ(-520px) scale(.6)';
+						card.style.opacity = '0';
+						card.setAttribute('aria-hidden', 'true');
+						card.tabIndex = -1;
+						const media = card.querySelector('.deck-media');
+						if (media) media.style.backgroundImage = ''; card.style.filter = 'none';
+					}
+					return;
+				}
+				if (changed) {
+					card.removeAttribute('aria-hidden');
+					card.tabIndex = 0;
+				}
+				// A card returning from outside the fan is placed without animating
+				// across the whole deck.
+				const jumpedIn = changed && previous === 'far';
+				if (jumpedIn) card.style.transition = 'none';
+				const scale = distance === 0 ? 1 : distance === 1 ? .84 : distance === 2 ? .72 : .63;
+				const spread = distance === 0 ? 0 : distance === 1 ? 82 : distance === 2 ? 136 : 176;
+				const rotate = offset * -20;
+				const depth = distance === 0 ? 0 : -(distance * 70);
+				const lift = distance === 0 ? 0 : distance * 6;
+				card.style.transform = `translate(-50%,0) translateX(${Math.sign(offset) * spread}%) translateY(${lift}px) translateZ(${depth}px) rotateY(${rotate}deg) scale(${scale})`;
+				card.style.opacity = distance === 0 ? '1' : distance === 1 ? '.74' : distance === 2 ? '.42' : '.22';
+				const blur = distance === 1 ? .6 : distance === 2 ? 1.6 : 2.6;
+				const brightness = distance === 1 ? .74 : distance === 2 ? .54 : .42;
+				card.style.filter = distance === 0 ? 'none' : `blur(${blur}px) brightness(${brightness})`;
+				card.style.zIndex = String(40 - distance);
+				card.dataset.active = distance === 0 ? 'true' : 'false';
+				// Big base64 photos are only attached while a card is close to the focus.
+				const item = visibleRecords[index];
+				const media = card.querySelector('.deck-media');
+				if (media && item && item.photo && !media.style.backgroundImage) media.style.backgroundImage = `url("${item.photo}")`;
+				if (jumpedIn) { void card.offsetWidth; card.style.transition = ''; }
+			});
+		}
+		function updateConsole() {
+			const item = visibleRecords[activeIndex];
+			const total = visibleRecords.length;
+			if (!item) return;
+			nowTitle.textContent = item.brand || 'Vehicle';
+			nowMeta.textContent = `Code ${item.code || '--'} · Plate ${item.plate || '--'} · ${expiryLabel(item).toLowerCase()}`;
+			nowCounter.textContent = `${String(activeIndex + 1).padStart(3, '0')} / ${String(total).padStart(3, '0')}`;
+			nowThumb.style.backgroundImage = `url("${item.photo || COVER_IMAGE}")`;
+		}
+		function goTo(index) {
+			const total = visibleRecords.length;
+			if (!total) return;
+			activeIndex = ((index % total) + total) % total;
+			paintDeck();
+			updateConsole();
+		}
+		function step(delta) {
+			goTo(activeIndex + delta);
+		}
+		function stopSlideshow() {
+			if (slideshowTimer) {
+				clearInterval(slideshowTimer);
+				slideshowTimer = null;
+			}
+			playButton.classList.remove('playing');
+			playButton.setAttribute('aria-pressed', 'false');
+			playButton.setAttribute('aria-label', 'Start slideshow');
+		}
+		function startSlideshow() {
+			stopSlideshow();
+			if (visibleRecords.length < 2) return;
+			slideshowTimer = setInterval(() => step(1), SLIDESHOW_MS);
+			playButton.classList.add('playing');
+			playButton.setAttribute('aria-pressed', 'true');
+			playButton.setAttribute('aria-label', 'Pause slideshow');
+		}
+		function renderVehicles(keepFocus = false) {
+			const focusedId = keepFocus && visibleRecords[activeIndex] ? String(visibleRecords[activeIndex].id) : '';
 			const query = vehicleSearch.value.trim().toLowerCase();
-			const filteredItems = items.filter((item) => {
+			const filter = getFilter();
+			visibleRecords = storedRecords.filter((item) => {
+				if (!matchesFilter(item, filter)) return false;
 				return !query || [item.brand, item.code, item.plate, item.chassis, item.year, item.expiry].some((value) => String(value || '').toLowerCase().includes(query));
 			});
-			const emptyState = ensureEmptyState();
-			emptyState.querySelector('h2').textContent = 'No vehicles yet';
-			emptyState.querySelector('p').textContent = 'Future vehicles will appear here when they are added.';
-			vehicleSection.innerHTML = '';
-			vehicleSection.appendChild(emptyState);
-			emptyState.style.display = 'none';
-			if (!items.length) {
-				emptyState.style.display = 'block';
-				vehicleStats[0].textContent = '00';
-				vehicleStats[1].textContent = '00';
-				vehicleStats[2].textContent = '00';
-				vehicleStats[3].textContent = '--';
-				return;
-			}
-			if (!filteredItems.length) {
-				emptyState.style.display = 'block';
-				emptyState.querySelector('h2').textContent = 'No matching vehicles';
-				emptyState.querySelector('p').textContent = 'Try a different search term.';
-				return;
-			}
-			filteredItems.forEach((item) => {
-				const article = document.createElement('article');
-				article.className = 'card';
-				article.innerHTML = `
-					<div class="cover ${getCoverClass(item.brand)}${item.photo ? ' has-photo' : ''}"${item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : ''}></div>
-					<div class="card-body">
-						<div class="card-title">
-							<div>
-								<h2>${escapeHtml(item.brand)}</h2>
-								<small>Registration record</small>
-							</div>
-							<span class="status">IN GARAGE</span>
-						</div>
-						<table class="details">
-							<tr><th>Code</th><td>${item.code || '--'}</td></tr>
-							<tr><th>Plate No.</th><td>${item.plate || '--'}</td></tr>
-							<tr><th>Chassis</th><td>${item.chassis || '--'}</td></tr>
-							<tr><th>Expiry</th><td>${item.expiry || '--'}</td></tr>
-						</table>
-						<div class="card-footer"><span>YEAR ${item.year || '--'}</span><button class="view-button" type="button" data-record-id="${item.id}">View details <i data-lucide="arrow-right"></i></button></div>
-					</div>
-				`;
-				vehicleSection.appendChild(article);
-			});
-			vehicleStats[0].textContent = String(items.length).padStart(2,'0');
-			vehicleStats[1].textContent = String(items.length).padStart(2,'0');
+			stopSlideshow();
+			deck.innerHTML = '';
+			cards = [];
+			activeIndex = 0;
+			const total = storedRecords.length;
+			vehicleStats[0].textContent = String(total).padStart(2, '0');
+			vehicleStats[1].textContent = String(total).padStart(2, '0');
 			vehicleStats[2].textContent = '00';
 			vehicleStats[3].textContent = '--';
+			if (!visibleRecords.length) {
+				stage.hidden = true;
+				consoleBar.hidden = true;
+				likeRail.hidden = true;
+				emptyState.style.display = 'block';
+				emptyState.querySelector('h2').textContent = total ? 'No matching vehicles' : 'No vehicles yet';
+				emptyState.querySelector('p').textContent = total ? 'Try a different search term or filter.' : 'Future vehicles will appear here when they are added.';
+				return;
+			}
+			emptyState.style.display = 'none';
+			stage.hidden = false;
+			consoleBar.hidden = false;
+			likeRail.hidden = false;
+			likeCount.textContent = String(visibleRecords.length).padStart(3, '0');
+			visibleRecords.forEach((item, index) => {
+				const card = buildCard(item, index);
+				deck.appendChild(card);
+				cards.push(card);
+			});
+			// A silent data refresh (returning to the tab) should not throw the
+			// visitor back to the first car.
+			if (focusedId) {
+				const restored = visibleRecords.findIndex((item) => String(item.id) === focusedId);
+				if (restored >= 0) activeIndex = restored;
+			}
+			paintDeck();
+			updateConsole();
 			lucide.createIcons();
 		}
-		vehicleSection.addEventListener('click', (event) => {
-			const button = event.target.closest('.view-button');
-			if (button) openDetails(button.dataset.recordId);
+		deck.addEventListener('click', (event) => {
+			const viewButton = event.target.closest('.view-button');
+			if (viewButton) {
+				openDetails(viewButton.dataset.recordId);
+				return;
+			}
+			const card = event.target.closest('.deck-card');
+			if (!card) return;
+			if (dragged) { dragged = false; return; }
+			if (card.dataset.active === 'true') {
+				openDetails(card.dataset.recordId);
+				return;
+			}
+			goTo(Number(card.dataset.index));
+		});
+		deck.addEventListener('keydown', (event) => {
+			if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+				event.preventDefault();
+				step(event.key === 'ArrowRight' ? 1 : -1);
+			}
+		});
+		stage.addEventListener('pointerdown', (event) => {
+			dragStartX = event.clientX;
+			dragged = false;
+		});
+		stage.addEventListener('pointerup', (event) => {
+			if (dragStartX === null) return;
+			const delta = event.clientX - dragStartX;
+			dragStartX = null;
+			if (Math.abs(delta) < 45) return;
+			dragged = true;
+			step(delta < 0 ? 1 : -1);
+			setTimeout(() => { dragged = false; }, 60);
+		});
+		stage.addEventListener('pointercancel', () => { dragStartX = null; });
+		document.getElementById('prev-vehicle').addEventListener('click', () => { stopSlideshow(); step(-1); });
+		document.getElementById('next-vehicle').addEventListener('click', () => { stopSlideshow(); step(1); });
+		playButton.addEventListener('click', () => {
+			if (slideshowTimer) stopSlideshow();
+			else startSlideshow();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && !detailModal.hidden) closeDetails();
+			const typing = ['INPUT', 'TEXTAREA'].includes(event.target.tagName);
+			if (detailModal.hidden && !typing) {
+				if (event.key === 'ArrowRight') { event.preventDefault(); step(1); }
+				if (event.key === 'ArrowLeft') { event.preventDefault(); step(-1); }
+			}
 		});
 		vehicleSearch.addEventListener('input', () => {
 			renderVehicles();
+		});
+		filterButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				filterButtons.forEach((other) => other.classList.toggle('active', other === button));
+				renderVehicles();
+			});
 		});
 		document.getElementById('close-detail').addEventListener('click', closeDetails);
 		document.getElementById('cancel-detail').addEventListener('click', closeDetails);
@@ -273,20 +545,18 @@
 		detailModal.addEventListener('click', (event) => {
 			if (event.target === detailModal) closeDetails();
 		});
-		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape' && !detailModal.hidden) closeDetails();
-		});
-		async function refreshVehicles() {
+		async function refreshVehicles(keepFocus = false) {
 			try {
 				await loadRecords();
-				renderVehicles();
+				renderVehicles(Boolean(keepFocus));
 			} catch (error) {
 				console.error('Unable to load vehicles from Supabase:', error);
 			}
 		}
-		window.addEventListener('pageshow', refreshVehicles);
+		window.addEventListener('pageshow', () => refreshVehicles(true));
 		window.addEventListener('visibilitychange', () => {
-			if (!document.hidden) refreshVehicles();
+			if (document.hidden) stopSlideshow();
+			else refreshVehicles(true);
 		});
 		refreshVehicles();
 
