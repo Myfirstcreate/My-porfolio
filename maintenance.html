@@ -147,7 +147,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 .rp-sign .line{border-bottom:1px solid var(--ink);height:36px}
 .rp-sign span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
 .rp-sign b{font-size:13px}
-.rp-foot{margin-top:22px;font-size:11px;color:var(--muted);text-align:center}
 @media (max-width:620px){.rp-info{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}.rp-sign{grid-template-columns:1fr;gap:6px}}
 @media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
@@ -169,11 +168,14 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
    #tab-detail .rp .rp-plate{border:1px solid #a8844a;outline:3px solid #14213a;outline-offset:3px;border-radius:8px;color:#14213a;font-family:var(--serif)}
    #tab-detail .rp .rp-vehicle{position:relative;padding-top:12px;margin:12px 0 10px}
    #tab-detail .rp .rp-vehicle::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
-   #tab-detail .rp .rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:500;letter-spacing:.2px}
+   /* Car name is the one line that reads bold; the odometer and chassis values
+      stay normal weight. Case is never forced here — the report shows exactly
+      what was typed in the checklist. */
+   #tab-detail .rp .rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:700;letter-spacing:.2px}
    #tab-detail .rp .rp-info{background:#e2dccd;border-color:#e2dccd;border-radius:0}
    #tab-detail .rp .rp-info>div{background:#fbf9f5;padding:8px 10px}
    #tab-detail .rp .rp-info span{color:#8a7f6a}
-   #tab-detail .rp .rp-info b{color:#14213a;font-family:var(--serif)}
+   #tab-detail .rp .rp-info b{color:#14213a;font-family:var(--serif);font-weight:400}
    #tab-detail .rp .rp-sum div{border-radius:0;border:1px solid #e2dccd}
    #tab-detail .rp .s-done, #tab-detail .rp .s-ok{background:#eef4ea;color:#315c40}
    #tab-detail .rp .s-attn{background:#f9f1e2;color:#8a6a2f}
@@ -199,11 +201,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
    #tab-detail .rp .rp-reco span, #tab-detail .rp .rp-kv span, #tab-detail .rp .rp-sign span{color:#8a7f6a}
    #tab-detail .rp .thumb{border-color:#e2dccd;border-radius:0}
    #tab-detail .rp .rp-sign .line{border-color:#14213a}
-   #tab-detail .rp .rp-foot{padding:8px 12px;background:#14213a!important;color:#c9d2e4!important}
-   /* The "Save as PDF" export is rendered by html2canvas from SCREEN styles, so
-      the print media rule below never reaches it. This class is added to the
-      off-screen export host so the footer loses the dark strip there too. */
-   #tab-detail .pdf-export .rp .rp-foot{background:none!important;color:#555!important}
 
 @media screen{
   #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
@@ -229,7 +226,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
   #tab-detail .rp .rp-h i{width:24px;height:24px;font-size:13px}
   #tab-detail .rp .pill{font-size:12px}
   #tab-detail .rp .rp-sign span{font-size:12px}
-  #tab-detail .rp .rp-foot{font-size:12px}
   #tab-detail .rp .rp-reco span{font-size:12px}
   #tab-detail .rp-table td,#tab-detail .rp-table th{padding:9px 8px}
 }
@@ -245,9 +241,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
   #tab-new,#tab-history,#tab-due{display:none!important}
   #tab-detail{display:block!important}
   #tab-detail .card{padding:0;margin:0;border:0}
-  /* Footer prints as plain gray text — no dark strip, so the ink stays
-     readable on white paper (the light color would vanish without it). */
-  #tab-detail .rp .rp-foot{position:fixed;bottom:0;left:0;right:0;margin:0;background:none!important;color:#555!important}
   .rp *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .toast,.lightbox{display:none!important}
   .rp-table tr{break-inside:avoid}
@@ -276,9 +269,9 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 		<div class="card">
 			<h2>Vehicle &amp; Service Info</h2>
 			<div class="grid">
-				<div><label for="f-plate">Plate No.</label><input id="f-plate" placeholder="e.g. RAK A 12345" style="text-transform:uppercase"></div>
-				<div><label for="f-model">Car Model</label><input id="f-model" placeholder="e.g. Nissan Patrol 2022" style="text-transform:uppercase"></div>
-				<div><label for="f-chassis">Chassis No.</label><input id="f-chassis" placeholder="e.g. WBA12345ABC123456" style="text-transform:uppercase"></div>
+				<div><label for="f-plate">Plate No.</label><input id="f-plate" placeholder="e.g. RAK A 12345"></div>
+				<div><label for="f-model">Car Model</label><input id="f-model" placeholder="e.g. Nissan Patrol 2022"></div>
+				<div><label for="f-chassis">Chassis No.</label><input id="f-chassis" placeholder="e.g. WBA12345ABC123456"></div>
 				<div><label for="f-date">Date</label><input id="f-date" type="date"></div>
 				<div><label for="f-km">Odometer (km)</label><input id="f-km" type="number" placeholder="e.g. 45200"></div>
 				<div><label for="f-next">Next Service (km)</label><input id="f-next" type="number" placeholder="auto +10,000"></div>
@@ -497,13 +490,13 @@ function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");set
 
 $("save").onclick = async ()=>{
 	const sb = ensureSupabase();
-	const plate = $("f-plate").value.trim().toUpperCase();
+	const plate = $("f-plate").value.trim();
 	if(!plate){toast("Please enter the plate no.");$("f-plate").focus();return;}
 	const items = {}; Object.entries(state).forEach(([k,v])=>{if(v&&v!=="na")items[k]=v});
 	const remarks = $("f-remarks").value.trim();
 	if(!Object.keys(items).length && !remarks){toast("Mark an item or enter remarks");return;}
 	const km = +$("f-km").value||0;
-	const chassis = $("f-chassis").value.trim().toUpperCase();
+	const chassis = $("f-chassis").value.trim();
 	const payload = {
 		plate, model:$("f-model").value.trim(), service_date:$("f-date").value||today(), km,
 		chassis_no: chassis,
@@ -511,14 +504,15 @@ $("save").onclick = async ()=>{
 		items,
 		notes:Object.fromEntries(Object.entries(notes).filter(([k,v])=>v&&items[k])),
 		photos:Object.fromEntries(Object.entries(photos).filter(([k,v])=>v.length&&items[k]).map(([k,v])=>[k,[...v]])),
-		gen_photos:[...genPhotos],
-		updated_at:new Date().toISOString()
+		gen_photos:[...genPhotos]
 	};
 	$("save").disabled = true; $("save-status").textContent = "Saving...";
 	try {
 		let error, count;
 		if (editingId){
-			({ error, count } = await sb.from(TABLE).update(payload, { count: "exact" }).eq('id', editingId));
+			// updated_at marks a real edit only. Stamping it on insert too made every
+			// brand-new checklist read "· edited" in History the moment it was saved.
+			({ error, count } = await sb.from(TABLE).update({ ...payload, updated_at: new Date().toISOString() }, { count: "exact" }).eq('id', editingId));
 			// Row Level Security silently skips rows when the admin session token is
 			// missing or expired: the request "succeeds" but changes 0 rows. Surface it.
 			if (!error && !count) throw Object.assign(new Error("row-level security blocked the update — admin session expired or missing"), { code: "42501" });
@@ -623,11 +617,10 @@ $("import-file").onchange = async e => {
 		const incoming = Array.isArray(parsed) ? parsed : parsed.records;
 		if (!Array.isArray(incoming) || !incoming.length) throw new Error("no records found in file");
 		const rows = incoming.filter(r => r && r.plate).map(r => ({
-			plate: String(r.plate).toUpperCase(), model: r.model || "", service_date: r.date || r.service_date || "",
+			plate: String(r.plate), model: r.model || "", service_date: r.date || r.service_date || "",
 			km: +r.km || 0, mechanic: r.mech || r.mechanic || "", location: r.loc || r.location || "",
-			cost: +r.cost || 0, next_km: +r.next || +r.next_km || 0, remarks: r.remarks || "", chassis_no: String(r.chassis || r.chassis_no || "").toUpperCase(),
-			items: r.items || {}, notes: r.notes || {}, photos: r.photos || {}, gen_photos: r.genPhotos || r.gen_photos || [],
-			updated_at: new Date().toISOString()
+			cost: +r.cost || 0, next_km: +r.next || +r.next_km || 0, remarks: r.remarks || "", chassis_no: String(r.chassis || r.chassis_no || ""),
+			items: r.items || {}, notes: r.notes || {}, photos: r.photos || {}, gen_photos: r.genPhotos || r.gen_photos || []
 		}));
 		if (!rows.length) throw new Error("every record needs a plate no.");
 		const { error } = await sb.from(TABLE).insert(rows).select();
@@ -683,7 +676,6 @@ function openDetail(id){
 				<td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted">${esc(r.notes?.[n]||"")}</td></tr>`}).join("");
 	}).join("");
 	const all = [...Object.entries(r.photos||{}).flatMap(([k,v])=>v.map(u=>({u,k}))), ...(r.genPhotos||[]).map(u=>({u,k:"Other"}))];
-	const repNo = "AKG-" + String(r.date||"").replace(/-/g,"").slice(2) + "-" + String(r.id).slice(-4).padStart(4,"0");
 	$("detail").innerHTML = `
 	<div class="rp">
 		<div class="rp-top">
@@ -702,7 +694,6 @@ function openDetail(id){
 		${rows?`<h3 class="rp-title">Inspection Checklist</h3><table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`:""}
 		${r.remarks?`<h3 class="rp-title">Technician Report</h3><div class="rp-remarks">${formatRemarks(r.remarks)}</div>`:""}
 		${all.length?`<h3 class="rp-title">Photos (${all.length})</h3><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div>`:""}
-		<div class="rp-foot">${r.updated?`Last edited ${new Date(r.updated).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})} · `:""}Generated by AK Garage · ${repNo}</div>
 	</div>`;
 	$("detail").querySelectorAll("td .thumbs").forEach(b=>{ const n = b.dataset.item; wireThumbs(b, r.photos[n], n, ()=>{}); });
 	const g = $("gal"); if (g) g.querySelectorAll(".thumb").forEach(t=>t.onclick=()=>{const p=all[+t.dataset.i]; openLB(p.u,p.k);});
@@ -760,7 +751,6 @@ async function saveReport(){
 	// Off-screen copy at A4 content width (703px = 186mm beside 12mm page
 	// margins), kept inside #tab-detail so the navy/gold report theme applies.
 	const host = document.createElement("div");
-	host.className = "pdf-export";
 	host.style.cssText = "position:fixed;left:-10000px;top:0;width:703px;background:#fff";
 	const card = document.createElement("div");
 	card.style.cssText = "max-width:703px;margin:0;padding:0;border:0;box-shadow:none;background:#fff";
