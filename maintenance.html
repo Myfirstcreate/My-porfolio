@@ -147,6 +147,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 .rp-sign .line{border-bottom:1px solid var(--ink);height:36px}
 .rp-sign span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
 .rp-sign b{font-size:13px}
+.rp-foot{margin-top:22px;font-size:11px;color:var(--muted);text-align:center}
 @media (max-width:620px){.rp-info{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}.rp-sign{grid-template-columns:1fr;gap:6px}}
 @media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
@@ -694,6 +695,7 @@ function openDetail(id){
 		${rows?`<h3 class="rp-title">Inspection Checklist</h3><table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`:""}
 		${r.remarks?`<h3 class="rp-title">Technician Report</h3><div class="rp-remarks">${formatRemarks(r.remarks)}</div>`:""}
 		${all.length?`<h3 class="rp-title">Photos (${all.length})</h3><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div>`:""}
+		<div class="rp-foot">AK Garage Maintenance</div>
 	</div>`;
 	$("detail").querySelectorAll("td .thumbs").forEach(b=>{ const n = b.dataset.item; wireThumbs(b, r.photos[n], n, ()=>{}); });
 	const g = $("gal"); if (g) g.querySelectorAll(".thumb").forEach(t=>t.onclick=()=>{const p=all[+t.dataset.i]; openLB(p.u,p.k);});
