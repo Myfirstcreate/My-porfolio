@@ -756,15 +756,25 @@ async function saveReport(){
 	const host = document.createElement("div");
 	host.style.cssText = "position:fixed;left:-10000px;top:0;width:703px;background:#fff";
 	const card = document.createElement("div");
-	card.style.cssText = "max-width:703px;margin:0;padding:0;border:0;box-shadow:none;background:#fff";
-	card.appendChild(rpEl.cloneNode(true));
+	card.style.cssText = "width:703px;max-width:703px;margin:0;padding:0;border:0;box-shadow:none;background:#fff";
+	// The report is pinned to the A4 content width on the copy itself, not just
+	// on its parent: when the export runs on a narrow (phone) screen the copy
+	// could otherwise be laid out at the device width, which squeezes the whole
+	// sheet into the left of the page and leaves the rest blank.
+	const report = rpEl.cloneNode(true);
+	report.style.width = "703px";
+	report.style.maxWidth = "703px";
+	card.appendChild(report);
 	host.appendChild(card);
 	document.getElementById("tab-detail").appendChild(host);
 	try {
 		const pdf = await html2pdf().set({
 			margin: [10, 12, 10, 12],
 			image: { type: "jpeg", quality: 0.97 },
-			html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 703 },
+			html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 703,
+				// Last line of defence inside the render clone: whatever width the
+				// browser laid the copy out at, the report is A4 wide again here.
+				onclone: (doc) => { doc.querySelectorAll(".rp").forEach((el) => { el.style.width = "703px"; el.style.maxWidth = "703px"; }); } },
 			pagebreak: { mode: ["css","legacy"], avoid: ["tr",".rp-top",".rp-vehicle",".rp-info",".rp-sum",".rp-title",".rp-sec",".rp-sign",".gallery",".thumb"] },
 			jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
 		}).from(card).toPdf().get("pdf");
