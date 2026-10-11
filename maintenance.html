@@ -710,6 +710,26 @@ function doPrint(){
 	// If the print dialog was blocked (e.g. inside an app preview), print() returns instantly
 	if (failed || performance.now() - t < 120) $("printhelp").classList.remove("hidden");
 }
+// How far the printed report reaches across the rendered sheet. A collapsed
+// layout (report pinned to the left, the rest blank) comes back far below 1.
+function inkFill(cv){
+	try {
+		const ctx = cv.getContext("2d");
+		const step = Math.max(1, Math.floor(cv.height / 40));
+		let right = 0;
+		for (let y = 0; y < cv.height; y += step){
+			const row = ctx.getImageData(0, y, cv.width, 1).data;
+			for (let x = cv.width - 1; x > right; x--){
+				const i = x * 4;
+				if (row[i] < 245 || row[i+1] < 245 || row[i+2] < 245){ if (x > right) right = x; break; }
+			}
+		}
+		return right / cv.width;
+	} catch (err){
+		console.warn("PDF export: could not measure the sheet", err);
+		return 1;
+	}
+}
 function loadHtml2pdf(){
 	if (window.html2pdf) return Promise.resolve();
 	return new Promise((resolve, reject)=>{
@@ -768,7 +788,7 @@ async function saveReport(){
 	host.appendChild(card);
 	document.getElementById("tab-detail").appendChild(host);
 	try {
-		const pdf = await html2pdf().set({
+		const opts = {
 			margin: [10, 12, 10, 12],
 			image: { type: "jpeg", quality: 0.97 },
 			html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 703,
@@ -777,14 +797,32 @@ async function saveReport(){
 				onclone: (doc) => { doc.querySelectorAll(".rp").forEach((el) => { el.style.width = "703px"; el.style.maxWidth = "703px"; }); } },
 			pagebreak: { mode: ["css","legacy"], avoid: ["tr",".rp-top",".rp-vehicle",".rp-info",".rp-sum",".rp-title",".rp-sec",".rp-sign",".gallery",".thumb"] },
 			jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-		}).from(card).toPdf().get("pdf");
+		};
+		let worker = html2pdf().set(opts).from(card);
+		// toPdf() reuses the canvas we ask for here, so the sheet is only rendered
+		// once — and we get to look at it before the PDF is built. If the report
+		// only covers the left of it, the browser laid the copy out at the page
+		// width instead of the A4 width; the SVG renderer then paints the copy
+		// where it actually sits, which fills the sheet again.
+		const sheet = await worker.toCanvas().get("canvas");
+		const fill = sheet ? inkFill(sheet) : 1;
+		let narrow = false;
+		if (fill < 0.92){
+			console.warn(`PDF export: sheet came back ${Math.round(fill*100)}% wide — redrawing with the SVG renderer`);
+			worker = html2pdf().set({ ...opts, html2canvas: { ...opts.html2canvas, foreignObjectRendering: true } }).from(card);
+			const redraw = await worker.toCanvas().get("canvas");
+			const redrawFill = redraw ? inkFill(redraw) : 1;
+			narrow = redrawFill < 0.92;
+			if (narrow) console.error(`PDF export: sheet still ${Math.round(redrawFill*100)}% wide after the SVG renderer`);
+		}
+		const pdf = await worker.toPdf().get("pdf");
 		const blob = pdf.output("blob");
 		const a = document.createElement("a");
 		a.href = URL.createObjectURL(blob);
 		a.download = fname + ".pdf";
 		document.body.appendChild(a); a.click(); a.remove();
 		setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
-		toast("PDF saved ✓");
+		toast(narrow ? "PDF saved — makitid pa ang layout, i-report ito" : "PDF saved ✓");
 	} catch(err){
 		console.error("PDF export failed:", err);
 		downloadReportHTML(r, fname);
