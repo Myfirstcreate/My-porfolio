@@ -13,3 +13,7 @@ node_modules/
 
 .vercel
 .env*
+
+# SQL files that embed a password hash must stay out of this public repo.
+# Keep them local and run them by hand in the Supabase SQL Editor.
+supabase-run-this.sql
