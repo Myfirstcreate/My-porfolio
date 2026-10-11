@@ -730,6 +730,274 @@ function inkFill(cv){
 		return 1;
 	}
 }
+// ---- Deterministic report PDF -------------------------------------------
+// The report is drawn with jsPDF primitives (text, rules, boxes, photos) in
+// millimetres, so the export no longer depends on how the browser lays the
+// page out. That is what made the raster export come back with the report
+// squeezed into the left of the sheet on some desktops.
+const PDF_INK = [43,42,38], PDF_MUTED = [138,127,106], PDF_NAVY = [20,33,58],
+	PDF_GOLD = [168,132,74], PDF_TITLE = [201,169,106], PDF_LINE = [226,220,205],
+	PDF_PANEL = [251,249,245], PDF_WARM = [247,244,238], PDF_OK = [49,92,64],
+	PDF_WARN = [138,106,47], PDF_NA = [107,100,89];
+
+function loadJsPdf(){
+	if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+	return new Promise((resolve, reject)=>{
+		const s = document.createElement("script");
+		s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+		s.onload = ()=> (window.jspdf && window.jspdf.jsPDF) ? resolve() : reject(new Error("jsPDF loaded but not exposed"));
+		s.onerror = ()=>reject(new Error("jsPDF CDN unavailable"));
+		document.head.appendChild(s);
+	});
+}
+
+// Plain-text view of the technician notes, so the PDF can wrap them itself.
+function remarkBlocks(text){
+	const isHead = l => { const t = l.replace(/^\d+[.)]\s*/,""); return t.length < 70 && /[A-Z]/.test(t) && !/[a-z]/.test(t); };
+	return String(text||"").replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean).map(b=>{
+		const lines = b.split("\n").map(l=>l.trim()).filter(Boolean);
+		let num = "", head = "";
+		if (lines.length && isHead(lines[0])){
+			const m = lines[0].match(/^(\d+)[.)]\s*(.*)$/);
+			if (m){ num = m[1]; head = m[2]; } else head = lines[0];
+			lines.shift();
+		}
+		return { num, head, body: lines.map(l=>{
+			const kv = l.match(/^([A-Za-z][A-Za-z0-9 \/()&-]{1,28}):\s*(.+)$/);
+			return kv ? { label: kv[1], text: kv[2], reco: /^recommend/i.test(kv[1]) } : { text: l };
+		}) };
+	});
+}
+
+const _photoDims = {};
+function photoSize(url){
+	if (_photoDims[url]) return Promise.resolve(_photoDims[url]);
+	return new Promise(resolve=>{
+		const im = new Image();
+		im.onload = ()=>{ _photoDims[url] = { w: im.naturalWidth || 4, h: im.naturalHeight || 3 }; resolve(_photoDims[url]); };
+		im.onerror = ()=>{ _photoDims[url] = { w: 4, h: 3 }; resolve(_photoDims[url]); };
+		im.src = url;
+	});
+}
+
+async function reportPDF(r){
+	const { jsPDF } = window.jspdf;
+	const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+	const L = 12, R = 12, TOP = 10, BOTTOM = 12, W = 210 - L - R, PAGE_H = 297, LIMIT = PAGE_H - BOTTOM;
+	let y = TOP;
+	const fill = c => pdf.setFillColor(c[0], c[1], c[2]);
+	const draw = c => pdf.setDrawColor(c[0], c[1], c[2]);
+	const ink = c => pdf.setTextColor(c[0], c[1], c[2]);
+	const rule = (c, h) => { fill(c); pdf.rect(L, y, W, h, "F"); y += h; };
+	const twoTone = ()=>{ fill(PDF_NAVY); pdf.rect(L, y, W*0.72, 0.8, "F"); fill(PDF_GOLD); pdf.rect(L + W*0.72, y, W*0.28, 0.8, "F"); y += 0.8; };
+	const sectionTitle = t => {
+		if (y + 12 > LIMIT){ pdf.addPage(); y = TOP; }
+		y += 6;
+		fill(PDF_GOLD); pdf.rect(L, y + 0.4, 8, 0.7, "F");
+		draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + 3.4, L + W, y + 3.4);
+		ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(9);
+		pdf.text(String(t).toUpperCase(), L + 10, y + 1.4);
+		y += 5.6;
+	};
+
+	// Header band with the brand title and the service date box.
+	fill(PDF_NAVY); pdf.rect(L, y, W, 27, "F");
+	ink(PDF_TITLE); pdf.setFont("times", "bold"); pdf.setFontSize(16);
+	pdf.text("VEHICLE SERVICE REPORT", L + 5, y + 12.5);
+	fill(PDF_GOLD); pdf.rect(L + 5, y + 16.5, 55, 0.8, "F");
+	const boxW = 44, boxH = 15, boxX = L + W - boxW - 5, boxY = y + 6;
+	fill([27,43,73]); pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, "F");
+	draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, "S");
+	ink(PDF_TITLE); pdf.setFont("times", "normal"); pdf.setFontSize(6.5);
+	pdf.text("SERVICE DATE", boxX + boxW/2, boxY + 5, { align: "center" });
+	pdf.setTextColor(255,255,255); pdf.setFontSize(10.5);
+	pdf.text(fmt(r.date), boxX + boxW/2, boxY + 10.5, { align: "center" });
+	y += 31;
+
+	// Plate, model, and the two rules that frame the vehicle line.
+	twoTone(); y += 4;
+	pdf.setFont("times", "bold"); pdf.setFontSize(16);
+	const plate = String(r.plate || "").toUpperCase();
+	const plateW = Math.max(38, pdf.getTextWidth(plate) + 14), plateH = 12;
+	draw(PDF_NAVY); pdf.setLineWidth(0.9); pdf.roundedRect(L - 1.6, y - 1.6, plateW + 3.2, plateH + 3.2, 2, 2, "S");
+	draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(L, y, plateW, plateH, 1.5, 1.5, "S");
+	ink(PDF_NAVY); pdf.text(plate, L + plateW/2, y + plateH/2 + 1.6, { align: "center" });
+	ink(PDF_NAVY); pdf.setFont("times", "italic"); pdf.setFontSize(12.5);
+	pdf.text(String(r.model || "—"), L + plateW + 6, y + plateH/2 + 0.8);
+	y += plateH + 5;
+	fill(PDF_NAVY); pdf.rect(L, y, W*0.72, 0.8, "F"); fill(PDF_GOLD); pdf.rect(L + W*0.72, y, W*0.28, 0.8, "F"); y += 4;
+
+	// Odometer / chassis row.
+	const halfW = (W - 1)/2, infoH = 12;
+	fill(PDF_PANEL); pdf.rect(L, y, W, infoH, "F");
+	draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L + halfW, y, L + halfW, y + infoH);
+	const info = [
+		["ODOMETER", r.km ? r.km.toLocaleString() + " km" : "—"],
+		["CHASSIS NO.", r.chassis || "—"]
+	];
+	info.forEach(([label, value], i)=>{
+		const x = L + i*(halfW + 1) + 3;
+		ink(PDF_MUTED); pdf.setFont("times", "normal"); pdf.setFontSize(6.5);
+		pdf.text(label, x, y + 4.6);
+		ink(PDF_NAVY); pdf.setFontSize(9.5);
+		pdf.text(String(value), x, y + 9.4);
+	});
+	y += infoH + 3;
+
+	// Status tiles (only when a checklist was filled in).
+	const items = r.items || {};
+	const counts = { done: 0, ok: 0, attn: 0 };
+	Object.values(items).forEach(s => { if (counts[s] !== undefined) counts[s] += 1; });
+	const tiles = [[counts.done, "Serviced", PDF_OK, [238,244,234]], [counts.ok, "Checked OK", PDF_OK, [238,244,234]], [counts.attn, "Needs Attention", PDF_WARN, [249,241,226]]].filter(t => t[0] > 0);
+	if (tiles.length){
+		const tw = (W - (tiles.length - 1)*2)/tiles.length;
+		tiles.forEach(([n, label, colour, bg], i)=>{
+			const x = L + i*(tw + 2);
+			fill(bg); pdf.rect(x, y, tw, 14, "F");
+			draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.rect(x, y, tw, 14, "S");
+			ink(colour); pdf.setFont("times", "bold"); pdf.setFontSize(13);
+			pdf.text(String(n), x + 4, y + 8.4);
+			pdf.setFontSize(8);
+			pdf.text(label, x + tw - 4, y + 8.4, { align: "right" });
+		});
+		y += 14 + 2;
+	}
+
+	// Checklist table: header repeats on every page, category bars stay with
+	// their rows.
+	const catOf = {};
+	Object.entries(ITEMS).forEach(([cat, list]) => list.forEach(n => { catOf[n] = cat; }));
+	const checked = Object.keys(items).filter(n => items[n]);
+	if (checked.length){
+		sectionTitle("Inspection Checklist");
+		const cw = [70, 26, W - 96];
+		const tableHead = ()=>{
+			fill(PDF_NAVY); pdf.rect(L, y, W, 7, "F");
+			pdf.setTextColor(255,255,255); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+			pdf.text("ITEM", L + 3, y + 4.8);
+			pdf.text("STATUS", L + cw[0] + 3, y + 4.8);
+			pdf.text("NOTE", L + cw[0] + cw[1] + 3, y + 4.8);
+			y += 7;
+		};
+		tableHead();
+		let lastCat = "";
+		const statusInk = { done: PDF_OK, ok: PDF_OK, attn: PDF_WARN, na: PDF_NA };
+		Object.entries(ITEMS).forEach(([cat, list]) => {
+			const got = list.filter(n => items[n]);
+			if (!got.length) return;
+			const drawCat = ()=>{
+				fill(PDF_WARM); pdf.rect(L, y, W, 7.5, "F");
+				fill(PDF_GOLD); pdf.rect(L, y, 1.2, 7.5, "F");
+				ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+				pdf.text(String(cat).toUpperCase(), L + 3.5, y + 5);
+				y += 7.5; lastCat = cat;
+			};
+			if (y + 7.5 + 7 > LIMIT){ pdf.addPage(); y = TOP; tableHead(); lastCat = ""; }
+			drawCat();
+			got.forEach((name, i)=>{
+				pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+				const itemLines = pdf.splitTextToSize(name, cw[0] - 6);
+				ink(PDF_MUTED); pdf.setFontSize(8);
+				const noteLines = pdf.splitTextToSize(String(r.notes?.[name] || ""), cw[2] - 6);
+				const rowH = Math.max(7, itemLines.length*4.2 + 2.6, noteLines.length*3.9 + 2.6);
+				if (y + rowH > LIMIT){
+					pdf.addPage(); y = TOP; tableHead();
+					if (lastCat !== cat) drawCat();
+				}
+				if (i % 2 === 1){ fill(PDF_PANEL); pdf.rect(L, y, W, rowH, "F"); }
+				ink(PDF_INK); pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+				itemLines.forEach((line, k) => pdf.text(line, L + 3, y + 4 + k*4.2));
+				ink(statusInk[items[name]] || PDF_NA); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+				pdf.text(String(LBL[items[name]] || "").toUpperCase(), L + cw[0] + 3, y + 4.4);
+				ink(PDF_MUTED); pdf.setFont("times", "normal"); pdf.setFontSize(8);
+				noteLines.forEach((line, k) => pdf.text(line, L + cw[0] + cw[1] + 3, y + 4 + k*3.9));
+				draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + rowH, L + W, y + rowH);
+				y += rowH;
+			});
+		});
+		y += 2;
+	}
+
+	// Technician report: one panel per note, never split across pages.
+	const blocks = remarkBlocks(r.remarks);
+	if (blocks.length){
+		sectionTitle("Technician Report");
+		for (const b of blocks){
+			pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+			const body = [];
+			b.body.forEach(p=>{
+				if (p.label){
+					pdf.setFont("times", "bold");
+					const lines = pdf.splitTextToSize(`${p.label}: ${p.text}`, W - 16);
+					body.push({ lines, kind: p.reco ? "reco" : "kv" });
+				} else {
+					pdf.setFont("times", "normal");
+					body.push({ lines: pdf.splitTextToSize(p.text, W - 16), kind: "p" });
+				}
+			});
+			const bodyH = body.reduce((s, p) => s + p.lines.length*4.2 + (p.kind === "p" ? 0.8 : 2), 0);
+			const panelH = (b.head ? 9 : 3) + bodyH + 4;
+			if (y + panelH > LIMIT && panelH < PAGE_H - TOP - BOTTOM){ pdf.addPage(); y = TOP; }
+			fill(PDF_PANEL); pdf.rect(L, y, W, panelH, "F");
+			fill(PDF_GOLD); pdf.rect(L, y, 1.2, panelH, "F");
+			let by = y + 5.4;
+			if (b.head){
+				if (b.num){
+					fill(PDF_GOLD); pdf.rect(L + 4, by - 4, 5, 5, "F");
+					pdf.setTextColor(255,255,255); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+					pdf.text(String(b.num), L + 6.5, by - 0.2, { align: "center" });
+				}
+				ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(9);
+				pdf.text(String(b.head).toUpperCase(), L + (b.num ? 11 : 4), by);
+				by += 3.4;
+			}
+			body.forEach(p=>{
+				if (p.kind === "reco"){ fill(PDF_WARM); pdf.rect(L + 4, by - 0.6, W - 8, p.lines.length*4.2 + 1.4, "F"); }
+				ink(p.kind === "p" ? PDF_INK : PDF_NAVY);
+				pdf.setFont("times", p.kind === "p" ? "normal" : "bold"); pdf.setFontSize(8.5);
+				p.lines.forEach((line, k) => pdf.text(line, L + 4, by + 3 + k*4.2));
+				by += p.lines.length*4.2 + (p.kind === "p" ? 0.8 : 2);
+			});
+			y += panelH + 2.5;
+		}
+	}
+
+	// Photos: item photos first (labelled), then the general ones.
+	const gallery = [];
+	Object.entries(r.photos || {}).forEach(([name, list]) => (list || []).forEach(u => gallery.push({ u, cap: name })));
+	(r.genPhotos || []).forEach(u => gallery.push({ u, cap: "Other" }));
+	if (gallery.length){
+		sectionTitle("Photos (" + gallery.length + ")");
+		const cols = 4, gap = 3, cell = (W - (cols - 1)*gap)/cols, imgH = 30;
+		for (let i = 0; i < gallery.length; i += cols){
+			if (y + imgH + 6 > LIMIT){ pdf.addPage(); y = TOP; }
+			const row = gallery.slice(i, i + cols);
+			for (let c = 0; c < row.length; c++){
+				const p = row[c], x = L + c*(cell + gap);
+				const { w, h } = await photoSize(p.u);
+				const scaled = Math.min(cell / w, imgH / h);
+				const dw = w*scaled, dh = h*scaled;
+				try { pdf.addImage(p.u, "JPEG", x + (cell - dw)/2, y + (imgH - dh)/2, dw, dh); }
+				catch(err){ console.warn("PDF export: photo skipped", err); }
+				draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.rect(x, y, cell, imgH, "S");
+				ink(PDF_MUTED); pdf.setFont("times", "normal"); pdf.setFontSize(6.5);
+				pdf.text(pdf.splitTextToSize(p.cap || "", cell)[0], x, y + imgH + 3.4);
+			}
+			y += imgH + 6;
+		}
+	}
+
+	return pdf.output("blob");
+}
+
+function downloadBlob(blob, name){
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = name;
+	document.body.appendChild(a); a.click(); a.remove();
+	setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+
 function loadHtml2pdf(){
 	if (window.html2pdf) return Promise.resolve();
 	return new Promise((resolve, reject)=>{
@@ -761,15 +1029,28 @@ async function saveReport(){
 	const rpEl = $("detail").querySelector(".rp"); if(!rpEl) return;
 	const fname = `AK-Garage-Report_${r.plate.replace(/\s+/g,"-")}_${r.date}`;
 	const btn = $("dl");
+	if (btn) btn.disabled = true;
+	toast("Preparing PDF…");
+	// First choice: draw the report as real PDF text, which cannot be affected
+	// by the page layout.
+	try {
+		await loadJsPdf();
+		downloadBlob(await reportPDF(r), fname + ".pdf");
+		toast("PDF saved ✓");
+		if (btn) btn.disabled = false;
+		return;
+	} catch(err){
+		console.error("Text PDF failed — falling back to the page renderer:", err);
+	}
+	// Fallback: render the on-screen report through the html2pdf library.
 	try { await loadHtml2pdf(); }
 	catch(err){
 		console.error("PDF library failed to load:", err);
 		downloadReportHTML(r, fname);
 		toast("PDF unavailable — HTML report downloaded instead");
+		if (btn) btn.disabled = false;
 		return;
 	}
-	if (btn) btn.disabled = true;
-	toast("Preparing PDF…");
 	// Off-screen copy at A4 content width (703px = 186mm beside 12mm page
 	// margins). The navy/gold theme is scoped to .rp itself, so it still
 	// applies after the PDF worker moves this copy into its own container.
@@ -816,12 +1097,7 @@ async function saveReport(){
 			if (narrow) console.error(`PDF export: sheet still ${Math.round(redrawFill*100)}% wide after the SVG renderer`);
 		}
 		const pdf = await worker.toPdf().get("pdf");
-		const blob = pdf.output("blob");
-		const a = document.createElement("a");
-		a.href = URL.createObjectURL(blob);
-		a.download = fname + ".pdf";
-		document.body.appendChild(a); a.click(); a.remove();
-		setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+		downloadBlob(pdf.output("blob"), fname + ".pdf");
 		toast(narrow ? "PDF saved — makitid pa ang layout, i-report ito" : "PDF saved ✓");
 	} catch(err){
 		console.error("PDF export failed:", err);
