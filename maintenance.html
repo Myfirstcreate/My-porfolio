@@ -200,6 +200,10 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
    #tab-detail .rp .thumb{border-color:#e2dccd;border-radius:0}
    #tab-detail .rp .rp-sign .line{border-color:#14213a}
    #tab-detail .rp .rp-foot{padding:8px 12px;background:#14213a!important;color:#c9d2e4!important}
+   /* The "Save as PDF" export is rendered by html2canvas from SCREEN styles, so
+      the print media rule below never reaches it. This class is added to the
+      off-screen export host so the footer loses the dark strip there too. */
+   #tab-detail .pdf-export .rp .rp-foot{background:none!important;color:#555!important}
 
 @media screen{
   #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
@@ -241,7 +245,9 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
   #tab-new,#tab-history,#tab-due{display:none!important}
   #tab-detail{display:block!important}
   #tab-detail .card{padding:0;margin:0;border:0}
-  #tab-detail .rp .rp-foot{position:fixed;bottom:0;left:0;right:0;margin:0}
+  /* Footer prints as plain gray text — no dark strip, so the ink stays
+     readable on white paper (the light color would vanish without it). */
+  #tab-detail .rp .rp-foot{position:fixed;bottom:0;left:0;right:0;margin:0;background:none!important;color:#555!important}
   .rp *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .toast,.lightbox{display:none!important}
   .rp-table tr{break-inside:avoid}
@@ -754,6 +760,7 @@ async function saveReport(){
 	// Off-screen copy at A4 content width (703px = 186mm beside 12mm page
 	// margins), kept inside #tab-detail so the navy/gold report theme applies.
 	const host = document.createElement("div");
+	host.className = "pdf-export";
 	host.style.cssText = "position:fixed;left:-10000px;top:0;width:703px;background:#fff";
 	const card = document.createElement("div");
 	card.style.cssText = "max-width:703px;margin:0;padding:0;border:0;box-shadow:none;background:#fff";
