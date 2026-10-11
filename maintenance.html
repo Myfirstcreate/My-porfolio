@@ -317,7 +317,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 			<button class="btn ghost sm" id="back">← Back</button>
 			<button class="btn sm" id="edit">Edit</button>
 			<button class="btn ghost sm" id="print">Print</button>
-			<button class="btn ghost sm" id="save-file" type="button" title="Download all maintenance records as JSON backup">⬇ Save file</button>
 			<button class="btn ghost sm" id="dl" type="button" title="Download this service report directly as a PDF">⬇ Save as PDF</button>
 			<button class="btn ghost sm" id="import-file-btn" type="button" title="Restore records from a JSON backup">⬆ Import file</button>
 			<button class="btn ghost sm danger" id="del">Delete</button>
@@ -594,18 +593,6 @@ function renderHistory(){
 }
 $("q").oninput = () => { carLink = null; renderHistory(); }; $("flt").onchange = renderHistory;
 
-$("save-file").onclick = () => {
-	if (!records.length) { toast("No records to save yet"); return; }
-	const payload = { app: "AK Garage Maintenance", version: 1, exportedAt: new Date().toISOString(), count: records.length,
-		records: records.map(r => ({ plate: r.plate, model: r.model, chassis: r.chassis, date: r.date, km: r.km, mech: r.mech, loc: r.loc, cost: r.cost, next: r.next, remarks: r.remarks, items: r.items, notes: r.notes, photos: r.photos, genPhotos: r.genPhotos })) };
-	const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-	const a = document.createElement("a");
-	a.href = URL.createObjectURL(blob);
-	a.download = `AK-Garage-maintenance-backup-${today()}.json`;
-	document.body.appendChild(a); a.click(); a.remove();
-	URL.revokeObjectURL(a.href);
-	toast(`Saved ${records.length} record${records.length===1?"":"s"} to file ✓`);
-};
 $("import-file-btn").onclick = () => { $("import-file").value = ""; $("import-file").click(); };
 $("import-file").onchange = async e => {
 	const file = e.target.files[0];
