@@ -31,19 +31,17 @@
             background: radial-gradient(circle at 82% 3%, #172016 0, transparent 26%), var(--black);
             font-family: 'Space Grotesk', sans-serif;
         }
-        /* Animated 3D car backdrop: video over a poster, faded out down the page. */
+        /* Brighter car backdrop for the command center. */
         .bg-media {
             position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
-            opacity: .3;
-            -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 44%, transparent 78%);
-            mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 44%, transparent 78%);
+            opacity: 1;
         }
         .bg-media::after {
             content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to bottom, rgba(7,8,7,.35), rgba(7,8,7,.12) 45%, transparent 75%);
+            background: transparent;
         }
-        .bg-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 74% 50%; }
-        @media (max-width: 900px) { .bg-media { opacity: .22; } }
+        .bg-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 74% 50%; filter: brightness(1.08) saturate(1.12) contrast(1.04); }
+        @media (max-width: 900px) { .bg-media { opacity: 1; } }
         button { font: inherit; }
         .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
         .sidebar {
@@ -91,7 +89,6 @@
         .alert-metrics { grid-template-columns: repeat(3, 1fr); }
         .metric.alert-card { border-color: #4a3b1f; }
         .metric-link { display: block; color: inherit; text-decoration: none; cursor: pointer; }
-        .metric-link:hover { border-color: var(--amber); background: rgba(242,201,76,.07); }
         .metric.alert-card::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--amber); }
         .metric { position: relative; padding: 18px 18px 16px; min-height: 119px; border: 1px solid var(--line); border-radius: 6px; background: rgba(16,18,16,.86); overflow: hidden; }
         /* Expiring registrations alert */
@@ -158,7 +155,7 @@
     <script src="auth-gate.js"></script>
     <script>akgarageInitGate();</script>
     <div class="bg-media" aria-hidden="true">
-        <img class="bg-photo" src="assets/hero-car.jpg?v=1" alt="">
+        <img class="bg-photo" src="assets/hero-car.jpg?v=2" alt="">
     </div>
     <div class="app">
         <aside class="sidebar">
