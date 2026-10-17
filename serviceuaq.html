@@ -90,7 +90,7 @@
 			let serviceRecords = [];
 			// ?from=mrak -> service log for Mr AK Cars records; default -> VVIPBoss UAQ.
 			const FROM_MRAK = new URLSearchParams(location.search).get('from') === 'mrak';
-			const TABLE = FROM_MRAK ? 'mr_ak_cars' : 'boss_cars_uaq';
+			const TABLE = FROM_MRAK ? 'mr_ak_cars' : 'vvipboss';
 			if (FROM_MRAK) {
 				document.title = 'AK Garage | Mr AK Cars Service';
 				const backLink = document.getElementById('service-back-link');

@@ -1,11 +1,57 @@
 -- Run once in the Supabase SQL Editor (Dashboard > SQL Editor) for project
--- wmofflwywrivbkuqyfif. Adds the Service UAQ fields used by serviceuaq.html.
--- Safe to re-run: each statement only adds a column if it does not exist yet.
+-- wmofflwywrivbkuqyfif. Safe to re-run: every statement is guarded.
 
-alter table public.boss_cars_uaq add column if not exists service_date text;
-alter table public.boss_cars_uaq add column if not exists service_mileage text;
-alter table public.boss_cars_uaq add column if not exists service_mileage_ask_rinat text;
-alter table public.boss_cars_uaq add column if not exists service_work text;
+-- =============================================================================
+-- 0. RENAME (Oct 2026) — the Boss UAQ table is called vvipboss now, keeping
+--    every row, policy and grant. Run this before the rest of the file.
+-- =============================================================================
+
+do $$
+begin
+	-- Existing project: rename in place.
+	if to_regclass('public.boss_cars_uaq') is not null then
+		alter table public.boss_cars_uaq rename to vvipboss;
+	end if;
+	-- Postgres keeps the old index/constraint name after a table rename.
+	if to_regclass('public.vvipboss') is not null and exists (
+		select 1 from pg_constraint
+		where conname = 'boss_cars_uaq_pkey'
+			and conrelid = to_regclass('public.vvipboss')::oid
+	) then
+		alter table public.vvipboss rename constraint boss_cars_uaq_pkey to vvipboss_pkey;
+	end if;
+end
+$$;
+
+-- The table originally came from the dashboard, so this file could not
+-- bootstrap it. Now it can: on an existing project the rename above already
+-- created vvipboss and this is a no-op.
+create table if not exists public.vvipboss (
+	id uuid primary key default gen_random_uuid(),
+	brand text,
+	model text,
+	code text,
+	plate text,
+	emirates text,
+	chassis text,
+	expiry date,
+	service_date text,
+	service_mileage text,
+	service_mileage_ask_rinat text,
+	service_work text,
+	created_at timestamptz default now()
+);
+
+alter table public.vvipboss enable row level security;
+
+-- =============================================================================
+-- 1. VVIP BOSS SERVICE FIELDS (used by serviceuaq.html). Safe to re-run.
+-- =============================================================================
+
+alter table public.vvipboss add column if not exists service_date text;
+alter table public.vvipboss add column if not exists service_mileage text;
+alter table public.vvipboss add column if not exists service_mileage_ask_rinat text;
+alter table public.vvipboss add column if not exists service_work text;
 -- service_mileage_after and service_tires were dropped: serviceuaq.html no longer
 -- shows or edits them. See section 9. Do not add them back here.
 
@@ -156,7 +202,7 @@ declare
 	t text;
 	r record;
 begin
-	foreach t in array array['mr_ak_cars', 'boss_cars_uaq', 'vip_numbers'] loop
+	foreach t in array array['mr_ak_cars', 'vvipboss', 'vip_numbers'] loop
 		for r in
 			select policyname from pg_policies
 			where schemaname = 'public' and tablename = t
@@ -402,8 +448,9 @@ create policy "admin can delete maintenance_checks" on public.maintenance_checks
 --    Nothing reads these columns any more: serviceuaq.html stopped showing
 --    mileage after service, service tires and garage location, and the
 --    dashboard never used them. All six were checked before dropping — every
---    row in both tables held NULL or an empty string (boss_cars_uaq 14 rows,
---    mr_ak_cars 133 rows) — so no entered data was lost. boss_cars_uaq had its
+--    row in both tables held NULL or an empty string (vvipboss — then called
+--    boss_cars_uaq — 14 rows,
+--    mr_ak_cars 133 rows) — so no entered data was lost. vvipboss had its
 --    own garage_location column, added outside this file. The drop is
 --    permanent; the lines are kept here, idempotent, as the record of it.
 -- =============================================================================
@@ -412,20 +459,20 @@ create policy "admin can delete maintenance_checks" on public.maintenance_checks
 -- select count(*) filter (where service_mileage_after <> '') as mileage_after,
 --        count(*) filter (where service_tires <> '') as tires,
 --        count(*) filter (where garage_location <> '') as garage_location
---   from public.boss_cars_uaq;
+--   from public.vvipboss;
 -- select count(*) filter (where service_mileage_after <> '') as mileage_after,
 --        count(*) filter (where service_tires <> '') as tires,
 --        count(*) filter (where garage_location <> '') as garage_location
 --   from public.mr_ak_cars;
 
-alter table public.boss_cars_uaq drop column if exists service_mileage_after;
-alter table public.boss_cars_uaq drop column if exists service_tires;
-alter table public.boss_cars_uaq drop column if exists garage_location;
+alter table public.vvipboss drop column if exists service_mileage_after;
+alter table public.vvipboss drop column if exists service_tires;
+alter table public.vvipboss drop column if exists garage_location;
 alter table public.mr_ak_cars drop column if exists service_mileage_after;
 alter table public.mr_ak_cars drop column if exists service_tires;
 alter table public.mr_ak_cars drop column if exists garage_location;
 
 -- After: both queries must fail with 42703 (column does not exist) — that is
 -- the success signal, not a problem.
--- select service_mileage_after from public.boss_cars_uaq limit 1;
+-- select service_mileage_after from public.vvipboss limit 1;
 -- select garage_location from public.mr_ak_cars limit 1;

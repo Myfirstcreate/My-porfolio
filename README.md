@@ -8,11 +8,11 @@ framework — deployable anywhere that serves static files.
 
 | Page | Data source |
 |---|---|
-| `index.html` (dashboard) | Supabase: `vip_numbers`, `boss_cars_uaq`, `mr_ak_cars`, `motorcycles`, `modifications` |
+| `index.html` (dashboard) | Supabase: `vip_numbers`, `vvipboss`, `mr_ak_cars`, `motorcycles`, `modifications` |
 | `mrakcars.html` (registrations) | Supabase: `mr_ak_cars` |
 | `vehicles.html` (vehicle gallery + maintenance notes) | Supabase: `mr_ak_cars` |
 | `vipnumbers.html` (VIP plates) | Supabase: `vip_numbers` |
-| `vvipboss.html` + `serviceuaq.html` | Supabase: `boss_cars_uaq` |
+| `vvipboss.html` + `serviceuaq.html` | Supabase: `vvipboss` (renamed from `boss_cars_uaq`, Oct 2026) |
 | `motorcycles.html` | Supabase: `motorcycles` |
 | `vipmoto.html` | Supabase: `vip_motorcycles` |
 | `project.html` | Supabase: `modifications` |

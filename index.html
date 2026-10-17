@@ -327,7 +327,7 @@
         async function fetchRegistrationRecords() {
             const [mrak, boss, moto] = await Promise.all([
                 window.sb.from('mr_ak_cars').select('code, plate, year, expiry').order('code'),
-                window.sb.from('boss_cars_uaq').select('code, plate, expiry'),
+                window.sb.from('vvipboss').select('code, plate, expiry'),
                 window.sb.from('motorcycles').select('code, plate, brand, expiry')
             ]);
             if (mrak.error) throw mrak.error;
@@ -399,7 +399,7 @@
         }
 
         async function renderBossSummary() {
-            const { data, error } = await window.sb.from('boss_cars_uaq').select('brand, model, code, plate, expiry').order('code');
+            const { data, error } = await window.sb.from('vvipboss').select('brand, model, code, plate, expiry').order('code');
             if (error) throw error;
             const bossRecords = data || [];
             bossUaqTotal.textContent = String(bossRecords.length).padStart(2, '0');
@@ -429,7 +429,7 @@
             if (!svg) return;
             const [mrak, boss] = await Promise.all([
                 window.sb.from('mr_ak_cars').select('created_at'),
-                window.sb.from('boss_cars_uaq').select('created_at')
+                window.sb.from('vvipboss').select('created_at')
             ]);
             if (mrak.error) throw mrak.error;
             if (boss.error) throw boss.error;
@@ -526,7 +526,7 @@
             async function renderBossExpiringCount() {
                 if (!bossExpiringTotal) return;
                 const today = new Date(); today.setHours(0, 0, 0, 0);
-                const { data, error } = await window.sb.from('boss_cars_uaq').select('expiry');
+                const { data, error } = await window.sb.from('vvipboss').select('expiry');
                 if (error) { bossExpiringTotal.textContent = '--'; return; }
                 let expiring = 0, expired = 0;
                 (data || []).forEach((row) => {
