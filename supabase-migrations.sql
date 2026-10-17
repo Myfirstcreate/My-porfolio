@@ -5,9 +5,9 @@
 alter table public.boss_cars_uaq add column if not exists service_date text;
 alter table public.boss_cars_uaq add column if not exists service_mileage text;
 alter table public.boss_cars_uaq add column if not exists service_mileage_ask_rinat text;
-alter table public.boss_cars_uaq add column if not exists service_mileage_after text;
-alter table public.boss_cars_uaq add column if not exists service_tires text;
 alter table public.boss_cars_uaq add column if not exists service_work text;
+-- service_mileage_after and service_tires were dropped: serviceuaq.html no longer
+-- shows or edits them. See section 9. Do not add them back here.
 
 -- -----------------------------------------------------------------------------
 -- Mr AK Cars registrations (mrakcars.html + vehicles.html + dashboard summary)
@@ -217,10 +217,10 @@ $$;
 alter table public.mr_ak_cars add column if not exists service_date text;
 alter table public.mr_ak_cars add column if not exists service_mileage text;
 alter table public.mr_ak_cars add column if not exists service_mileage_ask_rinat text;
-alter table public.mr_ak_cars add column if not exists service_mileage_after text;
-alter table public.mr_ak_cars add column if not exists service_tires text;
 alter table public.mr_ak_cars add column if not exists service_work text;
-alter table public.mr_ak_cars add column if not exists garage_location text;
+-- service_mileage_after, service_tires and garage_location were dropped: the
+-- service log no longer shows or edits them. See section 9. Do not add them
+-- back here.
 
 -- No new policies needed: section 3 already covers mr_ak_cars (team reads,
 -- admin writes) — the new columns ride along automatically.
@@ -394,3 +394,38 @@ create policy "admin can update maintenance_checks" on public.maintenance_checks
 drop policy if exists "admin can delete maintenance_checks" on public.maintenance_checks;
 create policy "admin can delete maintenance_checks" on public.maintenance_checks
 	for delete to anon using (public.is_ak_admin());
+
+-- =============================================================================
+-- 9. RETIRED SERVICE COLUMNS (Oct 2026) — APPLIED to ak-garage on 2026-10-17
+--    as migration drop_retired_service_columns (version 20261017165108).
+--
+--    Nothing reads these columns any more: serviceuaq.html stopped showing
+--    mileage after service, service tires and garage location, and the
+--    dashboard never used them. All six were checked before dropping — every
+--    row in both tables held NULL or an empty string (boss_cars_uaq 14 rows,
+--    mr_ak_cars 133 rows) — so no entered data was lost. boss_cars_uaq had its
+--    own garage_location column, added outside this file. The drop is
+--    permanent; the lines are kept here, idempotent, as the record of it.
+-- =============================================================================
+
+-- Before: expect 0 everywhere.
+-- select count(*) filter (where service_mileage_after <> '') as mileage_after,
+--        count(*) filter (where service_tires <> '') as tires,
+--        count(*) filter (where garage_location <> '') as garage_location
+--   from public.boss_cars_uaq;
+-- select count(*) filter (where service_mileage_after <> '') as mileage_after,
+--        count(*) filter (where service_tires <> '') as tires,
+--        count(*) filter (where garage_location <> '') as garage_location
+--   from public.mr_ak_cars;
+
+alter table public.boss_cars_uaq drop column if exists service_mileage_after;
+alter table public.boss_cars_uaq drop column if exists service_tires;
+alter table public.boss_cars_uaq drop column if exists garage_location;
+alter table public.mr_ak_cars drop column if exists service_mileage_after;
+alter table public.mr_ak_cars drop column if exists service_tires;
+alter table public.mr_ak_cars drop column if exists garage_location;
+
+-- After: both queries must fail with 42703 (column does not exist) — that is
+-- the success signal, not a problem.
+-- select service_mileage_after from public.boss_cars_uaq limit 1;
+-- select garage_location from public.mr_ak_cars limit 1;

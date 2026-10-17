@@ -34,7 +34,7 @@
 	style.textContent =
 		'.ak-viewer .form-card,.ak-viewer .edit,.ak-viewer .erase,.ak-viewer .save-detail,.ak-viewer .save-details{display:none!important}' +
 		'.ak-viewer select.status-select{pointer-events:none;border-color:transparent;background:transparent;appearance:none;-webkit-appearance:none}' +
-		'.ak-viewer .service-date,.ak-viewer .service-mileage,.ak-viewer .service-mileage-ask,.ak-viewer .service-mileage-after,.ak-viewer .service-tires,.ak-viewer .maintenance-input{pointer-events:none;background:#0c0f0c;color:#8b9388}' +
+		'.ak-viewer .service-date,.ak-viewer .service-mileage,.ak-viewer .service-mileage-ask,.ak-viewer .maintenance-input{pointer-events:none;background:#0c0f0c;color:#8b9388}' +
 		'.ak-role-badge{position:fixed;left:14px;bottom:14px;z-index:99998;display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid #292d29;border-radius:4px;background:rgba(7,8,7,.92);color:#8b9388;font:10px \'DM Mono\',monospace;letter-spacing:.06em;text-transform:uppercase}' +
 		'.ak-role-badge button{padding:4px 8px;border:1px solid #c4f04e;border-radius:3px;color:#c4f04e;background:transparent;font:9px \'DM Mono\',monospace;cursor:pointer;text-transform:uppercase}' +
 		'.ak-role-badge button:hover{color:#070807;background:#c4f04e}';
