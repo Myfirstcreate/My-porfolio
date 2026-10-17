@@ -8,6 +8,13 @@ const path = require('path');
 const ROOT = __dirname;
 const PORT = Number(process.argv[2]) || 8000;
 
+// Mirrors the "redirects" rules in vercel.json so local dev behaves the same
+// as production: renamed pages keep working through a real 301.
+const REDIRECTS = {
+	'/bosscarsuaq.html': '/vvipboss.html',
+	'/bosscarsuaq': '/vvipboss.html'
+};
+
 const MIME = {
 	'.html': 'text/html; charset=utf-8',
 	'.js': 'text/javascript; charset=utf-8',
@@ -31,6 +38,15 @@ const MIME = {
 const server = http.createServer((req, res) => {
 	try {
 		const urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+		// The query string is part of req.url and browsers carry the fragment over
+		// themselves, so only the path needs to be rewritten here.
+		const redirectPath = REDIRECTS[urlPath] || REDIRECTS[urlPath.replace(/\/+$/, '')];
+		if (redirectPath) {
+			const queryIndex = req.url.indexOf('?');
+			const query = queryIndex === -1 ? '' : req.url.slice(queryIndex);
+			res.writeHead(301, { 'Location': redirectPath + query, 'Content-Type': 'text/plain' }).end(`Moved Permanently: ${redirectPath}${query}`);
+			return;
+		}
 		let filePath = path.normalize(path.join(ROOT, urlPath));
 		const relativePath = path.relative(ROOT, filePath);
 		if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {

@@ -1,6 +1,19 @@
+# Files kept out of the deployment.
+# This site is deployed with no build step (vercel.json has no "builds"), so the
+# repository root itself is the output directory: anything not listed here is
+# served publicly. Keep secrets, SQL migrations and docs out.
+
 .freebuff
 .env.local
 *.log
 *.log.err
 node_modules
 .git
+
+# Not public assets.
+*.sql
+README.md
+vercel.json
+.gitignore
+.vercelignore
+.vercel

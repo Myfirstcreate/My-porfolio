@@ -1,25 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "builds": [
+  "redirects": [
     {
-      "src": "*.html",
-      "use": "@vercel/static"
+      "source": "/bosscarsuaq.html",
+      "destination": "/vvipboss.html",
+      "statusCode": 301
     },
     {
-      "src": "*.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.webmanifest",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "assets/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "robots.txt",
-      "use": "@vercel/static"
+      "source": "/bosscarsuaq",
+      "destination": "/vvipboss.html",
+      "statusCode": 301
     }
   ],
   "headers": [
