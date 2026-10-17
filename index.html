@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AK Garage | Command Center</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#070807">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AK Garage">
+    <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+    <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -110,6 +117,10 @@
         .expiry-alert.critical .ea-text b { color:#ff7670; }
         .expiry-alert .ea-link { padding:8px 13px; border:1px solid var(--amber); border-radius:5px; color:#0b0b09; background:var(--amber); font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; }
         .expiry-alert .ea-link:hover { filter:brightness(1.1); }
+        .offline-bar { display:flex; align-items:center; gap:10px; margin-bottom:18px; padding:11px 15px; border:1px solid #6b5200; border-radius:8px; color:#ffcf9a; background:linear-gradient(90deg,#241a00,#1a1608); font:11px 'DM Mono',monospace; letter-spacing:.04em; text-transform:uppercase; }
+        .offline-bar[hidden] { display:none; }
+        .offline-bar .dot { flex:0 0 auto; background:var(--amber); box-shadow:0 0 11px var(--amber); }
+        .offline-bar time { margin-left:auto; color:#a9977a; white-space:nowrap; }
         .notif-badge { position:absolute; top:6px; right:6px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:#ff7670; color:#0b0b09; font:700 9px/16px 'Space Grotesk',sans-serif; text-align:center; }
         .icon-button { position:relative; }
         .metric::after { content: ''; position: absolute; width: 70px; height: 70px; right: -21px; bottom: -32px; border: 1px solid #343c31; border-radius: 50%; }
@@ -218,6 +229,11 @@
                 </div>
                 <div class="top-actions"><span class="date" id="last-sync">LAST SYNC --:--:--</span><button class="icon-button" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-badge" id="expiry-notif-badge" hidden></span></button><div class="avatar">AS</div></div>
             </header>
+            <div class="offline-bar" id="offline-bar" role="status" hidden>
+                <span class="dot"></span>
+                <span>Offline — showing last saved records</span>
+                <time id="offline-time"></time>
+            </div>
             <section class="metrics record-metrics" aria-label="Car record metrics">
                 <article class="metric"><span class="metric-label">Mr AK car records</span><strong id="mr-ak-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">VIP Plates</span><strong id="vip-plates-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
@@ -253,8 +269,10 @@
                 <article class="card"><div class="card-head"><h2>Boss UAQ records</h2><span class="mono" id="boss-summary-count">00 RECORDS</span><a class="table-link" href="bosscarsuaq.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Car</th><th>Expiry</th></tr></thead><tbody id="boss-summary"><tr><td colspan="4" class="empty-row">No Boss UAQ records added</td></tr></tbody></table></div></article>
             </section>
         </main>
+        <!-- Inside .app on purpose: .app is its own stacking context (z-index: 1),
+             so a backdrop outside it would paint over the drawer. -->
+        <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
     </div>
-    <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
     <script>
         lucide.createIcons();
         const currentDate = document.getElementById('current-date');
@@ -524,6 +542,7 @@
 
         // Each summary independently: one failing table must not blank the others.
             await Promise.allSettled([renderRegistrationSummary(), renderVipSummary(), renderBossSummary(), renderProjectsCount(), renderFleetChart(), renderMotoCount(), renderVipMotoCount(), renderServicesDueCount(), renderBossExpiringCount()]);
+            if (navigator.onLine) saveSnapshot();
         }
 
         renderSummaries().catch((error) => {
@@ -537,6 +556,88 @@
             if (!document.hidden) renderSummaries().catch((error) => console.error('Unable to refresh dashboard records:', error));
         });
         window.addEventListener('storage', () => renderRegistrationSummary());
+
+        // Offline: the service worker serves the shell and the cached reads, and
+        // this snapshot keeps the last rendered numbers on screen if a read never made it.
+        const offlineBar = document.getElementById('offline-bar');
+        const offlineTime = document.getElementById('offline-time');
+        const SNAPSHOT_KEY = 'ak-dashboard-snapshot';
+        const CLOCK_IDS = new Set(['current-date', 'last-sync', 'greeting', 'offline-time']);
+        // Containers whose text is markup or state, not a value to restore.
+        const SKIP_IDS = new Set([...CLOCK_IDS, 'offline-bar', 'expiry-alert-text']);
+
+        function showOfflineBar(at) {
+            if (!offlineBar) return;
+            offlineBar.hidden = false;
+            if (offlineTime) {
+                offlineTime.textContent = at instanceof Date && Number.isFinite(at.getTime())
+                    ? `SAVED ${timeFormatter.format(at)}`
+                    : 'LAST SAVED RECORDS';
+            }
+        }
+
+        function hideOfflineBar() {
+            if (offlineBar) offlineBar.hidden = true;
+        }
+
+        function saveSnapshot() {
+            if (!navigator.onLine) return;
+            try {
+                const values = {};
+                document.querySelectorAll('main [id]').forEach((el) => {
+                    if (SKIP_IDS.has(el.id) || el.tagName === 'TBODY' || el.tagName === 'SVG' || el.tagName === 'PATH') return;
+                    values[el.id] = el.textContent;
+                });
+                const rows = {};
+                document.querySelectorAll('main tbody[id]').forEach((el) => { rows[el.id] = el.innerHTML; });
+                const chart = {};
+                ['fleet-line', 'fleet-fill'].forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) chart[id] = el.getAttribute('d');
+                });
+                localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ at: Date.now(), values, rows, chart }));
+            } catch (error) {
+                // Private mode or a full disk: offline simply has nothing to restore.
+            }
+        }
+
+        function restoreSnapshot() {
+            let snapshot;
+            try { snapshot = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || 'null'); } catch (error) { return false; }
+            if (!snapshot) return false;
+            Object.entries(snapshot.values || {}).forEach(([id, text]) => {
+                const el = document.getElementById(id);
+                if (el && text) el.textContent = text;
+            });
+            Object.entries(snapshot.rows || {}).forEach(([id, html]) => {
+                const el = document.getElementById(id);
+                if (el && html) el.innerHTML = html;
+            });
+            Object.entries(snapshot.chart || {}).forEach(([id, d]) => {
+                const el = document.getElementById(id);
+                if (el && d) el.setAttribute('d', d);
+            });
+            showOfflineBar(new Date(snapshot.at));
+            return true;
+        }
+
+        if (!navigator.onLine) restoreSnapshot();
+        window.addEventListener('offline', () => {
+            if (!restoreSnapshot()) showOfflineBar(null);
+        });
+        window.addEventListener('online', () => {
+            hideOfflineBar();
+            renderSummaries().catch((error) => console.error('Unable to refresh dashboard records:', error));
+        });
+
+        // Installable app: the service worker caches the shell and the last reads.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js', { scope: './' }).catch((error) => {
+                    console.warn('Offline mode unavailable:', error);
+                });
+            });
+        }
         document.querySelectorAll('.nav button').forEach((button) => {
             button.addEventListener('click', () => {
                 document.querySelectorAll('.nav button').forEach((item) => item.classList.remove('active'));
