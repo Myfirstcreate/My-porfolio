@@ -213,7 +213,7 @@
                 <a href="vipnumbers.html"><i data-lucide="award"></i><span>VIP Numbers</span></a>
                 <a href="motorcycles.html"><i data-lucide="bike"></i><span>Motorcycle</span></a>
                 <a href="vipmoto.html"><i data-lucide="gem"></i><span>VIP Plates motorcycle</span></a>
-                <a href="bosscarsuaq.html"><i data-lucide="car-front"></i><span>Boss Car's UAQ</span></a>
+                <a href="vvipboss.html"><i data-lucide="car-front"></i><span>VVIP Boss</span></a>
                 <a href="maintenance.html"><i data-lucide="clipboard-check"></i><span>Maintenance</span></a>
                 <button><i data-lucide="bar-chart-3"></i><span>Analytics</span></button>
             </nav>
@@ -237,14 +237,14 @@
             <section class="metrics record-metrics" aria-label="Car record metrics">
                 <article class="metric"><span class="metric-label">Mr AK car records</span><strong id="mr-ak-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">VIP Plates</span><strong id="vip-plates-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
-                <article class="metric"><span class="metric-label">Boss UAQ records</span><strong id="boss-uaq-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
+                <article class="metric"><span class="metric-label">VVIP Boss records</span><strong id="boss-uaq-total">00</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">Motorcycle records</span><strong id="moto-total">--</strong><span class="metric-change">TOTAL RECORDS</span></article>
                 <article class="metric"><span class="metric-label">VIP moto plates</span><strong id="vipmoto-total">--</strong><span class="metric-change">TOTAL RECORDS</span></article>
             </section>
             <section class="metrics alert-metrics" aria-label="Alerts needing attention">
                 <article class="metric alert-card"><span class="metric-label">Expiring registrations</span><strong id="expiring-total">00</strong><span class="metric-change neutral" id="expiring-sub">WITHIN 30 DAYS</span></article>
                 <article class="metric alert-card"><span class="metric-label">Mr AK services due</span><strong id="service-due-mrak">--</strong><span class="metric-change neutral">DUE NOW + 30 DAYS</span></article>
-                <a class="metric alert-card metric-link" href="bosscarsuaq.html#boss-car-records" title="Open Boss UAQ expiring registrations"><span class="metric-label">Boss UAQ Expiring Registration</span><strong id="boss-expiring-total">--</strong><span class="metric-change neutral" id="boss-expiring-sub">WITHIN 30 DAYS</span></a>
+                <a class="metric alert-card metric-link" href="vvipboss.html#boss-car-records" title="Open VVIP Boss expiring registrations"><span class="metric-label">VVIP Boss Expiring Registration</span><strong id="boss-expiring-total">--</strong><span class="metric-change neutral" id="boss-expiring-sub">WITHIN 30 DAYS</span></a>
             </section>
             <div class="expiry-alert" id="expiry-alert" role="alert">
                 <span class="ea-icon" id="expiry-alert-icon">🔔</span>
@@ -266,7 +266,7 @@
             <section class="bottom-grid">
                 <article class="card"><div class="card-head"><h2>Mr AK Car's</h2><span class="mono" id="registration-summary-count">00 RECORDS</span><a class="table-link" href="mrakcars.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Year</th><th>Status</th></tr></thead><tbody id="registration-summary"><tr><td colspan="4" class="empty-row">No registrations added</td></tr></tbody></table></div></article>
                 <article class="card"><div class="card-head"><h2>VIP numbers</h2><span class="mono" id="vip-summary-count">00 RECORDS</span><a class="table-link" href="vipnumbers.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Emirates</th><th>Plate No.</th></tr></thead><tbody id="vip-summary"><tr><td colspan="3" class="empty-row">No VIP numbers added</td></tr></tbody></table></div></article>
-                <article class="card"><div class="card-head"><h2>Boss UAQ records</h2><span class="mono" id="boss-summary-count">00 RECORDS</span><a class="table-link" href="bosscarsuaq.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Car</th><th>Expiry</th></tr></thead><tbody id="boss-summary"><tr><td colspan="4" class="empty-row">No Boss UAQ records added</td></tr></tbody></table></div></article>
+                <article class="card"><div class="card-head"><h2>VVIP Boss records</h2><span class="mono" id="boss-summary-count">00 RECORDS</span><a class="table-link" href="vvipboss.html">View all</a></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Code</th><th>Plate No.</th><th>Car</th><th>Expiry</th></tr></thead><tbody id="boss-summary"><tr><td colspan="4" class="empty-row">No VVIP Boss records added</td></tr></tbody></table></div></article>
             </section>
         </main>
         <!-- Inside .app on purpose: .app is its own stacking context (z-index: 1),
@@ -380,7 +380,7 @@
             if (expired) parts.push(`<b>${expired}</b> expired`);
             if (expiring) parts.push(`<b>${expiring}</b> expiring within 30 days`);
             const nextTxt = next ? ` Next: <b>${next.src === 'moto' ? '🏍️ ' : ''}${String(next.code || '').toUpperCase()} ${next.plate}</b> — ${next.days === 0 ? 'today' : `in ${next.days} day${next.days === 1 ? '' : 's'}`}.` : '.';
-            text.innerHTML = `🔔 <b>${parts.join(' · ')}</b> across Mr AK Cars, Boss UAQ and Motorcycle registrations.${nextTxt}`;
+            text.innerHTML = `🔔 <b>${parts.join(' · ')}</b> across Mr AK Cars, VVIP Boss and Motorcycle registrations.${nextTxt}`;
             alertBox.classList.add('show');
             alertBox.classList.toggle('critical', expired > 0);
             if (icon && expired > 0) icon.textContent = '⚠️';
@@ -406,7 +406,7 @@
             bossSummaryCount.textContent = `${String(bossRecords.length).padStart(2, '0')} RECORDS`;
             bossSummary.innerHTML = bossRecords.length ? bossRecords.slice(-4).reverse().map((record) => {
                 return `<tr><td class="code">${record.code || '--'}</td><td>${record.plate || '--'}</td><td>${[record.brand, record.model].filter(Boolean).join(' ') || '--'}</td><td>${record.expiry || '--'}</td></tr>`;
-            }).join('') : '<tr><td colspan="4" class="empty-row">No Boss UAQ records added</td></tr>';
+            }).join('') : '<tr><td colspan="4" class="empty-row">No VVIP Boss records added</td></tr>';
         }
 
         async function renderRegistrationSummary() {
@@ -520,8 +520,8 @@
                 serviceDueMrak.textContent = error ? '--' : String(countDue(data)).padStart(2, '0');
             }
 
-        // Boss UAQ expiring registration: the same rule as the "days to ex."
-        // column on bosscarsuaq.html — registration already expired, plus
+        // VVIP Boss expiring registration: the same rule as the "days to ex."
+        // column on vvipboss.html — registration already expired, plus
         // anything expiring within 30 days. Registration dates, not service dates.
             async function renderBossExpiringCount() {
                 if (!bossExpiringTotal) return;

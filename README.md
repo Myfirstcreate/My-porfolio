@@ -1,7 +1,7 @@
 # AK Garage
 
 Multi-page static site (plain HTML + Supabase) for tracking car registrations,
-VIP plates, Boss Car's UAQ records, and service logs. No build step, no
+VIP plates, VVIPBoss UAQ records, and service logs. No build step, no
 framework — deployable anywhere that serves static files.
 
 ## Pages
@@ -12,7 +12,7 @@ framework — deployable anywhere that serves static files.
 | `mrakcars.html` (registrations) | Supabase: `mr_ak_cars` |
 | `vehicles.html` (vehicle gallery + maintenance notes) | Supabase: `mr_ak_cars` |
 | `vipnumbers.html` (VIP plates) | Supabase: `vip_numbers` |
-| `bosscarsuaq.html` + `serviceuaq.html` | Supabase: `boss_cars_uaq` |
+| `vvipboss.html` + `serviceuaq.html` | Supabase: `boss_cars_uaq` |
 | `motorcycles.html` | Supabase: `motorcycles` |
 | `vipmoto.html` | Supabase: `vip_motorcycles` |
 | `project.html` | Supabase: `modifications` |
