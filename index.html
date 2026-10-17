@@ -77,7 +77,16 @@
         .status-box p { margin: 10px 0 0; color: var(--muted); font: 10px 'DM Mono', monospace; line-height: 1.5; }
 
         main { width: 100%; min-width: 0; padding: 32px 42px 38px; background: transparent; }
-        .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; }
+        .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 35px; }
+        .topbar-lead { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .menu-button { display: none; flex: 0 0 auto; width: 38px; height: 38px; place-items: center; border: 1px solid var(--line); border-radius: 5px; color: var(--text); background: transparent; cursor: pointer; }
+        .menu-button:hover { border-color: #697163; }
+        .menu-button svg { width: 18px; height: 18px; }
+        .drawer-backdrop { position: fixed; inset: 0; z-index: 30; background: rgba(4, 5, 4, .74); opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility .2s ease; }
+        .drawer-close { display: none; position: absolute; top: 16px; right: 12px; width: 32px; height: 32px; place-items: center; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: transparent; cursor: pointer; }
+        .drawer-close:hover { color: var(--text); border-color: #697163; }
+        .drawer-close svg { width: 16px; height: 16px; }
+        body.drawer-open .drawer-backdrop { opacity: 1; visibility: visible; }
         .eyebrow { margin: 0 0 7px; color: var(--lime); font: 11px 'DM Mono', monospace; letter-spacing: .16em; text-transform: uppercase; }
         h1 { margin: 0; font-size: clamp(26px, 3vw, 38px); letter-spacing: -.045em; line-height: 1.05; }
         .top-actions { display: flex; align-items: center; gap: 19px; }
@@ -138,7 +147,10 @@
         .activity-icon.orange { color: var(--amber); background: #2c2119; }
         .activity-text { font-size: 11px; line-height: 1.35; }
         .activity-text span { display: block; margin-top: 4px; color: var(--muted); font: 9px 'DM Mono', monospace; }
-        .data-table-wrap { overflow-x: auto; padding: 0 20px 12px; }
+        .data-table-wrap { overflow-x: auto; padding: 0 20px 12px; min-width: 0; }
+        /* Grid items default to min-width:auto, which lets a wide table push the
+           whole card past the viewport. Let the table scroll inside its card. */
+        .workspace > .card, .bottom-grid > .card { min-width: 0; }
         .data-table { width: 100%; min-width: 300px; border-collapse: collapse; }
         .data-table th { padding: 13px 8px; color: #697268; border-bottom: 1px solid var(--line); font: 9px 'DM Mono', monospace; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
         .data-table td { padding: 13px 8px; border-bottom: 1px solid #20241f; color: #dfe5da; font-size: 11px; white-space: nowrap; }
@@ -147,7 +159,27 @@
         .empty-row { color: var(--muted) !important; text-align: center; font: 10px 'DM Mono', monospace !important; text-transform: uppercase; }
         .table-link { color: var(--lime); font: 9px 'DM Mono', monospace; text-transform: uppercase; }
         .table-link:hover { text-decoration: underline; }
-        @media (max-width: 900px) { .sidebar { width: 72px; flex-basis: 72px; padding: 22px 10px; } .brand { padding: 0 11px 35px; } .brand > div:last-child, .section-label, .nav button span, .status-box { display: none; } main { padding: 28px 22px; } .brand-mark { flex-shrink: 0; } .nav button { justify-content: center; } }
+        /* Below 900px the sidebar leaves the layout and becomes an off-canvas drawer,
+           so the main column always owns the full viewport width. */
+        @media (max-width: 900px) {
+            .sidebar {
+                position: fixed; top: 0; left: 0; z-index: 40;
+                width: 262px; max-width: 84vw; height: 100dvh;
+                padding: 22px 16px; overflow-y: auto;
+                box-shadow: 0 0 44px rgba(0, 0, 0, .62);
+                transform: translateX(-100%);
+                transition: transform .22s ease;
+            }
+            body.drawer-open .sidebar { transform: translateX(0); }
+            body.drawer-open { overflow: hidden; }
+            .menu-button { display: grid; }
+            .drawer-close { display: grid; }
+            .brand { padding: 0 11px 30px; }
+            main { padding: 28px 22px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sidebar, .drawer-backdrop { transition: none; }
+        }
         @media (max-width: 680px) { .topbar { gap: 20px; } .date { display: none; } .metrics { grid-template-columns: repeat(2, 1fr); } .workspace, .bottom-grid { grid-template-columns: 1fr; } main { padding: 24px 15px 30px; } .top-actions { gap: 8px; } }
     </style>
 </head>
@@ -158,8 +190,9 @@
         <img class="bg-photo" src="assets/hero-car.jpg?v=3" alt="">
     </div>
     <div class="app">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
             <div class="brand"><div class="brand-mark">AK</div><div><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></div></div>
+            <button class="drawer-close" id="drawer-close" type="button" aria-label="Close navigation"><i data-lucide="x"></i></button>
             <div class="section-label">Workspace</div>
             <nav class="nav" aria-label="Main navigation">
                 <button class="active"><i data-lucide="layout-dashboard"></i><span>Overview</span></button>
@@ -179,7 +212,10 @@
         </aside>
         <main>
             <header class="topbar">
-                <div><p class="eyebrow" id="current-date">Loading date...</p><h1 id="greeting">Good day, Boss AK</h1></div>
+                <div class="topbar-lead">
+                    <button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><i data-lucide="menu"></i></button>
+                    <div><p class="eyebrow" id="current-date">Loading date...</p><h1 id="greeting">Good day, Boss AK</h1></div>
+                </div>
                 <div class="top-actions"><span class="date" id="last-sync">LAST SYNC --:--:--</span><button class="icon-button" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-badge" id="expiry-notif-badge" hidden></span></button><div class="avatar">AS</div></div>
             </header>
             <section class="metrics record-metrics" aria-label="Car record metrics">
@@ -218,6 +254,7 @@
             </section>
         </main>
     </div>
+    <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
     <script>
         lucide.createIcons();
         const currentDate = document.getElementById('current-date');
@@ -506,6 +543,47 @@
                 button.classList.add('active');
             });
         });
+
+        // Off-canvas drawer below 900px: the sidebar leaves the flow, a menu button
+        // opens it over a backdrop, and anything that navigates closes it again.
+        (function initDrawer() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('menu-toggle');
+            const close = document.getElementById('drawer-close');
+            const backdrop = document.getElementById('drawer-backdrop');
+            const narrow = window.matchMedia('(max-width: 900px)');
+            if (!sidebar || !toggle || !backdrop) return;
+
+            function syncInert() {
+                const closed = narrow.matches && !document.body.classList.contains('drawer-open');
+                sidebar.toggleAttribute('inert', closed);
+            }
+
+            function setDrawer(open) {
+                const isOpen = Boolean(open) && narrow.matches;
+                document.body.classList.toggle('drawer-open', isOpen);
+                backdrop.hidden = !isOpen;
+                toggle.setAttribute('aria-expanded', String(isOpen));
+                toggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+                if (isOpen) sidebar.querySelector('.nav a, .nav button')?.focus({ preventScroll: true });
+                syncInert();
+            }
+
+            toggle.addEventListener('click', () => setDrawer(!document.body.classList.contains('drawer-open')));
+            close?.addEventListener('click', () => { setDrawer(false); toggle.focus({ preventScroll: true }); });
+            backdrop.addEventListener('click', () => setDrawer(false));
+            sidebar.addEventListener('click', (event) => {
+                if (event.target.closest('a, button')) setDrawer(false);
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && document.body.classList.contains('drawer-open')) {
+                    setDrawer(false);
+                    toggle.focus({ preventScroll: true });
+                }
+            });
+            narrow.addEventListener('change', () => setDrawer(false));
+            syncInert();
+        })();
     </script>
 </body>
 </html>
