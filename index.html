@@ -242,7 +242,7 @@
                 <article class="metric"><span class="metric-label">VIP moto plates</span><strong id="vipmoto-total">--</strong><span class="metric-change">TOTAL RECORDS</span></article>
             </section>
             <section class="metrics alert-metrics" aria-label="Alerts needing attention">
-                <article class="metric alert-card"><span class="metric-label">Expiring registrations</span><strong id="expiring-total">00</strong><span class="metric-change neutral" id="expiring-sub">WITHIN 30 DAYS</span></article>
+                <article class="metric alert-card"><span class="metric-label">Mr AK Expiring Registrations</span><strong id="expiring-total">00</strong><span class="metric-change neutral" id="expiring-sub">WITHIN 30 DAYS</span></article>
                 <article class="metric alert-card"><span class="metric-label">Mr AK services due</span><strong id="service-due-mrak">--</strong><span class="metric-change neutral">DUE NOW + 30 DAYS</span></article>
                 <a class="metric alert-card metric-link" href="vvipboss.html#boss-car-records" title="Open VVIP Boss expiring registrations"><span class="metric-label">VVIP Boss Expiring Registration</span><strong id="boss-expiring-total">--</strong><span class="metric-change neutral" id="boss-expiring-sub">WITHIN 30 DAYS</span></a>
             </section>
@@ -334,8 +334,8 @@
             if (boss.error) throw boss.error;
             const motoRecords = moto.error ? [] : (moto.data || []);
             return { mrakRecords: mrak.data || [], combined: [
-                ...(mrak.data || []),
-                ...(boss.data || []),
+                ...(mrak.data || []).map((m) => ({ ...m, _src: 'mrak' })),
+                ...(boss.data || []).map((b) => ({ ...b, _src: 'boss' })),
                 ...motoRecords.map((m) => ({ ...m, _src: 'moto' }))
             ] };
         }
@@ -350,24 +350,28 @@
         function updateExpiryAlert(records) {
             const today = new Date(); today.setHours(0, 0, 0, 0);
             let expiring = 0, expired = 0;
+            // The card is Mr AK Cars only; the alert bar and the bell keep
+            // counting every source (Mr AK, VVIP Boss, motorcycles).
+            let mrakExpiring = 0, mrakExpired = 0;
             const soonest = [];
             (records || []).forEach((record) => {
+                const isMrak = record._src === 'mrak';
                 if (!record.expiry) return;
                 const t = new Date(`${record.expiry}T00:00:00`).getTime();
                 if (!Number.isFinite(t)) return;
                 const days = Math.round((t - today.getTime()) / 86400000);
-                if (days < 0) { expired++; return; }
-                if (days <= 30) { expiring++; soonest.push({ days, code: record.code || record.brand, plate: record.plate, src: record._src }); }
+                if (days < 0) { expired++; if (isMrak) mrakExpired++; return; }
+                if (days <= 30) { expiring++; if (isMrak) mrakExpiring++; soonest.push({ days, code: record.code || record.brand, plate: record.plate, src: record._src }); }
             });
-            window.__expiryCounts = { expiring, expired };
+            window.__expiryCounts = { expiring, expired, mrakExpiring, mrakExpired };
             const total = document.getElementById('expiring-total');
             const sub = document.getElementById('expiring-sub');
             const alertBox = document.getElementById('expiry-alert');
             const icon = document.getElementById('expiry-alert-icon');
             const text = document.getElementById('expiry-alert-text');
             const bell = document.getElementById('expiry-notif-badge');
-            if (total) total.textContent = String(expiring).padStart(2, '0');
-            if (sub) sub.textContent = expired ? `${expired} EXPIRED` : 'WITHIN 30 DAYS';
+            if (total) total.textContent = String(mrakExpiring).padStart(2, '0');
+            if (sub) sub.textContent = mrakExpired ? `${mrakExpired} EXPIRED` : 'WITHIN 30 DAYS';
             if (bell) {
                 if (expiring > 0) { bell.hidden = false; bell.textContent = String(expiring); }
                 else bell.hidden = true;
