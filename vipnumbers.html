@@ -144,9 +144,11 @@
 		let showAllRecords = false;
 		const statusFilter = document.getElementById('status-filter');
 		const sortOrderSelect = document.getElementById('sort-order');
-		let statusFilterValue = 'all';		form.querySelectorAll('input').forEach((input) => input.addEventListener('input', () => {
-			input.value = input.value.toUpperCase();
-		}));
+		let statusFilterValue = 'all';
+
+		// Values are upper-cased when the record is built, not on every keystroke:
+		// rewriting input.value while typing fights the on-screen keyboard and can
+		// move the caret, which feels like the field refuses input.
 
 		let storedRecords = [];
 
@@ -285,16 +287,31 @@
 
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
+			if (typeof window.akgarageCanEdit === 'function' && !window.akgarageCanEdit()) {
+				window.alert('View only — enter the admin password to add VIP numbers.');
+				if (typeof window.akgarageReopenGate === 'function') window.akgarageReopenGate();
+				return;
+			}
 			const data = new FormData(form);
+			const upper = (value) => String(value || '').trim().toUpperCase();
 			const record = {
-				code: data.get('code'),
-				emirates: data.get('emirates'),
-				plate: data.get('plate'),
+				code: upper(data.get('code')),
+				emirates: upper(data.get('emirates')),
+				plate: upper(data.get('plate')),
 				status: 'Available'
 			};
 			const { data: inserted, error } = await window.sb.from(TABLE).insert(record).select().single();
 			if (error) {
 				console.error('Unable to add VIP number:', error);
+				// RLS refuses the row when the admin token is missing or expired. Say so
+				// instead of failing silently, and reopen the login so it can be fixed.
+				if (error.code === '42501' || /row-level security|permission denied/i.test(error.message || '')) {
+					window.alert('Session expired — enter the admin password to add VIP numbers.');
+					if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+					else if (typeof window.akgarageReopenGate === 'function') window.akgarageReopenGate();
+					return;
+				}
+				window.alert(`Unable to add VIP number: ${error.message || 'unknown error'}`);
 				return;
 			}
 			storedRecords.push(inserted);

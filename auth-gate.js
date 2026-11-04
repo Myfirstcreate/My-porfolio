@@ -33,6 +33,12 @@
 	var style = document.createElement('style');
 	style.textContent =
 		'.ak-viewer .form-card,.ak-viewer .edit,.ak-viewer .erase,.ak-viewer .save-detail,.ak-viewer .save-details{display:none!important}' +
+		// The hidden form is easy to miss, so the viewer note becomes an action:
+		// it names the reason and offers the login that unlocks the form.
+		'.ak-viewer .viewer-note[hidden]{display:none!important}' +
+		'.ak-viewer .viewer-note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;border-color:#4a3b1f;color:#ffcf9a;background:rgba(36,26,0,.5)}' +
+		'.ak-viewer .viewer-note .ak-login-button{padding:6px 10px;border:1px solid #c4f04e;border-radius:3px;color:#c4f04e;background:transparent;font:9px \'DM Mono\',monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}' +
+		'.ak-viewer .viewer-note .ak-login-button:hover{color:#070807;background:#c4f04e}' +
 		'.ak-viewer select.status-select{pointer-events:none;border-color:transparent;background:transparent;appearance:none;-webkit-appearance:none}' +
 		'.ak-viewer .service-date,.ak-viewer .service-mileage,.ak-viewer .service-mileage-ask,.ak-viewer .maintenance-input{pointer-events:none;background:#0c0f0c;color:#8b9388}' +
 		'.ak-role-badge{position:fixed;left:14px;bottom:14px;z-index:99998;display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid #292d29;border-radius:4px;background:rgba(7,8,7,.92);color:#8b9388;font:10px \'DM Mono\',monospace;letter-spacing:.06em;text-transform:uppercase}' +
@@ -84,12 +90,38 @@
 		document.body.appendChild(badge);
 	}
 
+	// Viewers see "ask the admin to add…" with no way to act on it. Reword the
+	// note and give it the login button so the add form is one click away.
+	function decorateViewerNotes() {
+		if (window.akgarageIsAdmin()) return;
+		var notes = document.querySelectorAll('.viewer-note');
+		for (var i = 0; i < notes.length; i++) {
+			var note = notes[i];
+			if (note.querySelector('.ak-login-button')) continue;
+			note.textContent = note.textContent.replace(/ask the admin to/i, 'log in as admin to');
+			var button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'ak-login-button';
+			button.textContent = 'Admin login';
+			button.addEventListener('click', openGate);
+			note.appendChild(button);
+		}
+	}
+
 	window.akgarageRemoveGate = function () {
 		var gate = document.getElementById('auth-gate');
 		if (gate) gate.remove();
 		document.body.style.visibility = '';
 		document.body.style.background = '';
 	};
+
+	// Page scripts run before DOMContentLoaded, so their viewer-mode tweaks are
+	// already applied by the time this decorates the notes.
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', decorateViewerNotes);
+	} else {
+		decorateViewerNotes();
+	}
 
 	window.akgarageInitGate = function () {
 		// Devices that logged in before the two-role system existed ('1') become
