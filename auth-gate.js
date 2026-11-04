@@ -123,6 +123,27 @@
 		decorateViewerNotes();
 	}
 
+	// A stored admin role can outlive its token (it expires on the server). The
+	// page would then show the add form while every write is rejected by RLS, so
+	// "Add" did nothing at all. Ask the database once per load and step down to
+	// viewer when it no longer recognises the token.
+	function demoteExpiredAdmin() {
+		var role = '';
+		try { role = localStorage.getItem(AUTH_KEY) || ''; } catch (error) {}
+		if (role !== 'admin' || !window.akgarageAdminToken) return;
+		if (!window.sb || typeof window.sb.rpc !== 'function') return;
+		window.sb.rpc('is_ak_admin').then(function (result) {
+			if (result.error || result.data !== false) return; // offline or still valid: leave it alone
+			try { localStorage.removeItem(TOKEN_KEY); localStorage.setItem(AUTH_KEY, 'viewer'); } catch (error) {}
+			window.akgarageAdminToken = '';
+			window.akgarageApplyRole();
+			var note = document.querySelector('.viewer-note');
+			if (note) note.hidden = false;
+			decorateViewerNotes();
+			addRoleBadge();
+		}).catch(function () {});
+	}
+
 	window.akgarageInitGate = function () {
 		// Devices that logged in before the two-role system existed ('1') become
 		// viewers; they can switch to admin through the badge button.
@@ -133,6 +154,7 @@
 			role = 'viewer';
 		}
 		window.akgarageApplyRole();
+		demoteExpiredAdmin();
 		if (window.akgarageIsAdmin()) return;
 		if (role !== 'viewer') {
 			// Hide the page content (but keep the DOM alive) while the gate is open.
