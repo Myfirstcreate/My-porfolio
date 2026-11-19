@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>AK Garage | Modifications</title>
+	<title>AK Garage | Build queue</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -71,6 +71,10 @@
 		/* ===== Build card (Car Expenses.xlsx format) ===== */
 		.card { overflow:hidden; border:1px solid var(--line); border-radius:6px; background:rgba(16,18,16,.92); }
 		.card:hover { border-color:#56634d; }
+		.card.done { cursor:pointer; }
+		.card.done .card-top { border-bottom:0; }
+		.card.done:hover { border-color:#79875f; }
+		.card.done:focus-visible { outline:2px solid var(--lime); outline-offset:2px; }
 		.card-top { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--line); background:linear-gradient(90deg,rgba(196,240,78,.06),transparent 55%); }
 		.card-top h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
 		.chassis { margin:4px 0 0; color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.06em; }
@@ -118,6 +122,73 @@
 		@media(max-width:1100px) { .exp-form { grid-template-columns:repeat(3,1fr); } }
 		@media(max-width:850px) { .shell { padding:25px 20px 40px; } .stats { grid-template-columns:repeat(2,1fr); } .form-grid { grid-template-columns:repeat(2,1fr); } .money-row { grid-template-columns:1fr; } .money { border-right:0; border-bottom:1px solid var(--line); } .money:last-child { border-bottom:0; } .card-top { flex-direction:column; align-items:start; } .exp-table .hide-sm { display:none; } }
 		@media(max-width:560px) { .intro,.toolbar { align-items:start; flex-direction:column; } .intro p { max-width:none; } .search { width:100%; } .filters { flex-wrap:wrap; } .form-grid { grid-template-columns:1fr; } .exp-form { grid-template-columns:1fr 1fr; } }
+		/* ===== Report paper view — same navy/gold sheet as the Maintenance report ===== */
+		body.report-open .intro,body.report-open .stats,body.report-open .form-card,body.report-open .toolbar,body.report-open .projects { display:none; }
+		#report-view { margin-top:6px; }
+		.report-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px; }
+		.report-bar .rbtn { padding:8px 13px; border:1px solid var(--lime); border-radius:4px; color:var(--black); background:var(--lime); font:600 11px 'Space Grotesk',sans-serif; letter-spacing:.05em; text-transform:uppercase; cursor:pointer; }
+		.report-bar .rbtn:hover { filter:brightness(1.08); }
+		.report-bar .rbtn.ghost { color:var(--text); border-color:var(--line); background:transparent; }
+		.report-bar .rbtn.ghost:hover { border-color:var(--muted); filter:none; }
+		.report-bar .rbtn:disabled { opacity:.6; cursor:default; }
+		.report-status { margin-left:auto; color:var(--muted); font:10px 'DM Mono',monospace; text-transform:uppercase; }
+		.report-sheet { max-width:860px; margin:0 auto; padding:18px 16px; border:1px solid var(--line); border-radius:12px; background:#fff; box-shadow:0 14px 34px rgba(0,0,0,.45); }
+		.rp { --serif:Georgia,'Times New Roman',serif; border-top:3px solid #a8844a; background:#fff; color:#2b2a26; font-size:12px; }
+		.rp .rp-top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:16px 18px; background:#14213a; border-bottom:2px solid #a8844a; }
+		.rp .rp-brand { flex:1; display:flex; align-items:center; }
+		.rp .rp-brand b { position:relative; color:#c9a96a; font-family:var(--serif); font-size:26px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+		.rp .rp-brand b::after { content:""; display:block; height:3px; margin-top:8px; background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%); }
+		.rp .rp-meta { display:flex; gap:8px; text-align:center; }
+		.rp .rp-meta>div { min-width:150px; padding:10px 16px; border:1px solid #a8844a; border-radius:10px; background:#1b2b49; }
+		.rp .rp-meta span { display:block; color:#c9a96a; font:600 10.5px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.6px; }
+		.rp .rp-meta b { display:block; margin-top:2px; color:#fff; font-family:var(--serif); font-size:15px; font-weight:400; }
+		.rp .rp-vehicle { position:relative; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; padding-top:12px; margin:12px 0 10px; }
+		.rp .rp-vehicle::before { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%); }
+		.rp .rp-plate { position:relative; padding:2px 12px; border:1px solid #a8844a; border-radius:8px; color:#14213a; font-family:var(--serif); font-size:24px; font-weight:800; letter-spacing:1.5px; }
+		.rp .rp-plate::before { content:""; position:absolute; inset:-6px; border:3px solid #14213a; border-radius:12px; }
+		.rp .rp-model { color:#14213a; font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif; font-size:19px; font-style:italic; font-weight:700; }
+		.rp .rp-info { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin-top:6px; background:#e2dccd; border:1px solid #e2dccd; }
+		.rp .rp-info>div { padding:8px 10px; background:#fbf9f5; }
+		.rp .rp-info span { display:block; color:#8a7f6a; font:600 10.5px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.6px; }
+		.rp .rp-info b { color:#14213a; font-family:var(--serif); font-size:14.5px; font-weight:400; }
+		.rp .rp-sum { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0 4px; }
+		.rp .rp-sum>div { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #e2dccd; }
+		.rp .rp-sum b { font-family:var(--serif); font-size:19px; }
+		.rp .rp-sum span { font-size:12px; font-weight:600; }
+		.rp .s-ok { background:#eef4ea; color:#315c40; }
+		.rp .s-attn { background:#f9f1e2; color:#8a6a2f; }
+		.rp .rp-title { margin:22px 0 8px; padding-bottom:6px; border-bottom:1px solid #e2dccd; color:#14213a; font-family:var(--serif); font-size:12px; letter-spacing:2.5px; text-transform:uppercase; }
+		.rp .rp-title::before { content:""; display:inline-block; width:26px; height:2px; margin-right:8px; background:#a8844a; vertical-align:middle; }
+		.rp table.rp-table { width:100%; border-collapse:collapse; font-size:12px; }
+		.rp .rp-table th { padding:7px 8px; border-bottom:0; background:#14213a; color:#fff; font:700 10.5px 'DM Mono',monospace; letter-spacing:.8px; text-align:left; text-transform:uppercase; }
+		.rp .rp-table td { padding:7px 8px; border-bottom:1px solid #efeadf; color:#2b2a26; vertical-align:top; }
+		.rp .rp-table td.num { text-align:right; white-space:nowrap; font-family:var(--serif); }
+		.rp .rp-table td.rp-date { white-space:nowrap; color:#6f6552; font-size:11px; }
+		.rp .rp-table tbody tr:nth-child(even) td { background:#fbf9f5; }
+		.rp .rp-table td.rp-date span.rp-cat-inline { display:block; margin-top:2px; color:#a8844a; font-size:10px; letter-spacing:.4px; text-transform:uppercase; }
+		.rp .rp-table tr.rp-total td { border-bottom:0; border-top:1px solid #14213a; background:#f7f4ee; color:#14213a; font-weight:700; }
+		.rp .rp-table tr.rp-words td { border-bottom:0; background:#fff; color:#8a7f6a; font-family:var(--serif); font-size:11px; font-style:italic; }
+		.rp .rp-table tr.rp-words b { color:#14213a; font-style:normal; }
+		.rp .rp-notes { display:grid; gap:10px; }
+		.rp .rp-sec { padding:12px 14px; border:1px solid #e2dccd; border-left:3px solid #a8844a; background:#fbf9f5; }
+		.rp .rp-sec p { margin:0; line-height:1.6; white-space:pre-wrap; }
+		.rp .rp-notes::after { content:""; display:block; height:3px; margin-top:8px; background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%); }
+		.rp .rp-sign { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:40px; }
+		.rp .rp-sign .line { height:36px; border-bottom:1px solid #14213a; }
+		.rp .rp-sign span { display:block; margin-top:4px; color:#8a7f6a; font:600 10.5px 'DM Mono',monospace; letter-spacing:.5px; text-transform:uppercase; }
+		.rp .rp-sign b { color:#172845; font-size:13px; }
+		@media(max-width:640px) { .rp .rp-brand b { font-size:23px; } .rp .rp-meta>div { min-width:0; padding:8px 12px; } .rp .rp-plate { font-size:27px; } .rp .rp-sum { grid-template-columns:1fr; } .rp .rp-sign { grid-template-columns:1fr; gap:10px; } .report-sheet { padding:12px 10px; } .rp .rp-table td,.rp .rp-table th { padding:6px 5px; font-size:11px; } }
+		@media print {
+			@page { size:A4; margin:12mm; }
+			:root { color-scheme:light; }
+			* { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+			body.report-open { background:#fff !important; }
+			body.report-open .bg-media,body.report-open .shell > *:not(#report-view),body.report-open .report-bar { display:none !important; }
+			body.report-open .shell { max-width:none; padding:0; }
+			body.report-open .report-sheet { max-width:none; margin:0; padding:0; border:0; border-radius:0; box-shadow:none; background:#fff; }
+			.rp .rp-table tr { break-inside:avoid; }
+			.rp .rp-top { break-after:avoid; }
+		}
 	</style>
 </head>
 <body>
@@ -130,8 +201,8 @@
 			<a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a>
 		</header>
 		<section class="intro">
-			<div><p class="eyebrow">Workspace / Modifications</p><h1>Build queue.</h1></div>
-			<p>Car modification cards with full expense tracking — sold price, parts, and profit per build. Saved live for the whole team.</p>
+			<div><p class="eyebrow">Workspace / Build queue</p><h1>Build queue.</h1></div>
+			<p>Build queue cards with full expense tracking — sold price, parts, and profit per build. Saved live for the whole team.</p>
 		</section>
 		<section class="stats" aria-label="Project statistics">
 			<div class="stat"><label>Total projects</label><strong id="stat-total">00</strong><span id="stat-total-sub">NO PROJECTS YET</span></div>
@@ -140,8 +211,8 @@
 			<div class="stat"><label>Total PnL</label><strong id="stat-pnl">--</strong><span id="stat-pnl-sub">NO PROJECT DATA</span></div>
 		</section>
 		<div class="proj-banner" id="proj-banner" hidden></div>
-		<section class="form-card" aria-label="Add or edit modification project">
-			<div class="form-head"><h2 id="form-title">Add modification project</h2><button type="button" class="cancel" id="cancel-edit" hidden>Cancel edit</button></div>
+		<section class="form-card" aria-label="Add or edit build">
+			<div class="form-head"><h2 id="form-title">Add build to queue</h2><button type="button" class="cancel" id="cancel-edit" hidden>Cancel edit</button></div>
 			<form id="project-form">
 				<div class="form-grid">
 					<div class="field"><label for="proj-title">Car model *</label><input id="proj-title" name="title" type="text" required placeholder="e.g. MERCEDES BENZ 2010"></div>
@@ -156,8 +227,17 @@
 			</form>
 		</section>
 		<div class="toolbar"><div class="filters"><button class="filter active" data-filter="all">ALL PROJECTS</button><button class="filter" data-filter="active">IN PROGRESS</button><button class="filter" data-filter="done">COMPLETED</button></div><label class="search"><i data-lucide="search"></i><input type="search" id="proj-search" placeholder="Search model or chassis"></label></div>
-		<section class="projects" aria-label="Modifications">
-			<div class="empty-projects" id="empty-projects"><i data-lucide="folder-plus"></i><h2 id="empty-title">No projects yet</h2><p id="empty-text">Modification projects will appear here when they are added.</p></div>
+		<section class="projects" aria-label="Build queue">
+			<div class="empty-projects" id="empty-projects"><i data-lucide="folder-plus"></i><h2 id="empty-title">No projects yet</h2><p id="empty-text">Build queue entries will appear here when they are added.</p></div>
+		</section>
+		<section id="report-view" hidden aria-label="Completed build report">
+			<div class="report-bar">
+				<button type="button" class="rbtn ghost" id="report-back">← Back</button>
+				<button type="button" class="rbtn" id="report-print">Print</button>
+				<button type="button" class="rbtn ghost" id="report-save" title="Download this build report as a PDF">⬇ Save as PDF</button>
+				<span class="report-status" id="report-status"></span>
+			</div>
+			<div class="report-sheet" id="report-body"></div>
 		</section>
 	</div>
 	<script>
@@ -318,12 +398,340 @@
 				</div>`;
 			}
 
+			// ===== Print-ready A4 PDF report — same navy/gold design as the Maintenance report =====
+			const PDF_INK = [43,42,38], PDF_MUTED = [138,127,106], PDF_NAVY = [20,33,58], PDF_GOLD = [168,132,74],
+				PDF_TITLE = [201,169,106], PDF_LINE = [226,220,205], PDF_PANEL = [251,249,245], PDF_WARM = [247,244,238],
+				PDF_OK = [49,92,64], PDF_WARN = [138,106,47];
+
+			let pdfBusy = false;
+
+			function loadJsPdf() {
+				if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+				return new Promise((resolve, reject) => {
+					const script = document.createElement('script');
+					script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+					script.onload = () => (window.jspdf && window.jspdf.jsPDF) ? resolve() : reject(new Error('jsPDF loaded but not exposed'));
+					script.onerror = () => reject(new Error('jsPDF CDN unavailable'));
+					document.head.appendChild(script);
+				});
+			}
+
+			function moneyText(value) {
+				return 'AED ' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(value) || 0);
+			}
+
+			// Amount in words for the report (e.g. 294 -> "Two Hundred Ninety-Four").
+			function numberWords(value) {
+				const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+				const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+				const scales = ['', 'Thousand', 'Million', 'Billion', 'Trillion'];
+				const below1000 = (n) => {
+					const parts = [];
+					if (n >= 100) { parts.push(ones[Math.floor(n / 100)] + ' Hundred'); n %= 100; }
+					if (n >= 20) parts.push(tens[Math.floor(n / 10)] + (n % 10 ? '-' + ones[n % 10] : ''));
+					else if (n > 0) parts.push(ones[n]);
+					return parts.join(' ');
+				};
+				let n = Math.round(Math.abs(Number(value) || 0));
+				if (!n) return 'Zero';
+				const groups = [];
+				let scale = 0;
+				while (n > 0) {
+					const chunk = n % 1000;
+					if (chunk) groups.unshift(below1000(chunk) + (scales[scale] ? ' ' + scales[scale] : ''));
+					n = Math.floor(n / 1000);
+					scale += 1;
+				}
+				return groups.join(' ');
+			}
+
+			function buildReportPDF(job) {
+				const { jsPDF } = window.jspdf;
+				const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+				const L = 12, TOP = 10, BOTTOM = 16, W = 210 - 24, LIMIT = 297 - BOTTOM;
+				let y = TOP;
+				const fill = (c) => pdf.setFillColor(c[0], c[1], c[2]);
+				const draw = (c) => pdf.setDrawColor(c[0], c[1], c[2]);
+				const ink = (c) => pdf.setTextColor(c[0], c[1], c[2]);
+				const twoTone = () => {
+					fill(PDF_NAVY); pdf.rect(L, y, W * 0.72, 0.8, 'F');
+					fill(PDF_GOLD); pdf.rect(L + W * 0.72, y, W * 0.28, 0.8, 'F');
+					y += 0.8;
+				};
+				const sectionTitle = (text) => {
+					if (y + 12 > LIMIT) { pdf.addPage(); y = TOP; }
+					y += 5;
+					fill(PDF_GOLD); pdf.rect(L, y + 0.4, 8, 0.7, 'F');
+					draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + 3.4, L + W, y + 3.4);
+					ink(PDF_NAVY); pdf.setFont('times', 'bold'); pdf.setFontSize(9);
+					pdf.text(String(text).toUpperCase(), L + 10, y + 1.4);
+					y += 5.6;
+				};
+
+				// Header band with the brand title and the build date box.
+				fill(PDF_NAVY); pdf.rect(L, y, W, 27, 'F');
+				ink(PDF_TITLE); pdf.setFont('times', 'bold'); pdf.setFontSize(16);
+				pdf.text('BUILD REPORT', L + 5, y + 12.5);
+				fill(PDF_GOLD); pdf.rect(L + 5, y + 16.5, 55, 0.8, 'F');
+				const dateBoxW = 44, dateBoxH = 15, dateBoxX = L + W - dateBoxW - 5, dateBoxY = y + 6;
+				fill([27,43,73]); pdf.roundedRect(dateBoxX, dateBoxY, dateBoxW, dateBoxH, 2, 2, 'F');
+				draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(dateBoxX, dateBoxY, dateBoxW, dateBoxH, 2, 2, 'S');
+				ink(PDF_TITLE); pdf.setFont('times', 'normal'); pdf.setFontSize(6.5);
+				pdf.text('BUILD DATE', dateBoxX + dateBoxW / 2, dateBoxY + 5, { align: 'center' });
+				pdf.setTextColor(255,255,255); pdf.setFontSize(10.5);
+				pdf.text(dateText(job.due_date) ? dateText(job.due_date).toUpperCase() : '--', dateBoxX + dateBoxW / 2, dateBoxY + 10.5, { align: 'center' });
+				y += 31;
+
+				// Car name inside the gold/navy plate box.
+				twoTone(); y += 4;
+				pdf.setFont('times', 'bold'); pdf.setFontSize(15);
+				const nameLines = pdf.splitTextToSize(String(job.title || '--').toUpperCase(), W - 12);
+				const nameBoxH = Math.max(12, nameLines.length * 6.4 + 4);
+				const nameBoxW = Math.min(W, Math.max(...nameLines.map((line) => pdf.getTextWidth(line))) + 16);
+				draw(PDF_NAVY); pdf.setLineWidth(0.9); pdf.roundedRect(L - 1.6, y - 1.6, nameBoxW + 3.2, nameBoxH + 3.2, 2, 2, 'S');
+				draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(L, y, nameBoxW, nameBoxH, 1.5, 1.5, 'S');
+				ink(PDF_NAVY);
+				nameLines.forEach((line, i) => pdf.text(line, L + nameBoxW / 2, y + 6 + i * 6.4, { align: 'center' }));
+				y += nameBoxH + 5;
+				twoTone(); y += 4;
+
+				// Chassis / progress / parts + labor row.
+				const grand = grandTotalOf(job);
+				const cellW = W / 3, infoH = 12;
+				fill(PDF_PANEL); pdf.rect(L, y, W, infoH, 'F');
+				draw(PDF_LINE); pdf.setLineWidth(0.2);
+				pdf.line(L + cellW, y, L + cellW, y + infoH);
+				pdf.line(L + cellW * 2, y, L + cellW * 2, y + infoH);
+				[['CHASSIS NO.', job.chassis || '--'], ['PROGRESS', progressOf(job) + '%'], ['PARTS + LABOR', moneyText(grand)]].forEach(([label, value], i) => {
+					const x = L + i * cellW + 3;
+					ink(PDF_MUTED); pdf.setFont('times', 'normal'); pdf.setFontSize(6.5);
+					pdf.text(label, x, y + 4.6);
+					ink(PDF_NAVY); pdf.setFontSize(9.5);
+					pdf.text(String(value), x, y + 9.4);
+				});
+				y += infoH + 3;
+
+				// Expenses table, grouped by category with the gold category bars.
+				const expenses = expensesOf(job);
+				sectionTitle('Expense Details');
+				if (expenses.length) {
+					const cw = [27, 55, 38, 10, 24, W - 154];
+					const tableHead = () => {
+						fill(PDF_NAVY); pdf.rect(L, y, W, 7, 'F');
+						pdf.setTextColor(255,255,255); pdf.setFont('times', 'bold'); pdf.setFontSize(7.5);
+						pdf.text('DATE', L + 3, y + 4.8);
+						pdf.text('ITEM / PART', L + cw[0] + 3, y + 4.8);
+						pdf.text('SHOP', L + cw[0] + cw[1] + 3, y + 4.8);
+						pdf.text('QTY', L + cw[0] + cw[1] + cw[2] + cw[3] - 3, y + 4.8, { align: 'right' });
+						pdf.text('UNIT (AED)', L + cw[0] + cw[1] + cw[2] + cw[3] + cw[4] - 3, y + 4.8, { align: 'right' });
+						pdf.text('TOTAL (AED)', L + W - 3, y + 4.8, { align: 'right' });
+						y += 7;
+					};
+					tableHead();
+					const groups = new Map();
+					expenses.forEach((line) => {
+						const cat = line.category || 'Other';
+						if (!groups.has(cat)) groups.set(cat, []);
+						groups.get(cat).push(line);
+					});
+					const categories = [...CATEGORIES, ...[...groups.keys()].filter((cat) => !CATEGORIES.includes(cat))];
+					categories.forEach((cat) => {
+						const lines = groups.get(cat);
+						if (!lines) return;
+						const catLabel = String(cat || 'Other').toUpperCase();
+						lines.forEach((line, index) => {
+							pdf.setFont('times', 'normal'); pdf.setFontSize(8.5);
+							const itemLines = pdf.splitTextToSize(String(line.item || '--'), cw[1] - 6);
+							const rowH = Math.max(9.5, itemLines.length * 4.2 + 2.6);
+							if (y + rowH > LIMIT) { pdf.addPage(); y = TOP; tableHead(); }
+							if (index % 2 === 1) { fill(PDF_PANEL); pdf.rect(L, y, W, rowH, 'F'); }
+							ink(PDF_MUTED); pdf.setFont('times', 'normal'); pdf.setFontSize(7.5);
+							pdf.text(dateText(line.date) || '--', L + 3, y + 4);
+							pdf.setFont('times', 'italic'); pdf.setFontSize(7);
+							pdf.text(pdf.splitTextToSize(catLabel, cw[0] - 5)[0], L + 3, y + 7.6);
+							ink(PDF_INK); pdf.setFontSize(8.5);
+							itemLines.forEach((text, k) => pdf.text(text, L + cw[0] + 3, y + 4 + k * 4.2));
+							ink(PDF_MUTED); pdf.setFontSize(8);
+							pdf.text(pdf.splitTextToSize(String(line.shop || '--'), cw[2] - 4)[0], L + cw[0] + cw[1] + 3, y + 4.4);
+							ink(PDF_INK); pdf.setFontSize(8.5);
+							pdf.text(String(Number(line.qty) || 0), L + cw[0] + cw[1] + cw[2] + cw[3] - 3, y + 4.4, { align: 'right' });
+							pdf.text(moneyText(line.unit_price), L + cw[0] + cw[1] + cw[2] + cw[3] + cw[4] - 3, y + 4.4, { align: 'right' });
+							pdf.setFont('times', 'bold');
+							pdf.text(moneyText(expenseTotal(line)), L + W - 3, y + 4.4, { align: 'right' });
+							draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + rowH, L + W, y + rowH);
+							y += rowH;
+						});
+					});
+					if (y + 12 > LIMIT) { pdf.addPage(); y = TOP; }
+					fill(PDF_PANEL); pdf.rect(L, y, W, 10, 'F');
+					draw(PDF_NAVY); pdf.setLineWidth(0.4); pdf.line(L, y, L + W, y);
+					ink(PDF_NAVY); pdf.setFont('times', 'bold'); pdf.setFontSize(8.5);
+					pdf.text('NET AMOUNT', L + 3, y + 6.4);
+					pdf.setFontSize(10.5);
+					pdf.text(moneyText(grand), L + W - 3, y + 6.6, { align: 'right' });
+					y += 12;
+					// Amount in words, right under the net amount.
+					pdf.setFont('times', 'italic'); pdf.setFontSize(8);
+					const words = 'Amount in words: ' + numberWords(grand);
+					const wordsLines = pdf.splitTextToSize(words, W - 6);
+					if (y + wordsLines.length * 4 + 3 > LIMIT) { pdf.addPage(); y = TOP; }
+					ink(PDF_MUTED);
+					wordsLines.forEach((text, i) => pdf.text(text, L + 3, y + 3 + i * 4));
+					y += wordsLines.length * 4 + 5;
+				} else {
+					ink(PDF_MUTED); pdf.setFont('times', 'italic'); pdf.setFontSize(8.5);
+					pdf.text('No expenses recorded for this build.', L + 3, y + 4);
+					y += 11;
+				}
+
+				// Build notes panel.
+				if (job.description) {
+					sectionTitle('Build Notes');
+					pdf.setFont('times', 'normal'); pdf.setFontSize(8.5);
+					const noteLines = pdf.splitTextToSize(String(job.description), W - 12);
+					const noteH = noteLines.length * 4.2 + 8;
+					if (y + noteH > LIMIT) { pdf.addPage(); y = TOP; }
+					fill(PDF_PANEL); pdf.rect(L, y, W, noteH, 'F');
+					fill(PDF_GOLD); pdf.rect(L, y, 1.2, noteH, 'F');
+					ink(PDF_INK);
+					noteLines.forEach((text, i) => pdf.text(text, L + 5, y + 6 + i * 4.2));
+					y += noteH + 3;
+				}
+
+				// Sign-off lines.
+				if (y + 26 > LIMIT) { pdf.addPage(); y = TOP; }
+				y += 14;
+				const signW = (W - 12) / 2;
+				[0, 1].forEach((i) => {
+					const x = L + i * (signW + 12);
+					draw(PDF_NAVY); pdf.setLineWidth(0.3); pdf.line(x, y + 8, x + signW, y + 8);
+				});
+
+				// Footer with page numbers on every sheet.
+				const pages = pdf.getNumberOfPages();
+				for (let page = 1; page <= pages; page += 1) {
+					pdf.setPage(page);
+					fill(PDF_LINE); pdf.rect(L, 286, W, 0.3, 'F');
+					ink(PDF_MUTED); pdf.setFont('times', 'normal'); pdf.setFontSize(6.5);
+					pdf.text('AK GARAGE · MODIFICATION LAB', L, 290);
+					pdf.text('Page ' + page + ' of ' + pages, L + W, 290, { align: 'right' });
+				}
+
+				return pdf.output('blob');
+			}
+
+			async function downloadBuildReport(job) {
+				if (pdfBusy) return;
+				const statusEl = document.getElementById('report-status');
+				const saveBtn = document.getElementById('report-save');
+				pdfBusy = true;
+				if (saveBtn) saveBtn.disabled = true;
+				statusEl.textContent = 'Preparing PDF…';
+				try {
+					await loadJsPdf();
+					const blob = buildReportPDF(job);
+					const safeName = String(job.title || 'modification').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'modification';
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.download = 'AK-Garage-Build_' + safeName + (job.due_date ? '_' + job.due_date : '') + '.pdf';
+					document.body.appendChild(link);
+					link.click();
+					link.remove();
+					setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+					statusEl.textContent = 'PDF saved ✓';
+				} catch (error) {
+					console.error('PDF export failed:', error);
+					statusEl.textContent = 'PDF export failed — ' + (error.message || 'unknown error');
+				} finally {
+					pdfBusy = false;
+					if (saveBtn) saveBtn.disabled = false;
+				}
+			}
+
+			// ===== On-screen report view (shown before any saving/printing) =====
+			let reportJob = null;
+
+			function reportHtml(job) {
+				const grand = grandTotalOf(job), expenses = expensesOf(job);
+				const buildDate = job.due_date ? dateText(job.due_date).toUpperCase() : '--';
+				let expenseTable;
+				if (expenses.length) {
+					const groups = new Map();
+					expenses.forEach((line) => {
+						const cat = line.category || 'Other';
+						if (!groups.has(cat)) groups.set(cat, []);
+						groups.get(cat).push(line);
+					});
+					const order = [...CATEGORIES, ...[...groups.keys()].filter((cat) => !CATEGORIES.includes(cat))];
+					const rows = order.filter((cat) => groups.has(cat)).map((cat) => groups.get(cat).map((line) => `<tr>
+						<td class="rp-date">${escapeHtml(dateText(line.date) || '--')}<span class="rp-cat-inline">${escapeHtml(cat)}</span></td>
+						<td>${escapeHtml(line.item || '--')}</td>
+						<td>${escapeHtml(line.shop || '--')}</td>
+						<td class="num">${Number(line.qty) || 0}</td>
+						<td class="num">${moneyText(line.unit_price)}</td>
+						<td class="num"><b>${moneyText(expenseTotal(line))}</b></td>
+					</tr>`).join('')).join('');
+					expenseTable = `<h3 class="rp-title">Expense details</h3>
+						<table class="rp-table">
+							<thead><tr><th style="width:92px">Date</th><th>Item / part</th><th>Shop</th><th style="width:40px;text-align:right">Qty</th><th style="width:92px;text-align:right">Unit</th><th style="width:100px;text-align:right">Total</th></tr></thead>
+							<tbody>${rows}</tbody>
+							<tfoot>
+								<tr class="rp-total"><td colspan="5">Net Amount</td><td class="num">${moneyText(grand)}</td></tr>
+								<tr class="rp-words"><td colspan="6">Amount in words: <b>${escapeHtml(numberWords(grand))}</b></td></tr>
+							</tfoot>
+						</table>`;
+				} else {
+					expenseTable = `<h3 class="rp-title">Expense details</h3><div class="rp-sec"><p>No expenses recorded for this build.</p></div>`;
+				}
+				return `<div class="rp">
+					<div class="rp-top">
+						<div class="rp-brand"><b>Build Report</b></div>
+						<div class="rp-meta"><div><span>Build Date</span><b>${buildDate}</b></div></div>
+					</div>
+					<div class="rp-vehicle">
+						<div class="rp-plate">${escapeHtml(String(job.title || '--').toUpperCase())}</div>
+					</div>
+					<div class="rp-info">
+						<div><span>Chassis No.</span><b>${escapeHtml(job.chassis || '--')}</b></div>
+						<div><span>Progress</span><b>${progressOf(job)}%</b></div>
+						<div><span>Parts + labor</span><b>${moneyText(grand)}</b></div>
+					</div>
+					${expenseTable}
+					${job.description ? `<h3 class="rp-title">Build notes</h3><div class="rp-notes"><div class="rp-sec"><p>${escapeHtml(job.description)}</p></div></div>` : ''}
+					<div class="rp-sign">
+						<div><div class="line"></div></div>
+						<div><div class="line"></div></div>
+					</div>
+				</div>`;
+			}
+
+			function openBuildReport(job) {
+				reportJob = job;
+				document.getElementById('report-body').innerHTML = reportHtml(job);
+				document.getElementById('report-status').textContent = '';
+				const view = document.getElementById('report-view');
+				view.hidden = false;
+				document.body.classList.add('report-open');
+				view.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+
+			function closeBuildReport() {
+				reportJob = null;
+				document.getElementById('report-view').hidden = true;
+				document.getElementById('report-status').textContent = '';
+				document.body.classList.remove('report-open');
+			}
+
+			document.getElementById('report-back').addEventListener('click', closeBuildReport);
+			document.getElementById('report-print').addEventListener('click', () => window.print());
+			document.getElementById('report-save').addEventListener('click', () => { if (reportJob) downloadBuildReport(reportJob); });
+
 			function cardHtml(job) {
 				const active = isActive(job);
 				const progress = progressOf(job);
 				const pnl = pnlOf(job);
 				const pnlClass = pnl > 0 ? 'pnl-pos' : pnl < 0 ? 'pnl-neg' : '';
-				return `
+				const header = `
 					<div class="card-top">
 						<div><h2>${escapeHtml(job.title)}</h2><p class="chassis">CHASSIS ${escapeHtml(job.chassis || '--')}${job.due_date ? ' · ' + dateText(job.due_date).toUpperCase() : ''}</p></div>
 						<div class="top-right">
@@ -331,7 +739,10 @@
 							<span class="status ${active ? '' : 'done'}">${escapeHtml(job.status || 'In progress')}</span>
 							${window.akgarageCanEdit() ? `<span class="card-actions" style="display:flex;gap:6px"><button type="button" class="edit" data-id="${job.id}" style="padding:5px 9px;border:1px solid var(--line);border-radius:3px;color:var(--muted);background:transparent;font:9px 'DM Mono',monospace;text-transform:uppercase;cursor:pointer">Edit</button><button type="button" class="erase" data-id="${job.id}" style="padding:5px 9px;border:1px solid var(--line);border-radius:3px;color:var(--muted);background:transparent;font:9px 'DM Mono',monospace;text-transform:uppercase;cursor:pointer">Erase</button></span>` : ''}
 						</div>
-					</div>
+					</div>`;
+				// Completed builds collapse to the compact summary bar — no money row or expense table.
+				if (!active) return header;
+				return header + `
 					<div class="money-row">
 						<div class="money"><label>Sold price</label><strong>${job.sold_price == null ? '--' : aed(job.sold_price)}</strong></div>
 						<div class="money"><label>Grand total (parts + labor)</label><strong>${aed(grandTotalOf(job))}</strong></div>
@@ -353,21 +764,34 @@
 				if (!records.length) {
 					document.getElementById('empty-title').textContent = 'No projects yet';
 					document.getElementById('empty-text').textContent = window.akgarageCanEdit()
-						? 'Add your first modification project with the form above — it saves to the cloud instantly.'
-						: 'Modification projects will appear here when they are added.';
+						? 'Add your first build with the form above — it saves to the cloud instantly.'
+						: 'Build queue entries will appear here when they are added.';
 				} else if (!jobs.length) {
 					document.getElementById('empty-title').textContent = 'Nothing here';
 					document.getElementById('empty-text').textContent = 'No projects match the current filter or search.';
 				}
 				jobs.forEach((job) => {
 					const card = document.createElement('article');
-					card.className = 'card';
+					card.className = isActive(job) ? 'card' : 'card done';
 					card.dataset.id = job.id;
 					card.innerHTML = cardHtml(job);
 					const editBtn = card.querySelector('.edit');
 					if (editBtn) editBtn.addEventListener('click', () => startEdit(job));
 					const eraseBtn = card.querySelector('.erase');
 					if (eraseBtn) eraseBtn.addEventListener('click', () => eraseJob(job));
+					// Completed builds open the print-ready PDF report (same design as Maintenance).
+					if (!isActive(job)) {
+						card.classList.add('report-ready');
+						card.setAttribute('role', 'button');
+						card.tabIndex = 0;
+						card.title = 'Click to open the build report';
+						card.addEventListener('click', (event) => { if (event.target.closest('button')) return; openBuildReport(job); });
+						card.addEventListener('keydown', (event) => {
+							if (event.key !== 'Enter' && event.key !== ' ') return;
+							event.preventDefault();
+							openBuildReport(job);
+						});
+					}
 					const addExp = card.querySelector('.add-exp');
 					if (addExp) addExp.addEventListener('click', () => { expFormFor = expFormFor === job.id ? null : job.id; render(); });
 					const expBody = card.querySelector(`[data-exp-body="${job.id}"]`);
@@ -412,7 +836,7 @@
 				editingId = null;
 				form.reset();
 				document.getElementById('proj-progress').value = '0';
-				formTitle.textContent = 'Add modification project';
+				formTitle.textContent = 'Add build to queue';
 				submitBtn.innerHTML = '<i data-lucide="plus" style="width:13px;vertical-align:middle"></i> Add project';
 				cancelBtn.hidden = true;
 				formError.textContent = '';
@@ -429,7 +853,7 @@
 				form.elements['due_date'].value = job.due_date || '';
 				form.elements['sold_price'].value = job.sold_price ?? '';
 				form.elements['description'].value = job.description || '';
-				formTitle.textContent = 'Edit modification project';
+				formTitle.textContent = 'Edit build';
 				submitBtn.innerHTML = '<i data-lucide="save" style="width:13px;vertical-align:middle"></i> Update project';
 				cancelBtn.hidden = false;
 				form.scrollIntoView({ behavior: 'smooth', block: 'start' });

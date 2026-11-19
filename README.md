@@ -17,6 +17,7 @@ framework — deployable anywhere that serves static files.
 | `vipmoto.html` | Supabase: `vip_motorcycles` |
 | `project.html` | Supabase: `modifications` |
 | `maintenance.html` | Supabase: `maintenance_checks` |
+| `Fleetauditreports.html` (fleet audit calendar) | Supabase: `modifications` (`expenses[]`) |
 
 All records live in one Supabase project, so every team member sees the same
 data. The viewer prompt is a convenience gate, not account authentication:
