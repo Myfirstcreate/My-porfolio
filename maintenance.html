@@ -26,7 +26,6 @@ header .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;pa
 header .brand-copy{display:flex;flex-direction:column;gap:2px}
 header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.08em}
 header .subtitle{color:var(--muted);font-size:11px;letter-spacing:.04em}
-header .top-actions{margin-left:auto}
 nav{display:flex;gap:6px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
 nav button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit}
 nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
@@ -113,7 +112,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 .rp-brand{display:flex;align-items:center;gap:10px}
 .rp-brand .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:8px 10px;font-weight:800;letter-spacing:.5px;font-size:18px}
 .rp-brand b{display:block;font-size:18px;letter-spacing:1.5px}
-.rp-brand small{color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:600}
 .rp-meta{display:flex;gap:18px;text-align:right}
 .rp-meta span,.rp-info span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
 .rp-meta b{font-size:14px}
@@ -143,12 +141,8 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 .rp-kv span{color:var(--muted);min-width:110px;font-weight:600}
 .rp-reco{margin-top:6px;background:var(--warn-bg);color:var(--ink);border-radius:6px;padding:8px 10px;line-height:1.5}
 .rp-reco span{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--warn);margin-bottom:2px}
-.rp-sign{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px;break-inside:avoid}
-.rp-sign .line{border-bottom:1px solid var(--ink);height:36px}
-.rp-sign span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
-.rp-sign b{font-size:13px}
 @media (max-width:620px){.rp-info{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}.rp-sign{grid-template-columns:1fr;gap:6px}}
+@media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}}
 @media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
 
 /* ---- Report paper view: clicking a record shows the same navy/gold report
@@ -160,7 +154,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
      export and the report would be rendered with the app's dark colours. ---- */
    .rp .rp-meta{gap:8px}
    .rp .rp-h{color:#172845}
-   .rp .rp-sign b{color:#172845}
    .rp{--serif:Georgia,'Times New Roman',serif;--bg:#f7f4ee;--card:#fbf9f5;--ink:#2b2a26;--muted:#8a7f6a;--line:#e2dccd;--ok:#315c40;--ok-bg:#eef4ea;--warn:#8a6a2f;--warn-bg:#f9f1e2;--na:#6b6459;--na-bg:#f4f1ea;border-top:3px solid #a8844a;background:#fff;color:#2b2a26;font-size:12px}
    .rp .rp-top{background:#14213a;border-radius:0;padding:16px 18px;border-bottom:2px solid #a8844a;align-items:center;margin-bottom:8px}
    .rp .rp-brand .logo{background:#a8844a;color:#14213a;border-radius:0;font-family:var(--serif)}
@@ -169,7 +162,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
    /* Two-tone rule under the title. Drawn as a bar (not border-image, which
       the PDF renderer ignores) so screen, print and PDF all look the same. */
    .rp .rp-brand b::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
-   .rp .rp-brand small, .rp .rp-meta span{color:#c9a96a}
+   .rp .rp-meta span{color:#c9a96a}
    .rp .rp-meta>div{min-width:166px;padding:10px 16px;text-align:center;background:#1b2b49;border:1px solid #a8844a;border-radius:10px}
    .rp .rp-meta b{color:#fff;font-family:var(--serif);font-size:15px}
    /* Navy ring around the plate. Drawn with a border on ::before (not outline,
@@ -210,9 +203,8 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
    .rp .rp-h i{background:#a8844a;color:#fff;border-radius:0}
    .rp .rp-summary{background:#f7f4ee}
    .rp .rp-reco{background:#f9f1e2;border-radius:0;color:#172845}
-   .rp .rp-reco span, .rp .rp-kv span, .rp .rp-sign span{color:#8a7f6a}
+   .rp .rp-reco span, .rp .rp-kv span{color:#8a7f6a}
    .rp .thumb{border-color:#e2dccd;border-radius:0}
-   .rp .rp-sign .line{border-color:#14213a}
 
 @media screen{
   #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
@@ -237,7 +229,6 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
   #tab-detail .rp .rp-h{font-size:14px}
   #tab-detail .rp .rp-h i{width:24px;height:24px;font-size:13px}
   #tab-detail .rp .pill{font-size:12px}
-  #tab-detail .rp .rp-sign span{font-size:12px}
   #tab-detail .rp .rp-reco span{font-size:12px}
   #tab-detail .rp-table td,#tab-detail .rp-table th{padding:9px 8px}
 }
@@ -377,7 +368,7 @@ const asNumber = value => {
    maintenance rows keep one plate string ("DXB M 8887"). Both collapse to
    the same key, so a car row's Maintenance link can only ever open that car —
    never another code that happens to share the number (K 8887, D 8887, ...). */
-const carKey = value => String(value ?? '').toUpperCase().replace(/\bDXB\b/g, '').replace(/[^A-Z0-9]/g, '');
+const carKey = value => String(value ?? '').toUpperCase().replace(/\b(DXB|RAK|SHJ|AJM|UAQ|FUJ)\b/g, '').replace(/[^A-Z0-9]/g, '');
 const recordKey = record => carKey(record && record.plate);
 const linkLabel = (code, plate) => [String(code || '').toUpperCase().trim(), String(plate || '').trim()].filter(Boolean).join(' ');
 
@@ -391,7 +382,9 @@ async function loadRecords() {
 	const sb = ensureSupabase();
 	const { data, error } = await sb.from(TABLE).select('*').order('created_at', { ascending: false });
 	if (error) throw error;
-	records = (Array.isArray(data) ? data : []).filter(r => r && typeof r === 'object').map(r => ({
+	// Only VVIP Boss records belong on this page. A record stamped "mrak" was
+	// entered for a Mr AK Cars plate and lives on the Mr AK Car Service page.
+	records = (Array.isArray(data) ? data : []).filter(r => r && typeof r === 'object' && asText(r.source) !== 'mrak').map(r => ({
 		id: r.id, plate: asText(r.plate), model: asText(r.model), date: asText(r.service_date) || today(),
 		km: asNumber(r.km), mech: asText(r.mechanic), loc: asText(r.location), cost: asNumber(r.cost), chassis: asText(r.chassis_no),
 		next: asNumber(r.next_km), remarks: asText(r.remarks),
@@ -509,7 +502,7 @@ $("save").onclick = async ()=>{
 	const km = +$("f-km").value||0;
 	const chassis = $("f-chassis").value.trim();
 	const payload = {
-		plate, model:$("f-model").value.trim(), service_date:$("f-date").value||today(), km,
+		plate, source:"vvip", model:$("f-model").value.trim(), service_date:$("f-date").value||today(), km,
 		chassis_no: chassis,
 		next_km:+$("f-next").value||(km?km+10000:0), remarks,
 		items,
@@ -616,7 +609,7 @@ $("import-file").onchange = async e => {
 		const incoming = Array.isArray(parsed) ? parsed : parsed.records;
 		if (!Array.isArray(incoming) || !incoming.length) throw new Error("no records found in file");
 		const rows = incoming.filter(r => r && r.plate).map(r => ({
-			plate: String(r.plate), model: r.model || "", service_date: r.date || r.service_date || "",
+			plate: String(r.plate), source: "vvip", model: r.model || "", service_date: r.date || r.service_date || "",
 			km: +r.km || 0, mechanic: r.mech || r.mechanic || "", location: r.loc || r.location || "",
 			cost: +r.cost || 0, next_km: +r.next || +r.next_km || 0, remarks: r.remarks || "", chassis_no: String(r.chassis || r.chassis_no || ""),
 			items: r.items || {}, notes: r.notes || {}, photos: r.photos || {}, gen_photos: r.genPhotos || r.gen_photos || []
@@ -1076,7 +1069,7 @@ async function saveReport(){
 				// Last line of defence inside the render clone: whatever width the
 				// browser laid the copy out at, the report is A4 wide again here.
 				onclone: (doc) => { doc.querySelectorAll(".rp").forEach((el) => { el.style.width = "703px"; el.style.maxWidth = "703px"; }); } },
-			pagebreak: { mode: ["css","legacy"], avoid: ["tr",".rp-top",".rp-vehicle",".rp-info",".rp-sum",".rp-title",".rp-sec",".rp-sign",".gallery",".thumb"] },
+			pagebreak: { mode: ["css","legacy"], avoid: ["tr",".rp-top",".rp-vehicle",".rp-info",".rp-sum",".rp-title",".rp-sec",".gallery",".thumb"] },
 			jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
 		};
 		let worker = html2pdf().set(opts).from(card);
@@ -1203,7 +1196,7 @@ $("f-date").value = today(); buildChecklist(); renderGen();
 		// Legacy ?plate=-only links. A stored plate may already carry the code
 		// ("DXB E 8887"); a bare number has no car identity to lock onto, so it
 		// falls back to the plain search box instead of an empty list.
-		const parts = plate.replace(/\bDXB\b/gi, ' ').trim().split(/\s+/).filter(Boolean);
+		const parts = plate.replace(/\b(DXB|RAK|SHJ|AJM|UAQ|FUJ)\b/gi, ' ').trim().split(/\s+/).filter(Boolean);
 		if (parts.length > 1) { code = parts[0]; plate = parts.slice(1).join(''); }
 		else if (!/[A-Z]/i.test(plate)) { $("q").value = plate.toUpperCase(); show("history"); return; }
 	}

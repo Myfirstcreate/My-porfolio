@@ -417,10 +417,12 @@ create table if not exists public.maintenance_checks (
 	items jsonb not null default '{}'::jsonb,
 	notes jsonb not null default '{}'::jsonb,
 	photos jsonb not null default '{}'::jsonb,
-	gen_photos jsonb not null default '[]'::jsonb
+	gen_photos jsonb not null default '[]'::jsonb,
+	source text not null default 'vvip'
 );
 
 -- Chassis number (added Oct 2026). Safe to re-run; fills existing rows with ''.
+alter table public.maintenance_checks add column if not exists source text not null default 'vvip';
 alter table public.maintenance_checks add column if not exists chassis_no text not null default '';
 
 alter table public.maintenance_checks enable row level security;
@@ -480,11 +482,11 @@ alter table public.mr_ak_cars drop column if exists garage_location;
 -- =============================================================================
 -- 10. WAREHOUSE WORK (run once — makes warehouse.html live). Safe to re-run.
 --
---     One row = one warehouse work entry for one vehicle visit (receiving,
---     storage, issuing, stock count, dispatch, safety). Same shape as
---     maintenance_checks so the page and its PDF report behave the same way.
---     items / notes are JSONB (Done / OK / Attn / N/A + per-item notes) and
---     photos is a JSONB array of compressed data URLs.
+--     One row = one Mr AK Car Service entry (receiving, storage, issuing,
+--     stock count, dispatch, safety). Same shape as maintenance_checks so the
+--     page and its PDF report behave the same way. items / notes are JSONB
+--     (Done / OK / Attn / N/A + per-item notes), photos is a JSONB object of
+--     per-item photo arrays and gen_photos is a JSONB array of general ones.
 -- =============================================================================
 
 create table if not exists public.warehouse_work (
@@ -495,18 +497,26 @@ create table if not exists public.warehouse_work (
 	model text not null default '',
 	chassis_no text not null default '',
 	work_date text not null default '',
-	area text not null default '',
+	km bigint not null default 0,
+	next_km bigint not null default 0,
 	remarks text not null default '',
 	items jsonb not null default '{}'::jsonb,
 	notes jsonb not null default '{}'::jsonb,
-	photos jsonb not null default '[]'::jsonb
+	photos jsonb not null default '{}'::jsonb,
+	gen_photos jsonb not null default '[]'::jsonb,
+	source text not null default 'mrak'
 );
 
 create index if not exists warehouse_work_plate_idx on public.warehouse_work (plate);
 
 -- Safe to re-run: fills existing rows with ''.
 alter table public.warehouse_work add column if not exists chassis_no text not null default '';
-alter table public.warehouse_work add column if not exists area text not null default '';
+alter table public.warehouse_work drop column if exists area;
+alter table public.warehouse_work add column if not exists gen_photos jsonb not null default '[]'::jsonb;
+alter table public.warehouse_work alter column photos set default '{}'::jsonb;
+alter table public.warehouse_work add column if not exists source text not null default 'mrak';
+alter table public.warehouse_work add column if not exists km bigint not null default 0;
+alter table public.warehouse_work add column if not exists next_km bigint not null default 0;
 
 alter table public.warehouse_work enable row level security;
 

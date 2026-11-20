@@ -106,7 +106,7 @@
 	<div class="shell">
 		<header class="topbar">
 			<div class="brand"><span class="mark">AK</span><span><strong>AK GARAGE</strong><small>MODIFICATION LAB</small></span></div>
-			<div class="top-actions"><a class="back" href="serviceuaq.html?from=mrak"><i data-lucide="headphones"></i> Service</a><a class="back" href="maintenance.html"><i data-lucide="clipboard-check"></i> Maintenance</a><a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a></div>
+			<div class="top-actions"><a class="back" href="serviceuaq.html?from=mrak"><i data-lucide="headphones"></i> Service</a><a class="back" href="index.html"><i data-lucide="arrow-left"></i> Back to overview</a></div>
 		</header>
 		<div class="viewer-note" hidden>View only — ask the admin to add, edit, or erase records.</div>
 		<section class="intro">
@@ -262,7 +262,7 @@
 				<td class="expiry ${statusClass}">${hasExpiry ? dateFormatter.format(expiryTime) : '--'}</td>
 				<td class="days-left ${statusClass}">${!hasExpiry ? '--' : daysUntilExpiry < 0 ? `${Math.abs(daysUntilExpiry)} days ago` : `${daysUntilExpiry} days`}</td>
 				<td><span class="status ${statusClass}">${status}</span></td>
-				<td><div class="action-buttons"><button class="edit" type="button">Edit</button><a class="maint-link" href="warehouse.html?code=${encodeURIComponent(String(record.code || ''))}&amp;plate=${encodeURIComponent(String(record.plate || ''))}" title="Open warehouse work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Warehouse</a><button class="erase" type="button">Erase</button></div></td>
+				<td><div class="action-buttons"><button class="edit" type="button">Edit</button><a class="maint-link" href="warehouse.html?code=${encodeURIComponent(String(record.code || ''))}&amp;plate=${encodeURIComponent(String(record.plate || ''))}" title="Open Mr AK Car Service records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Car Service</a><button class="erase" type="button">Erase</button></div></td>
 				<td class="audit-cell">Audit</td>`;
 			if (targetRow) targetRow.replaceWith(row);
 			else records.appendChild(row);

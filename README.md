@@ -16,9 +16,14 @@ framework — deployable anywhere that serves static files.
 | `motorcycles.html` | Supabase: `motorcycles` |
 | `vipmoto.html` | Supabase: `vip_motorcycles` |
 | `project.html` | Supabase: `modifications` |
-| `maintenance.html` | Supabase: `maintenance_checks` |
-| `warehouse.html` (warehouse work) | Supabase: `warehouse_work` |
+| `maintenance.html` (VVIP Maintenance record) | Supabase: `maintenance_checks` (`source = 'vvip'`) |
+| `warehouse.html` (Mr AK Car Service) | Supabase: `warehouse_work` (`source = 'mrak'`) |
 | `Fleetauditreports.html` (fleet audit calendar) | Supabase: `modifications` (`expenses[]`) |
+
+The two service logs stay separate: `maintenance.html` only lists and writes
+rows stamped `source = 'vvip'` (VVIP Boss cars) and `warehouse.html` only rows
+stamped `source = 'mrak'` (Mr AK Cars), so a record can never show up on the
+other page.
 
 All records live in one Supabase project, so every team member sees the same
 data. The viewer prompt is a convenience gate, not account authentication:
