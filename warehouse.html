@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Garage | Warehouse Work</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#070807;--card:#101210;--ink:#f0f3ec;--muted:#8b9388;--line:#292d29;
+  --brand:#c4f04e;--brand-ink:#070807;--ok:#4ade80;--ok-bg:#12301d;--warn:#fbbf24;--warn-bg:#3a2c0b;
+  --bad:#f87171;--bad-bg:#3b1414;--na:#9aa1ad;--na-bg:#23272f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.bg-media{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;opacity:.16;-webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 44%,transparent 78%);mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 44%,transparent 78%)}
+.bg-media::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(7,8,7,.4),rgba(7,8,7,.15) 45%,transparent 75%)}
+.bg-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:74% 50%}
+@media (max-width:900px){.bg-media{opacity:.12}}
+header,nav,main{position:relative;z-index:1}
+header{background:#090a09;color:var(--ink);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:4px 8px;font-weight:800;letter-spacing:.5px}
+header .brand-copy{display:flex;flex-direction:column;gap:2px}
+header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.08em}
+header .subtitle{color:var(--muted);font-size:11px;letter-spacing:.04em}
+header .top-actions{margin-left:auto}
+nav{display:flex;gap:6px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit}
+nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+nav .back{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted);background:transparent;text-decoration:none;white-space:nowrap;font-size:13px;transition:color .15s,border-color .15s,background .15s}
+nav .back:hover{color:var(--ink);border-color:#697163;background:#1d221d}
+main{max-width:960px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 12px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--brand)}
+textarea{min-height:70px;resize:vertical}
+#f-remarks{min-height:180px}
+.btn{border:0;background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.danger{background:transparent;border:1px solid var(--line);color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cat{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:14px 0 6px;letter-spacing:.4px}
+.item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.item .name{font-weight:500;cursor:pointer}
+.item input.note{grid-column:1/-1;font-size:13px;padding:6px 8px;display:none}
+.item.show-note input.note{display:block}
+.cam{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:5px 8px;cursor:pointer;display:flex;align-items:center;gap:4px;font:inherit;font-size:12px}
+.cam svg{width:16px;height:16px}
+.cam.has{border-color:var(--brand);color:var(--brand);font-weight:700}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumbs:empty{display:none}
+.thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;padding:0}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:8px}
+.gallery .thumb{width:auto;height:110px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:20;padding:16px;flex-direction:column;gap:10px;color:#fff}
+.lightbox.show{display:flex}
+.lightbox img{max-width:100%;max-height:82vh;border-radius:8px}
+.editbar{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);padding:6px 9px;font:inherit;font-size:12px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on[data-v="done"]{background:var(--ok-bg);color:var(--ok);font-weight:700}
+.seg button.on[data-v="ok"]{background:var(--ok-bg);color:var(--ok);font-weight:700}
+.seg button.on[data-v="attn"]{background:var(--warn-bg);color:var(--warn);font-weight:700}
+.seg button.on[data-v="na"]{background:var(--na-bg);color:var(--na)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.done,.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.attn{background:var(--warn-bg);color:var(--warn)}
+.pill.na{background:var(--na-bg);color:var(--na)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--muted)}
+.rec{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;background:var(--card)}
+.rec:hover{border-color:var(--brand)}
+.rec .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.plate{font-weight:800;letter-spacing:.5px}
+.muted{color:var(--muted);font-size:13px}
+.hidden{display:none}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#090a09;color:var(--ink);padding:10px 16px;border:1px solid var(--line);border-radius:8px;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:6px}
+.progress i{display:block;height:100%;background:var(--brand)}
+.viewer-note{margin:0 0 14px;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;color:var(--muted);font-size:12px}
+.empty-note{padding:20px;text-align:center;color:var(--muted)}
+.skip{position:absolute;left:-9999px;top:8px;z-index:40}
+.skip:focus{left:8px;background:var(--card);color:var(--ink);padding:8px 12px;border-radius:8px;border:2px solid var(--brand)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+button.name{background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+/* ---- Report sheet (same navy/gold report as the maintenance print-out) ---- */
+.rp{font-size:14px;--serif:Georgia,'Times New Roman',serif;border-top:3px solid #a8844a;background:#fff;color:#2b2a26;font-size:12px}
+.rp-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 18px;background:#14213a;border-bottom:2px solid #a8844a;margin-bottom:8px}
+.rp-brand{flex:1;display:flex;align-items:center;gap:10px}
+.rp-brand b{position:relative;color:#c9a96a;font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:1.5px;text-align:left;text-transform:uppercase}
+.rp-brand b::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+.rp-meta{display:flex;gap:8px}
+.rp-meta>div{min-width:166px;padding:10px 16px;text-align:center;background:#1b2b49;border:1px solid #a8844a;border-radius:10px}
+.rp-meta span,.rp-info span{display:block;font-size:10.5px;color:#c9a96a;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.rp-meta b{color:#fff;font-family:var(--serif);font-size:15px}
+.rp-vehicle{position:relative;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-top:12px;margin:12px 0 10px}
+.rp-vehicle::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+.rp-plate{position:relative;border:1px solid #a8844a;border-radius:8px;color:#14213a;font-family:var(--serif);font-size:24px;font-weight:800;letter-spacing:1.5px;padding:2px 12px}
+.rp-plate::before{content:"";position:absolute;inset:-6px;border:3px solid #14213a;border-radius:12px}
+.rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:700;letter-spacing:.2px}
+.rp-info{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#e2dccd;border:1px solid #e2dccd}
+.rp-info>div{background:#fbf9f5;padding:8px 10px}
+.rp-info span{color:#8a7f6a}
+.rp-info b{color:#14213a;font-family:var(--serif);font-weight:400;font-size:14.5px}
+.rp-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
+.rp-sum div{border:1px solid #e2dccd;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.rp-sum b{font-size:22px;font-family:var(--serif)}
+.rp-sum span{font-size:12px;font-weight:600}
+.rp .s-done,.rp .s-ok{background:#eef4ea;color:#315c40}
+.rp .s-attn{background:#f9f1e2;color:#8a6a2f}
+.rp-title{color:#14213a;font-family:var(--serif);font-size:12px;text-transform:uppercase;letter-spacing:2.5px;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid #e2dccd}
+.rp-title::before{content:"";display:inline-block;width:26px;height:2px;background:#a8844a;vertical-align:middle;margin-right:8px}
+.rp-table th{font-size:11px;text-transform:uppercase;letter-spacing:.8px;background:#14213a;color:#fff;border-bottom:0}
+.rp-table td{border-bottom:1px solid #efeadf;color:#2b2a26}
+.rp-table td.muted{color:#6f6552;white-space:pre-wrap}
+.rp-table tbody tr:nth-child(even) td{background:#fbf9f5}
+.rp-table tr.rp-cat td{background:#f7f4ee;color:#14213a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding-top:12px;border-bottom:1px solid #e2dccd;border-left:3px solid #a8844a}
+.rp .pill{background:none;border:0;border-radius:0;padding:0;text-transform:uppercase;font-size:10.5px;font-weight:700;letter-spacing:.5px}
+.rp .pill.done,.rp .pill.ok{background:none;color:#315c40}
+.rp .pill.attn{background:none;color:#8a6a2f}
+.rp .pill.na{background:none;color:#6b6459}
+.rp-remarks{display:grid;gap:10px}
+.rp-remarks::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+.rp-sec{border:1px solid #e2dccd;border-left:3px solid #a8844a;padding:12px 14px;background:#fbf9f5;break-inside:avoid}
+.rp-sec p{margin:0 0 4px;line-height:1.6}
+.rp-sec p:last-child{margin-bottom:0}
+.rp-h{color:#172845;font-weight:800;font-size:13px;letter-spacing:.6px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.rp-h i{font-style:normal;background:#a8844a;color:#fff;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.rp-summary{background:#f7f4ee}
+.rp-kv{display:flex;gap:10px;padding:4px 0}
+.rp-kv span{color:#8a7f6a;min-width:110px;font-weight:600}
+.rp-reco{margin-top:6px;background:#f9f1e2;color:#172845;padding:8px 10px;line-height:1.5}
+.rp-reco span{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#8a7f6a;margin-bottom:2px}
+.rp .thumb{border-color:#e2dccd;border-radius:0}
+@media screen{
+  #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
+  #tab-detail .rp{background:transparent}
+}
+@media screen and (max-width:640px){
+  #tab-detail .rp{font-size:14px}
+  #tab-detail .rp .rp-brand b{font-size:24px}
+  #tab-detail .rp .rp-meta>div{min-width:150px;padding:8px 12px}
+  #tab-detail .rp .rp-meta b{font-size:13px}
+  #tab-detail .rp .rp-plate{font-size:30px}
+  #tab-detail .rp .rp-model{font-size:21px}
+  #tab-detail .rp .rp-info b{font-size:16px}
+  #tab-detail .rp .rp-sum b{font-size:24px}
+  #tab-detail .rp .rp-title{font-size:13px}
+  #tab-detail .rp .rp-h{font-size:14px}
+  #tab-detail .rp-table td,#tab-detail .rp-table th{padding:9px 8px}
+}
+@media (max-width:650px){ .item{grid-template-columns:1fr;gap:6px} }
+@media print{
+  @page{size:A4;margin:12mm}
+  :root{color-scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,nav,.bg-media,.no-print{display:none!important}
+  body,main{background:#fff!important;color:#111!important}
+  main{padding:0;max-width:none}
+  .card,.stat,.rec{background:#fff!important;color:#111!important;border-color:#d4d4d4!important;box-shadow:none!important}
+  .muted,.stat span{color:#555!important}
+  #tab-new,#tab-history,#tab-issues{display:none!important}
+  #tab-detail{display:block!important}
+  #tab-detail .card{padding:0;margin:0;border:0}
+  .toast,.lightbox{display:none!important}
+  .rp-table tr{break-inside:avoid}
+  .gallery{grid-template-columns:repeat(4,1fr)}
+  .gallery .thumb{height:95px}
+}
+</style>
+</head>
+<body>
+<script src="auth-gate.js"></script>
+<script>akgarageInitGate();</script>
+<div class="bg-media" aria-hidden="true"><img class="bg-photo" src="assets/hero-car.jpg?v=3" alt=""></div>
+<a class="skip" href="#main">Skip to main content</a>
+<header><span class="logo">AK</span><div class="brand-copy"><h1>AK GARAGE</h1><span class="subtitle">Warehouse Work</span></div></header>
+<nav aria-label="Main">
+	<button data-tab="new" class="active" aria-current="true">+ New Work Entry</button>
+	<button data-tab="history">History</button>
+	<button data-tab="issues">Open Issues</button>
+	<a class="back" href="index.html">BACK TO OVERVIEW</a>
+</nav>
+<main id="main">
+	<div class="viewer-note" hidden>View only — ask the admin to save or edit warehouse entries.</div>
+	<section id="tab-new">
+		<div class="editbar hidden no-print" id="editbar"><span id="edit-lbl">Editing record</span><button class="btn ghost sm" id="cancel-edit">Cancel edit</button></div>
+		<div class="card">
+			<h2>Vehicle &amp; Warehouse Info</h2>
+			<div class="grid">
+				<div><label for="f-plate">Plate No.</label><input id="f-plate" placeholder="e.g. DXB M 8887"></div>
+				<div><label for="f-model">Car Model</label><input id="f-model" placeholder="e.g. Nissan Patrol 2022"></div>
+				<div><label for="f-chassis">Chassis No.</label><input id="f-chassis" placeholder="e.g. WBA12345ABC123456"></div>
+				<div><label for="f-date">Date</label><input id="f-date" type="date"></div>
+				<div><label for="f-area">Area / Bin</label><input id="f-area" placeholder="e.g. Rack B · Shelf 3"></div>
+			</div>
+		</div>
+		<div class="card">
+			<div class="row" style="justify-content:space-between">
+				<h2 style="margin:0">Warehouse Work</h2>
+				<div class="row no-print"><button class="btn ghost sm" id="all-na">Reset all</button></div>
+			</div>
+			<div class="muted" style="margin-top:6px">Tap: <b style="color:var(--ok)">Done</b> = work finished · <b style="color:var(--ok)">OK</b> = checked, fine · <b style="color:var(--warn)">Attn</b> = needs attention · <b>N/A</b> = not done. Tap the item name to add a note.</div>
+			<div class="progress" role="progressbar" aria-label="Work progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="prog" style="width:0"></i></div>
+			<div id="checklist"></div>
+		</div>
+		<div class="card">
+			<h2>Remarks</h2>
+			<textarea id="f-remarks" aria-label="Remarks" placeholder="Parts received / issued, stock notes, problems found, recommendations..."></textarea>
+			<label style="margin-top:14px">Photos (delivery, shelf, packing, before / after)</label>
+			<div class="row"><button class="cam no-print" id="gen-add" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>Add photos</button></div>
+			<div class="thumbs" id="gen-thumbs" style="margin-top:8px"></div>
+			<div class="row" style="margin-top:12px">
+				<button class="btn" id="save">Save Work Entry</button>
+				<button class="btn ghost" id="clear">Clear form</button>
+				<span class="muted" id="save-status" style="font-size:12px"></span>
+			</div>
+		</div>
+	</section>
+	<section id="tab-history" class="hidden">
+		<div class="stats" id="stats"></div>
+		<div class="card no-print">
+			<div class="grid">
+				<div><label for="q">Search</label><input id="q" placeholder="Plate, model, area..."></div>
+				<div><label for="flt">Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
+			</div>
+		</div>
+		<div id="list"></div>
+	</section>
+	<section id="tab-issues" class="hidden">
+		<div class="card"><h2>Items Needing Attention</h2><div id="issues"></div></div>
+	</section>
+	<section id="tab-detail" class="hidden">
+		<div class="row no-print" style="margin-bottom:10px">
+			<button class="btn ghost sm" id="back">← Back</button>
+			<button class="btn sm" id="edit">Edit</button>
+			<button class="btn ghost sm" id="print">Print</button>
+			<button class="btn ghost sm" id="dl" type="button" title="Download this warehouse report directly as a PDF">⬇ Save as PDF</button>
+			<button class="btn ghost sm danger" id="del">Delete</button>
+		</div>
+		<div class="editbar hidden no-print" id="printhelp"><span>Hindi ma-open ang print dito sa preview. Pindutin ang <b>Save as PDF</b> — diretso na bababa ang PDF file nito.</span><button class="btn ghost sm" id="ph-x">OK</button></div>
+		<div class="card" id="detail"></div>
+	</section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="lightbox" id="lb" role="dialog" aria-modal="true" aria-label="Photo preview"><img id="lb-img" alt=""><div id="lb-cap"></div><button class="btn ghost sm" id="lb-x" style="color:#fff;border-color:#fff">Close</button></div>
+<input type="file" id="picker" accept="image/*" multiple class="hidden">
+<script>
+const TABLE = 'warehouse_work';
+const ITEMS = {
+	"Receiving":["Delivery unloaded","Cartons / items counted","Part number verified","Condition inspected","Damage reported"],
+	"Storage":["Shelved in the right bin","Bin label updated","Fragile items padded","Liquids stored upright","Stock level recorded"],
+	"Issuing":["Request / job card checked","Part picked and counted","Part number verified on issue","Handed to technician","Issue log updated"],
+	"Stock Count":["Cycle count done","Minimum stock checked","Low stock listed","Re-order raised","Shelf cleaned"],
+	"Dispatch & Tools":["Order packed correctly","Label / address checked","Tools returned to store","Tools cleaned","Warehouse locked and secured"],
+	"Safety":["Walkways clear","Racking inspected","Fire extinguisher checked","PPE available","Waste cleared"]
+};
+const LBL = {done:"Done",ok:"OK",attn:"Attn",na:"N/A"};
+const localISO = d => { const p = n => String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
+const today = () => localISO(new Date());
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = d => d ? new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+const ensureSupabase = () => {
+	if (!window.sb || typeof window.sb.from !== 'function') {
+		throw new Error('Supabase client is unavailable. Check the network connection and reload the page.');
+	}
+	return window.sb;
+};
+const asText = value => value == null ? '' : String(value);
+const asObject = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+
+/* Same car identity rule as the maintenance page: the code and the plate
+   collapse to one key, so a car row can only ever open its own records. */
+const carKey = value => String(value ?? '').toUpperCase().replace(/\bDXB\b/g, '').replace(/[^A-Z0-9]/g, '');
+const recordKey = record => carKey(record && record.plate);
+const linkLabel = (code, plate) => [String(code || '').toUpperCase().trim(), String(plate || '').trim()].filter(Boolean).join(' ');
+
+let state = {}, notes = {}, photos = [];
+let currentId = null, editingId = null;
+let records = [];
+let carLink = null;
+
+async function loadRecords() {
+	const sb = ensureSupabase();
+	const { data, error } = await sb.from(TABLE).select('*').order('created_at', { ascending: false });
+	if (error) throw error;
+	records = (Array.isArray(data) ? data : []).filter(r => r && typeof r === 'object').map(r => ({
+		id: r.id, plate: asText(r.plate), model: asText(r.model), date: asText(r.work_date) || today(),
+		chassis: asText(r.chassis_no), area: asText(r.area), remarks: asText(r.remarks),
+		items: asObject(r.items), notes: asObject(r.notes),
+		photos: Array.isArray(r.photos) ? r.photos : [], updated: asText(r.updated_at) || null
+	}));
+}
+
+/* ---------- Photos ---------- */
+function shrink(file){
+	return new Promise((res,rej)=>{
+		const r = new FileReader();
+		r.onload = () => { const img = new Image();
+			img.onload = () => { const m = 1280, s = Math.min(1, m/Math.max(img.width,img.height));
+				const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+				c.getContext("2d").drawImage(img,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",0.75)); };
+			img.onerror = rej; img.src = r.result; };
+		r.onerror = rej; r.readAsDataURL(file);
+	});
+}
+$("picker").onchange = async e => {
+	const files = [...e.target.files]; if(!files.length) return;
+	let urls;
+	try { urls = await Promise.all(files.map(shrink)); }
+	catch(error) { console.error('Unable to process selected photos:', error); toast("Could not process photo. Try another image."); return; }
+	photos.push(...urls); renderGen();
+	toast(urls.length + " photo" + (urls.length>1?"s":"") + " added");
+};
+function thumbsHTML(list, removable){
+	return list.map((u,i)=>`<div class="thumb" data-i="${i}"><img src="${u}" alt="Photo">${removable?`<button class="x" title="Remove" aria-label="Remove photo">×</button>`:""}</div>`).join("");
+}
+function wireThumbs(box, list, onRemove){
+	box.querySelectorAll(".thumb").forEach(t=>{
+		t.onclick = ev => { if (ev.target.classList.contains("x")) { ev.stopPropagation(); onRemove(+t.dataset.i); } else openLB(list[+t.dataset.i]); };
+	});
+}
+function renderGen(){
+	const box = $("gen-thumbs"); box.innerHTML = thumbsHTML(photos, true);
+	wireThumbs(box, photos, i => { photos.splice(i,1); renderGen(); });
+}
+$("gen-add").onclick = () => { $("picker").value = ""; $("picker").click(); };
+let lbReturnFocus = null;
+function openLB(src){
+	lbReturnFocus = document.activeElement;
+	$("lb-img").src = src; $("lb-img").alt = "Photo"; $("lb-cap").textContent = "";
+	$("lb").classList.add("show"); $("lb-x").focus();
+}
+function closeLB(){
+	$("lb").classList.remove("show");
+	if (lbReturnFocus && lbReturnFocus.focus) lbReturnFocus.focus();
+}
+$("lb").onclick = event => { if (event.target === $("lb")) closeLB(); };
+$("lb-x").onclick = closeLB;
+document.addEventListener("keydown", event => { if (event.key === "Escape" && $("lb").classList.contains("show")) closeLB(); });
+
+/* ---------- Work form ---------- */
+function buildWork(){
+	const box = $("checklist"); box.innerHTML = "";
+	for (const [cat,list] of Object.entries(ITEMS)){
+		const h = document.createElement("div"); h.className="cat"; h.textContent=cat; box.appendChild(h);
+		list.forEach(name=>{
+			const row = document.createElement("div"); row.className="item";
+			row.innerHTML = `<button type="button" class="name" aria-expanded="${!!notes[name]}">${esc(name)}</button>
+				<div class="seg">${Object.keys(LBL).map(v=>`<button type="button" data-v="${v}" aria-pressed="false">${LBL[v]}</button>`).join("")}</div>
+				<input class="note" placeholder="Note for ${esc(name)}..." aria-label="Note for ${esc(name)}">`;
+			const setOn = () => row.querySelectorAll(".seg button").forEach(b=>{
+				const on = b.dataset.v === (state[name] || "na");
+				b.classList.toggle("on", on);
+				b.setAttribute("aria-pressed", String(on));
+			});
+			row.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{state[name]=b.dataset.v; setOn(); progress();});
+			row.querySelector(".name").onclick=event=>{
+				const open = row.classList.toggle("show-note");
+				event.currentTarget.setAttribute("aria-expanded", String(open));
+			};
+			const n = row.querySelector(".note"); n.value = notes[name]||""; n.oninput=()=>notes[name]=n.value;
+			if (notes[name]) row.classList.add("show-note");
+			setOn(); box.appendChild(row);
+		});
+	}
+	progress();
+}
+function progress(){
+	const all = Object.values(ITEMS).flat().length;
+	const n = Object.values(state).filter(v=>v && v!=="na").length;
+	$("prog").style.width = (n/all*100)+"%";
+	$("prog").parentElement.setAttribute("aria-valuenow", String(Math.round(n/all*100)));
+}
+const FIELDS = {plate:"f-plate",model:"f-model",chassis:"f-chassis",date:"f-date",area:"f-area",remarks:"f-remarks"};
+function clearForm(){
+	Object.values(FIELDS).forEach(i=>$(i).value="");
+	$("f-date").value = today(); state={}; notes={}; photos=[];
+	editingId = null; $("editbar").classList.add("hidden"); $("save").textContent = "Save Work Entry";
+	buildWork(); renderGen();
+}
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200);}
+
+$("save").onclick = async ()=>{
+	const sb = ensureSupabase();
+	const plate = $("f-plate").value.trim();
+	if(!plate){toast("Please enter the plate no.");$("f-plate").focus();return;}
+	const items = {}; Object.entries(state).forEach(([k,v])=>{if(v&&v!=="na")items[k]=v});
+	const remarks = $("f-remarks").value.trim();
+	if(!Object.keys(items).length && !remarks){toast("Mark an item or enter remarks");return;}
+	const payload = {
+		plate, model:$("f-model").value.trim(), chassis_no:$("f-chassis").value.trim(),
+		work_date:$("f-date").value||today(), area:$("f-area").value.trim(), remarks,
+		items,
+		notes:Object.fromEntries(Object.entries(notes).filter(([k,v])=>v&&items[k])),
+		photos:[...photos]
+	};
+	$("save").disabled = true; $("save-status").textContent = "Saving...";
+	try {
+		let error, count, id;
+		if (editingId){
+			({ error, count } = await sb.from(TABLE).update({ ...payload, updated_at: new Date().toISOString() }, { count: "exact" }).eq('id', editingId));
+			// Row Level Security silently skips rows when the admin token is missing.
+			if (!error && !count) throw Object.assign(new Error("row-level security blocked the update — admin session expired or missing"), { code: "42501" });
+			id = editingId;
+		} else {
+			({ error } = await sb.from(TABLE).insert(payload));
+		}
+		if (error) throw error;
+		await loadRecords();
+		if (editingId){ clearForm(); toast("Changes saved ✓"); openDetail(id); }
+		else { toast("Work entry saved ✓"); clearForm(); show("history"); }
+	} catch (err) {
+		console.error('Unable to save work entry:', err);
+		const msg = String(err?.message || '');
+		const missing = err?.code === '42P01' || /does not exist/i.test(msg) || /schema cache/i.test(msg);
+		const authFail = err?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(msg);
+		if (authFail && typeof window.akgarageForceRelogin === 'function') {
+			toast("Session expired — mag-login ulit bilang admin.");
+			window.akgarageForceRelogin();
+			const gateErr = document.getElementById('auth-gate-error');
+			if (gateErr) { gateErr.style.display = 'block'; gateErr.textContent = 'Session expired — enter the admin password to continue saving.'; }
+		} else {
+			toast(missing ? "Table missing — run section 10 of supabase-migrations.sql" : "Save failed: " + (err?.message || "unknown error"));
+		}
+	} finally {
+		$("save").disabled = false; $("save-status").textContent = "";
+	}
+};
+$("clear").onclick = clearForm;
+$("cancel-edit").onclick = ()=>{ const id = editingId; clearForm(); openDetail(id); };
+$("all-na").onclick = ()=>{state={};notes={};buildWork();};
+
+function startEdit(id){
+	const r = records.find(x=>String(x.id)===String(id)); if(!r) return;
+	$("f-plate").value=r.plate; $("f-model").value=r.model; $("f-date").value=r.date;
+	$("f-chassis").value=r.chassis||""; $("f-area").value=r.area||"";
+	$("f-remarks").value=r.remarks||"";
+	state = {...r.items}; notes = {...(r.notes||{})}; photos = [...(r.photos||[])];
+	editingId = id; $("edit-lbl").textContent = "Editing: " + r.plate + " · " + fmt(r.date);
+	$("editbar").classList.remove("hidden"); $("save").textContent = "Save Changes";
+	buildWork(); renderGen(); show("new");
+}
+$("edit").onclick = ()=>startEdit(currentId);
+
+/* ---------- History ---------- */
+function renderHistory(){
+	const q = $("q").value.toLowerCase(), f = $("flt").value;
+	const rs = records.filter(r=>carLink
+					? recordKey(r) === carLink.key || (carLink.plateKey && recordKey(r) === carLink.plateKey)
+					: [r.plate,r.model,r.chassis,r.area].join(" ").toLowerCase().includes(q))
+				.filter(r=>!f || Object.values(r.items).includes("attn"));
+	const attn = records.reduce((a,r)=>a+Object.values(r.items).filter(v=>v==="attn").length,0);
+	const cars = new Set(records.map(recordKey)).size;
+	const photoTotal = records.reduce((a,r)=>a+(r.photos||[]).length,0);
+	$("stats").innerHTML = `
+		<div class="stat"><b>${records.length}</b><span>Work entries</span></div>
+		<div class="stat"><b>${cars}</b><span>Vehicles</span></div>
+		<div class="stat"><b style="color:var(--warn)">${attn}</b><span>Items need attention</span></div>
+		<div class="stat"><b>${photoTotal}</b><span>Photos</span></div>`;
+	$("list").innerHTML = (carLink ? `<div class="muted" style="margin:0 0 8px">Showing only <b>${esc(carLink.label)}</b> · <a href="#" id="car-link-clear">show all records</a></div>` : "") + (rs.length ? rs.map(r=>{
+		const v = Object.values(r.items), a = v.filter(x=>x==="attn").length, pc = (r.photos||[]).length;
+		return `<div class="rec" data-id="${r.id}">
+			<div class="top"><span class="plate">${esc(r.plate)}</span><span class="muted">${fmt(r.date)}${r.updated?" · edited":""}</span></div>
+			<div class="muted">${esc([r.model||"—", r.area||"", r.chassis?"CHASSIS "+r.chassis:""].filter(Boolean).join(" · "))}</div>
+			<div class="row" style="margin-top:6px">
+				${v.filter(x=>x==="done").length?`<span class="pill done">${v.filter(x=>x==="done").length} done</span>`:""}
+				${v.filter(x=>x==="ok").length?`<span class="pill ok">${v.filter(x=>x==="ok").length} checked OK</span>`:""}
+				${a?`<span class="pill attn">${a} needs attention</span>`:""}
+				${pc?`<span class="pill na">${pc} photo${pc>1?"s":""}</span>`:""}
+			</div></div>`}).join("") : `<div class="empty-note">${carLink ? `No warehouse work yet for ${esc(carLink.label)} — open “+ New Work Entry” to add the first one.` : "No records found — save your first work entry."}</div>`);
+	document.querySelectorAll(".rec").forEach(e=>e.onclick=()=>openDetail(e.dataset.id));
+	const carLinkClear = $("car-link-clear");
+	if (carLinkClear) carLinkClear.onclick = event => { event.preventDefault(); carLink = null; $("q").value = ""; renderHistory(); };
+}
+$("q").oninput = () => { carLink = null; renderHistory(); }; $("flt").onchange = renderHistory;
+
+function renderIssues(){
+	const rows = records.filter(r=>Object.values(r.items).includes("attn"));
+	$("issues").innerHTML = rows.length ? `<table><thead><tr><th>Plate</th><th>Date</th><th>Area</th><th>Items needing attention</th></tr></thead><tbody>${rows.map(r=>{
+		const a = Object.entries(r.items).filter(([k,v])=>v==="attn").map(([k])=>k);
+		return `<tr><td class="plate">${esc(r.plate)}</td><td>${fmt(r.date)}</td><td>${esc(r.area||"—")}</td><td>${a.map(x=>`<span class="pill attn">${esc(x)}</span>`).join(" ")}</td></tr>`;
+	}).join("")}</tbody></table>` : `<div class="muted">No open issues.</div>`;
+}
+
+/* ---------- Report ---------- */
+function formatRemarks(text){
+	const blocks = text.replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+	const isHead = l => { const t=l.replace(/^\d+[.)]\s*/,""); return t.length<70 && /[A-Z]/.test(t) && !/[a-z]/.test(t); };
+	return blocks.map(b=>{
+		const lines = b.split("\n").map(l=>l.trim()).filter(Boolean);
+		let head = "", num = "";
+		if (isHead(lines[0])) { const m = lines[0].match(/^(\d+)[.)]\s*(.*)$/); if(m){num=m[1];head=m[2];} else head=lines[0]; lines.shift(); }
+		const body = lines.map(l=>{
+			const kv = l.match(/^([A-Za-z][A-Za-z0-9 \/()&-]{1,28}):\s*(.+)$/);
+			if (kv && /^recommend/i.test(kv[1])) return `<div class="rp-reco"><span>${esc(kv[1])}</span>${esc(kv[2])}</div>`;
+			if (kv) return `<div class="rp-kv"><span>${esc(kv[1])}</span><b>${esc(kv[2])}</b></div>`;
+			return `<p>${esc(l)}</p>`;
+		}).join("");
+		const cls = /^summary$/i.test(head) ? "rp-sec rp-summary" : "rp-sec";
+		return `<div class="${cls}">${head?`<div class="rp-h">${num?`<i>${num}</i>`:""}${esc(head)}</div>`:""}${body}</div>`;
+	}).join("");
+}
+
+function openDetail(id){
+	const r = records.find(x=>String(x.id)===String(id)); if(!r) return; currentId=id;
+	const vals = Object.values(r.items);
+	const cnt = k => vals.filter(v=>v===k).length;
+	const nDone = cnt("done"), nOk = cnt("ok"), nAttn = cnt("attn");
+	const sum = (nDone||nOk||nAttn) ? `
+		<div class="rp-sum">
+			${nDone?`<div class="s-done"><b>${nDone}</b><span>Completed</span></div>`:""}
+			${nOk?`<div class="s-ok"><b>${nOk}</b><span>Checked OK</span></div>`:""}
+			${nAttn?`<div class="s-attn"><b>${nAttn}</b><span>Needs Attention</span></div>`:""}
+		</div>` : "";
+	const rows = Object.entries(ITEMS).map(([cat,list])=>{
+		const got = list.filter(n=>r.items[n]); if(!got.length) return "";
+		return `<tr class="rp-cat"><td colspan="3">${esc(cat)}</td></tr>` +
+			got.map(n=>`<tr><td>${esc(n)}</td><td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted">${esc(r.notes?.[n]||"")}</td></tr>`).join("");
+	}).join("");
+	$("detail").innerHTML = `
+	<div class="rp">
+		<div class="rp-top">
+			<div class="rp-brand"><b>Warehouse Work Report</b></div>
+			<div class="rp-meta"><div><span>Work Date</span><b>${fmt(r.date)}</b></div></div>
+		</div>
+		<div class="rp-vehicle">
+			<div class="rp-plate">${esc(r.plate)}</div>
+			<div class="rp-model">${esc(r.model||"—")}</div>
+		</div>
+		<div class="rp-info">
+			<div><span>Area / Bin</span><b>${esc(r.area||"—")}</b></div>
+			<div><span>Chassis No.</span><b>${esc(r.chassis||"—")}</b></div>
+		</div>
+		${sum}
+		${rows?`<h3 class="rp-title">Warehouse Checklist</h3><table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`:""}
+		${r.remarks?`<h3 class="rp-title">Work Notes</h3><div class="rp-remarks">${formatRemarks(r.remarks)}</div>`:""}
+		${(r.photos||[]).length?`<h3 class="rp-title">Photos (${r.photos.length})</h3><div class="gallery" id="gal">${r.photos.map((u,i)=>`<div class="thumb" data-i="${i}"><img src="${u}" alt=""></div>`).join("")}</div>`:""}
+	</div>`;
+	const g = $("gal"); if (g) g.querySelectorAll(".thumb").forEach(t=>t.onclick=()=>openLB(r.photos[+t.dataset.i]));
+	show("detail");
+}
+
+/* ---------- Print / Save ---------- */
+function doPrint(){
+	$("printhelp").classList.add("hidden");
+	const originalTitle = document.title;
+	document.title = " ";
+	const t = performance.now(); let failed = false;
+	try { window.print(); } catch(e){ failed = true; }
+	setTimeout(() => { document.title = originalTitle; }, 800);
+	if (failed || performance.now() - t < 120) $("printhelp").classList.remove("hidden");
+}
+
+const PDF_INK = [43,42,38], PDF_MUTED = [138,127,106], PDF_NAVY = [20,33,58],
+	PDF_GOLD = [168,132,74], PDF_TITLE = [201,169,106], PDF_LINE = [226,220,205],
+	PDF_PANEL = [251,249,245], PDF_WARM = [247,244,238], PDF_OK = [49,92,64],
+	PDF_WARN = [138,106,47], PDF_NA = [107,100,89];
+
+function loadJsPdf(){
+	if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+	return new Promise((resolve, reject)=>{
+		const s = document.createElement("script");
+		s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+		s.onload = ()=> (window.jspdf && window.jspdf.jsPDF) ? resolve() : reject(new Error("jsPDF loaded but not exposed"));
+		s.onerror = ()=>reject(new Error("jsPDF CDN unavailable"));
+		document.head.appendChild(s);
+	});
+}
+
+function remarkBlocks(text){
+	const isHead = l => { const t = l.replace(/^\d+[.)]\s*/,""); return t.length < 70 && /[A-Z]/.test(t) && !/[a-z]/.test(t); };
+	return String(text||"").replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean).map(b=>{
+		const lines = b.split("\n").map(l=>l.trim()).filter(Boolean);
+		let num = "", head = "";
+		if (lines.length && isHead(lines[0])){
+			const m = lines[0].match(/^(\d+)[.)]\s*(.*)$/);
+			if (m){ num = m[1]; head = m[2]; } else head = lines[0];
+			lines.shift();
+		}
+		return { num, head, body: lines.map(l=>{
+			const kv = l.match(/^([A-Za-z][A-Za-z0-9 \/()&-]{1,28}):\s*(.+)$/);
+			return kv ? { label: kv[1], text: kv[2], reco: /^recommend/i.test(kv[1]) } : { text: l };
+		}) };
+	});
+}
+
+const _photoDims = {};
+function photoSize(url){
+	if (_photoDims[url]) return Promise.resolve(_photoDims[url]);
+	return new Promise(resolve=>{
+		const im = new Image();
+		im.onload = ()=>{ _photoDims[url] = { w: im.naturalWidth || 4, h: im.naturalHeight || 3 }; resolve(_photoDims[url]); };
+		im.onerror = ()=>{ _photoDims[url] = { w: 4, h: 3 }; resolve(_photoDims[url]); };
+		im.src = url;
+	});
+}
+
+async function reportPDF(r){
+	const { jsPDF } = window.jspdf;
+	const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+	const L = 12, R = 12, TOP = 10, BOTTOM = 12, W = 210 - L - R, PAGE_H = 297, LIMIT = PAGE_H - BOTTOM;
+	let y = TOP;
+	const fill = c => pdf.setFillColor(c[0], c[1], c[2]);
+	const draw = c => pdf.setDrawColor(c[0], c[1], c[2]);
+	const ink = c => pdf.setTextColor(c[0], c[1], c[2]);
+	const twoTone = ()=>{ fill(PDF_NAVY); pdf.rect(L, y, W*0.72, 0.8, "F"); fill(PDF_GOLD); pdf.rect(L + W*0.72, y, W*0.28, 0.8, "F"); y += 0.8; };
+	const sectionTitle = t => {
+		if (y + 12 > LIMIT){ pdf.addPage(); y = TOP; }
+		y += 6;
+		fill(PDF_GOLD); pdf.rect(L, y + 0.4, 8, 0.7, "F");
+		draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + 3.4, L + W, y + 3.4);
+		ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(9);
+		pdf.text(String(t).toUpperCase(), L + 10, y + 1.4);
+		y += 5.6;
+	};
+
+	// Header band with the brand title and the work date box.
+	fill(PDF_NAVY); pdf.rect(L, y, W, 27, "F");
+	ink(PDF_TITLE); pdf.setFont("times", "bold"); pdf.setFontSize(16);
+	pdf.text("WAREHOUSE WORK REPORT", L + 5, y + 12.5);
+	fill(PDF_GOLD); pdf.rect(L + 5, y + 16.5, 55, 0.8, "F");
+	const boxW = 44, boxH = 15, boxX = L + W - boxW - 5, boxY = y + 6;
+	fill([27,43,73]); pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, "F");
+	draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, "S");
+	ink(PDF_TITLE); pdf.setFont("times", "normal"); pdf.setFontSize(6.5);
+	pdf.text("WORK DATE", boxX + boxW/2, boxY + 5, { align: "center" });
+	pdf.setTextColor(255,255,255); pdf.setFontSize(10.5);
+	pdf.text(fmt(r.date), boxX + boxW/2, boxY + 10.5, { align: "center" });
+	y += 31;
+
+	// Plate, model and the two-tone rules that frame the vehicle line.
+	twoTone(); y += 4;
+	pdf.setFont("times", "bold"); pdf.setFontSize(16);
+	const plate = String(r.plate || "").toUpperCase();
+	const plateW = Math.max(38, pdf.getTextWidth(plate) + 14), plateH = 12;
+	draw(PDF_NAVY); pdf.setLineWidth(0.9); pdf.roundedRect(L - 1.6, y - 1.6, plateW + 3.2, plateH + 3.2, 2, 2, "S");
+	draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(L, y, plateW, plateH, 1.5, 1.5, "S");
+	ink(PDF_NAVY); pdf.text(plate, L + plateW/2, y + plateH/2 + 1.6, { align: "center" });
+	ink(PDF_NAVY); pdf.setFont("times", "italic"); pdf.setFontSize(12.5);
+	pdf.text(String(r.model || "—"), L + plateW + 6, y + plateH/2 + 0.8);
+	y += plateH + 5;
+	fill(PDF_NAVY); pdf.rect(L, y, W*0.72, 0.8, "F"); fill(PDF_GOLD); pdf.rect(L + W*0.72, y, W*0.28, 0.8, "F"); y += 4;
+
+	// Area / chassis row.
+	const halfW = (W - 1)/2, infoH = 12;
+	fill(PDF_PANEL); pdf.rect(L, y, W, infoH, "F");
+	draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L + halfW, y, L + halfW, y + infoH);
+	[["AREA / BIN", r.area || "—"], ["CHASSIS NO.", r.chassis || "—"]].forEach(([label, value], i)=>{
+		const x = L + i*(halfW + 1) + 3;
+		ink(PDF_MUTED); pdf.setFont("times", "normal"); pdf.setFontSize(6.5);
+		pdf.text(label, x, y + 4.6);
+		ink(PDF_NAVY); pdf.setFontSize(9.5);
+		pdf.text(String(value), x, y + 9.4);
+	});
+	y += infoH + 3;
+
+	// Status tiles.
+	const items = r.items || {};
+	const counts = { done: 0, ok: 0, attn: 0 };
+	Object.values(items).forEach(s => { if (counts[s] !== undefined) counts[s] += 1; });
+	const tiles = [[counts.done, "Completed", PDF_OK, [238,244,234]], [counts.ok, "Checked OK", PDF_OK, [238,244,234]], [counts.attn, "Needs Attention", PDF_WARN, [249,241,226]]].filter(t => t[0] > 0);
+	if (tiles.length){
+		const tw = (W - (tiles.length - 1)*2)/tiles.length;
+		tiles.forEach(([n, label, colour, bg], i)=>{
+			const x = L + i*(tw + 2);
+			fill(bg); pdf.rect(x, y, tw, 14, "F");
+			draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.rect(x, y, tw, 14, "S");
+			ink(colour); pdf.setFont("times", "bold"); pdf.setFontSize(13);
+			pdf.text(String(n), x + 4, y + 8.4);
+			pdf.setFontSize(8);
+			pdf.text(label, x + tw - 4, y + 8.4, { align: "right" });
+		});
+		y += 14 + 2;
+	}
+
+	// Checklist table: header repeats on every page.
+	const checked = Object.keys(items).filter(n => items[n]);
+	if (checked.length){
+		sectionTitle("Warehouse Checklist");
+		const cw = [70, 26, W - 96];
+		const tableHead = ()=>{
+			fill(PDF_NAVY); pdf.rect(L, y, W, 7, "F");
+			pdf.setTextColor(255,255,255); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+			pdf.text("ITEM", L + 3, y + 4.8);
+			pdf.text("STATUS", L + cw[0] + 3, y + 4.8);
+			pdf.text("NOTE", L + cw[0] + cw[1] + 3, y + 4.8);
+			y += 7;
+		};
+		tableHead();
+		let lastCat = "";
+		const statusInk = { done: PDF_OK, ok: PDF_OK, attn: PDF_WARN, na: PDF_NA };
+		Object.entries(ITEMS).forEach(([cat, list]) => {
+			const got = list.filter(n => items[n]);
+			if (!got.length) return;
+			const drawCat = ()=>{
+				fill(PDF_WARM); pdf.rect(L, y, W, 7.5, "F");
+				fill(PDF_GOLD); pdf.rect(L, y, 1.2, 7.5, "F");
+				ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+				pdf.text(String(cat).toUpperCase(), L + 3.5, y + 5);
+				y += 7.5; lastCat = cat;
+			};
+			if (y + 7.5 + 7 > LIMIT){ pdf.addPage(); y = TOP; tableHead(); lastCat = ""; }
+			drawCat();
+			got.forEach((name, i)=>{
+				pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+				const itemLines = pdf.splitTextToSize(name, cw[0] - 6);
+				ink(PDF_MUTED); pdf.setFontSize(8);
+				const noteLines = pdf.splitTextToSize(String(r.notes?.[name] || ""), cw[2] - 6);
+				const rowH = Math.max(7, itemLines.length*4.2 + 2.6, noteLines.length*3.9 + 2.6);
+				if (y + rowH > LIMIT){
+					pdf.addPage(); y = TOP; tableHead();
+					if (lastCat !== cat) drawCat();
+				}
+				if (i % 2 === 1){ fill(PDF_PANEL); pdf.rect(L, y, W, rowH, "F"); }
+				ink(PDF_INK); pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+				itemLines.forEach((line, k) => pdf.text(line, L + 3, y + 4 + k*4.2));
+				ink(statusInk[items[name]] || PDF_NA); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+				pdf.text(String(LBL[items[name]] || "").toUpperCase(), L + cw[0] + 3, y + 4.4);
+				ink(PDF_MUTED); pdf.setFont("times", "normal"); pdf.setFontSize(8);
+				noteLines.forEach((line, k) => pdf.text(line, L + cw[0] + cw[1] + 3, y + 4 + k*3.9));
+				draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + rowH, L + W, y + rowH);
+				y += rowH;
+			});
+		});
+		y += 2;
+	}
+
+	// Work notes: one panel per block.
+	const blocks = remarkBlocks(r.remarks);
+	if (blocks.length){
+		sectionTitle("Work Notes");
+		for (const b of blocks){
+			pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+			const body = [];
+			b.body.forEach(p=>{
+				if (p.label){
+					pdf.setFont("times", "bold");
+					body.push({ lines: pdf.splitTextToSize(`${p.label}: ${p.text}`, W - 16), kind: p.reco ? "reco" : "kv" });
+				} else {
+					pdf.setFont("times", "normal");
+					body.push({ lines: pdf.splitTextToSize(p.text, W - 16), kind: "p" });
+				}
+			});
+			const bodyH = body.reduce((s, p) => s + p.lines.length*4.2 + (p.kind === "p" ? 0.8 : 2), 0);
+			const panelH = (b.head ? 9 : 3) + bodyH + 4;
+			if (y + panelH > LIMIT && panelH < PAGE_H - TOP - BOTTOM){ pdf.addPage(); y = TOP; }
+			fill(PDF_PANEL); pdf.rect(L, y, W, panelH, "F");
+			fill(PDF_GOLD); pdf.rect(L, y, 1.2, panelH, "F");
+			let by = y + 5.4;
+			if (b.head){
+				if (b.num){
+					fill(PDF_GOLD); pdf.rect(L + 4, by - 4, 5, 5, "F");
+					pdf.setTextColor(255,255,255); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+					pdf.text(String(b.num), L + 6.5, by - 0.2, { align: "center" });
+				}
+				ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(9);
+				pdf.text(String(b.head).toUpperCase(), L + (b.num ? 11 : 4), by);
+				by += 3.4;
+			}
+			body.forEach(p=>{
+				if (p.kind === "reco"){ fill(PDF_WARM); pdf.rect(L + 4, by - 0.6, W - 8, p.lines.length*4.2 + 1.4, "F"); }
+				ink(p.kind === "p" ? PDF_INK : PDF_NAVY);
+				pdf.setFont("times", p.kind === "p" ? "normal" : "bold"); pdf.setFontSize(8.5);
+				p.lines.forEach((line, k) => pdf.text(line, L + 4, by + 3 + k*4.2));
+				by += p.lines.length*4.2 + (p.kind === "p" ? 0.8 : 2);
+			});
+			y += panelH + 2.5;
+		}
+	}
+
+	// Photos.
+	const gallery = (r.photos || []).slice();
+	if (gallery.length){
+		sectionTitle("Photos (" + gallery.length + ")");
+		const cols = 4, gap = 3, cell = (W - (cols - 1)*gap)/cols, imgH = 30;
+		for (let i = 0; i < gallery.length; i += cols){
+			if (y + imgH + 6 > LIMIT){ pdf.addPage(); y = TOP; }
+			const row = gallery.slice(i, i + cols);
+			for (let c = 0; c < row.length; c++){
+				const u = row[c], x = L + c*(cell + gap);
+				const { w, h } = await photoSize(u);
+				const scaled = Math.min(cell / w, imgH / h);
+				const dw = w*scaled, dh = h*scaled;
+				try { pdf.addImage(u, "JPEG", x + (cell - dw)/2, y + (imgH - dh)/2, dw, dh); }
+				catch(err){ console.warn("PDF export: photo skipped", err); }
+				draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.rect(x, y, cell, imgH, "S");
+			}
+			y += imgH + 6;
+		}
+	}
+
+	return pdf.output("blob");
+}
+
+function downloadBlob(blob, name){
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = name;
+	document.body.appendChild(a); a.click(); a.remove();
+	setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+function downloadReportHTML(r, fname){
+	// Fallback used when the PDF library cannot load.
+	const css = document.querySelector("style").textContent;
+	const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Warehouse Work ${esc(r.plate)} ${r.date}</title><style>${css}
+body{background:#fff}main{padding:24px}.card{border:0}</style></head>
+<body><main><div class="card">${$("detail").innerHTML}</div></main>
+<script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`;
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(new Blob([html], {type:"text/html"}));
+	a.download = fname + ".html";
+	document.body.appendChild(a); a.click(); a.remove();
+	setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+async function saveReport(){
+	const r = records.find(x=>String(x.id)===String(currentId)); if(!r) return;
+	const fname = `AK-Warehouse_${r.plate.replace(/\s+/g,"-")}_${r.date}`;
+	const btn = $("dl");
+	if (btn) btn.disabled = true;
+	toast("Preparing PDF…");
+	try {
+		await loadJsPdf();
+		downloadBlob(await reportPDF(r), fname + ".pdf");
+		toast("PDF saved ✓");
+	} catch(err){
+		console.error("PDF export failed:", err);
+		downloadReportHTML(r, fname);
+		toast("PDF unavailable — HTML report downloaded instead");
+	} finally {
+		if (btn) btn.disabled = false;
+	}
+}
+$("print").onclick = doPrint;
+$("dl").onclick = saveReport;
+$("ph-x").onclick = ()=>$("printhelp").classList.add("hidden");
+$("back").onclick = ()=>show("history");
+$("del").onclick = async ()=>{
+	if (!confirm("Delete this work entry?")) return;
+	try {
+		const sb = ensureSupabase();
+		const { error, count } = await sb.from(TABLE).delete({ count: "exact" }).eq('id', currentId);
+		if (error) { console.error('Unable to delete work entry:', error); toast("Delete failed: " + error.message); return; }
+		if (!count) {
+			console.error('Delete blocked by row-level security (0 rows changed)');
+			toast("Session expired — mag-login ulit bilang admin.");
+			if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+			return;
+		}
+		await loadRecords(); toast("Deleted"); show("history");
+	} catch (error) {
+		console.error('Unable to delete work entry:', error);
+		const dmsg = String(error?.message || '');
+		if (error?.code === '42501' || /row-level security|permission denied|JWT|401|Invalid API key/i.test(dmsg)) {
+			toast("Session expired — mag-login ulit bilang admin.");
+			if (typeof window.akgarageForceRelogin === 'function') window.akgarageForceRelogin();
+		} else {
+			toast("Delete failed: " + (error?.message || 'Supabase unavailable'));
+		}
+	}
+};
+
+function show(tab){
+	["new","history","issues","detail"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==tab));
+	document.querySelectorAll("nav button").forEach(b=>{
+		const active = b.dataset.tab===tab || (tab==="detail" && b.dataset.tab==="history");
+		b.classList.toggle("active", active);
+		if (active) b.setAttribute("aria-current", "true");
+		else b.removeAttribute("aria-current");
+	});
+	if(tab==="history") renderHistory(); if(tab==="issues") renderIssues();
+	window.scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="new" && editingId) clearForm(); show(b.dataset.tab); });
+
+$("f-date").value = today(); buildWork(); renderGen();
+
+// Deep link from a Mr AK Cars row: warehouse.html?code=M&plate=8887 opens
+// History locked to that exact car.
+(function openCarHistory() {
+	const params = new URLSearchParams(location.search);
+	let code = (params.get('code') || '').trim();
+	let plate = (params.get('plate') || '').trim();
+	if (!code && !plate) return;
+	if (!code) {
+		const parts = plate.replace(/\bDXB\b/gi, ' ').trim().split(/\s+/).filter(Boolean);
+		if (parts.length > 1) { code = parts[0]; plate = parts.slice(1).join(''); }
+		else if (!/[A-Z]/i.test(plate)) { $("q").value = plate.toUpperCase(); show("history"); return; }
+	}
+	const key = carKey(code + plate);
+	if (!key) return;
+	// Mr AK Cars rows pass code and plate separately ("20" + "50366"), while a
+	// work entry usually stores only the plate. Accept either key so the row
+	// link still finds the car's history.
+	carLink = { key, plateKey: carKey(plate), label: linkLabel(code, plate) || plate.toUpperCase() };
+	$("q").value = carLink.label;
+	show("history");
+})();
+
+(async function initialize(){
+	try {
+		await loadRecords();
+		renderHistory();
+	} catch (error) {
+		console.error('Unable to load warehouse records from Supabase:', error);
+		const message = error?.message || 'Unknown error';
+		const missingTable = error?.code === '42P01' || /does not exist|schema cache/i.test(message);
+		$("list").innerHTML = `<div class="empty-note">${missingTable
+			? 'Warehouse table is missing — run section 10 of supabase-migrations.sql in Supabase.'
+			: `Unable to load warehouse records: ${esc(message)}`}</div>`;
+	}
+	// Viewers (team password) cannot save, edit, or delete — the admin token
+	// guards this in the database too, so hiding the buttons is cosmetic.
+	if (typeof window.akgarageIsAdmin !== 'function' || !window.akgarageIsAdmin()) {
+		const viewerNote = document.querySelector('.viewer-note');
+		if (viewerNote) viewerNote.hidden = false;
+		["save","edit","del","gen-add"].forEach(id => { const el = $(id); if (el) el.classList.add("hidden"); });
+	}
+})();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRecords().then(renderHistory).catch(()=>{}); });
+</script>
+</body>
+</html>

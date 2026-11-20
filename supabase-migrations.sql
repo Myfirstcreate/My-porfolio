@@ -476,3 +476,52 @@ alter table public.mr_ak_cars drop column if exists garage_location;
 -- the success signal, not a problem.
 -- select service_mileage_after from public.vvipboss limit 1;
 -- select garage_location from public.mr_ak_cars limit 1;
+
+-- =============================================================================
+-- 10. WAREHOUSE WORK (run once — makes warehouse.html live). Safe to re-run.
+--
+--     One row = one warehouse work entry for one vehicle visit (receiving,
+--     storage, issuing, stock count, dispatch, safety). Same shape as
+--     maintenance_checks so the page and its PDF report behave the same way.
+--     items / notes are JSONB (Done / OK / Attn / N/A + per-item notes) and
+--     photos is a JSONB array of compressed data URLs.
+-- =============================================================================
+
+create table if not exists public.warehouse_work (
+	id uuid primary key default gen_random_uuid(),
+	created_at timestamptz not null default now(),
+	updated_at timestamptz,
+	plate text not null,
+	model text not null default '',
+	chassis_no text not null default '',
+	work_date text not null default '',
+	area text not null default '',
+	remarks text not null default '',
+	items jsonb not null default '{}'::jsonb,
+	notes jsonb not null default '{}'::jsonb,
+	photos jsonb not null default '[]'::jsonb
+);
+
+create index if not exists warehouse_work_plate_idx on public.warehouse_work (plate);
+
+-- Safe to re-run: fills existing rows with ''.
+alter table public.warehouse_work add column if not exists chassis_no text not null default '';
+alter table public.warehouse_work add column if not exists area text not null default '';
+
+alter table public.warehouse_work enable row level security;
+
+drop policy if exists "team can read warehouse_work" on public.warehouse_work;
+create policy "team can read warehouse_work" on public.warehouse_work
+	for select to anon using (true);
+
+drop policy if exists "admin can insert warehouse_work" on public.warehouse_work;
+create policy "admin can insert warehouse_work" on public.warehouse_work
+	for insert to anon with check (public.is_ak_admin());
+
+drop policy if exists "admin can update warehouse_work" on public.warehouse_work;
+create policy "admin can update warehouse_work" on public.warehouse_work
+	for update to anon using (public.is_ak_admin()) with check (public.is_ak_admin());
+
+drop policy if exists "admin can delete warehouse_work" on public.warehouse_work;
+create policy "admin can delete warehouse_work" on public.warehouse_work
+	for delete to anon using (public.is_ak_admin());
