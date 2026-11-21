@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Garage | Weekly Report</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#070807;--card:#101210;--ink:#f0f3ec;--muted:#8b9388;--line:#292d29;
+  --brand:#c4f04e;--brand-ink:#070807;--ok:#4ade80;--ok-bg:#12301d;--warn:#fbbf24;--warn-bg:#3a2c0b;
+  --bad:#f87171;--bad-bg:#3b1414;--na:#9aa1ad;--na-bg:#23272f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+/* Car backdrop shared with the overview page (hidden in print). */
+.bg-media{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;opacity:.16;-webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 44%,transparent 78%);mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 44%,transparent 78%)}
+.bg-media::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(7,8,7,.4),rgba(7,8,7,.15) 45%,transparent 75%)}
+.bg-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:74% 50%}
+@media (max-width:900px){.bg-media{opacity:.12}}
+header,nav,main{position:relative;z-index:1}
+header{background:#090a09;color:var(--ink);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:4px 8px;font-weight:800;letter-spacing:.5px}
+header .brand-copy{display:flex;flex-direction:column;gap:2px}
+header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.08em}
+header .subtitle{color:var(--muted);font-size:11px;letter-spacing:.04em}
+nav{display:flex;gap:6px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit}
+nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+nav .back{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted);background:transparent;text-decoration:none;white-space:nowrap;font-size:13px;transition:color .15s,border-color .15s,background .15s}
+nav .back:hover{color:var(--ink);border-color:#697163;background:#1d221d}
+main{max-width:960px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 12px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--brand)}
+textarea{min-height:70px;resize:vertical}
+#f-remarks{min-height:180px}
+.remarks{white-space:pre-wrap;word-wrap:break-word;line-height:1.55}
+td.muted{white-space:pre-wrap}
+.btn{border:0;background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.danger{background:transparent;border:1px solid var(--line);color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cam{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:5px 8px;cursor:pointer;display:flex;align-items:center;gap:4px;font:inherit;font-size:12px}
+.cam svg{width:16px;height:16px}
+.cam.has{border-color:var(--brand);color:var(--brand);font-weight:700}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumbs:empty{display:none}
+.thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;padding:0}
+.thumb .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:8px}
+.gallery .thumb{width:auto;height:110px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:20;padding:16px;flex-direction:column;gap:10px;color:#fff}
+.lightbox.show{display:flex}
+.lightbox img{max-width:100%;max-height:82vh;border-radius:8px}
+.editbar{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.done,.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.attn{background:var(--warn-bg);color:var(--warn)}
+.pill.na{background:var(--na-bg);color:var(--na)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--muted)}
+.rec{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;background:var(--card)}
+.rec:hover{border-color:var(--brand)}
+.rec .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.plate{font-weight:800;letter-spacing:.5px}
+.muted{color:var(--muted);font-size:13px}
+.hidden{display:none}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#090a09;color:var(--ink);padding:10px 16px;border:1px solid var(--line);border-radius:8px;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.viewer-note{margin:0 0 14px;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;color:var(--muted);font-size:12px}
+.empty-note{padding:20px;text-align:center;color:var(--muted)}
+.skip{position:absolute;left:-9999px;top:8px;z-index:40}
+.skip:focus{left:8px;background:var(--card);color:var(--ink);padding:8px 12px;border-radius:8px;border:2px solid var(--brand)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+/* ---- Pro service report ---- */
+.rp{font-size:14px}
+.rp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:3px solid var(--brand)}
+.rp-brand{display:flex;align-items:center;gap:10px}
+.rp-brand .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:8px 10px;font-weight:800;letter-spacing:.5px;font-size:18px}
+.rp-brand b{display:block;font-size:18px;letter-spacing:1.5px}
+.rp-meta{display:flex;gap:18px;text-align:right}
+.rp-meta span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.rp-meta b{font-size:14px}
+.rp-vehicle{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:16px 0 10px}
+.rp-plate{font-size:24px;font-weight:800;letter-spacing:1.5px;border:2px solid var(--ink);border-radius:6px;padding:2px 12px}
+.rp-model{font-size:16px;color:var(--muted);font-weight:500}
+.rp-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
+.rp-sum div{border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.rp-sum b{font-size:22px}
+.rp-sum span{font-size:12px;font-weight:600}
+.s-done,.s-ok{background:var(--ok-bg);color:var(--ok)}
+.s-attn{background:var(--warn-bg);color:var(--warn)}
+.rp-title{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line);color:var(--ink)}
+.rp-table th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)}
+.rp-table tr.rp-cat td{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--brand);padding-top:12px;border-bottom:1px solid var(--line)}
+.rp-remarks{display:grid;gap:10px}
+.rp-sec{border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:8px;padding:12px 14px;background:var(--card);break-inside:avoid}
+.rp-sec p{margin:0 0 4px;line-height:1.6}
+.rp-sec p:last-child{margin-bottom:0}
+.rp-h{font-weight:800;font-size:13px;letter-spacing:.6px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.rp-h i{font-style:normal;background:var(--brand);color:var(--brand-ink);border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.rp-summary{border-left-color:var(--brand);background:var(--bg)}
+.rp-kv{display:flex;gap:10px;padding:4px 0}
+.rp-kv span{color:var(--muted);min-width:110px;font-weight:600}
+.rp-reco{margin-top:6px;background:var(--warn-bg);color:var(--ink);border-radius:6px;padding:8px 10px;line-height:1.5}
+.rp-reco span{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--warn);margin-bottom:2px}
+.rp-sec .thumbs{margin-top:8px}
+.rp-sec .thumb{width:76px;height:76px;cursor:zoom-in}
+#part-photos{display:grid;gap:8px;margin-top:8px}
+#part-photos:empty{display:none}
+.part-row{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.part-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700;letter-spacing:.3px}
+.part-head span{overflow-wrap:anywhere}
+.part-row .thumbs{margin-top:6px}
+@media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}}
+
+/* ---- Report paper view: clicking a record shows the same navy/gold report
+     as the print-out, as a white sheet on the dark app. The same theme rules
+     below are reused by the print stylesheet and by "Save as PDF".
+     NOTE: the theme is deliberately scoped to .rp itself and NOT to
+     #tab-detail. The PDF worker clones the report out of the app into its own
+     container on <body>, so an ancestor-scoped theme stops matching during the
+     export and the report would be rendered with the app's dark colours. ---- */
+   .rp .rp-meta{gap:8px}
+   .rp .rp-h{color:#172845}
+   .rp{--serif:Georgia,'Times New Roman',serif;--bg:#f7f4ee;--card:#fbf9f5;--ink:#2b2a26;--muted:#8a7f6a;--line:#e2dccd;--ok:#315c40;--ok-bg:#eef4ea;--warn:#8a6a2f;--warn-bg:#f9f1e2;--na:#6b6459;--na-bg:#f4f1ea;border-top:3px solid #a8844a;background:#fff;color:#2b2a26;font-size:12px}
+   .rp .rp-top{background:#14213a;border-radius:0;padding:16px 18px;border-bottom:2px solid #a8844a;align-items:center;margin-bottom:8px}
+   .rp .rp-brand .logo{background:#a8844a;color:#14213a;border-radius:0;font-family:var(--serif)}
+   .rp .rp-brand{flex:1;justify-content:flex-start}
+   .rp .rp-brand b{position:relative;color:#c9a96a;font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:1.5px;text-align:left;text-transform:uppercase}
+   /* Two-tone rule under the title. Drawn as a bar (not border-image, which
+      the PDF renderer ignores) so screen, print and PDF all look the same. */
+   .rp .rp-brand b::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+   .rp .rp-meta span{color:#c9a96a}
+   .rp .rp-meta>div{min-width:166px;padding:10px 16px;text-align:center;background:#1b2b49;border:1px solid #a8844a;border-radius:10px}
+   .rp .rp-meta b{color:#fff;font-family:var(--serif);font-size:15px}
+   /* Navy ring around the plate. Drawn with a border on ::before (not outline,
+      which the PDF renderer ignores) so the PDF keeps the ring too. */
+   .rp .rp-plate{position:relative;border:1px solid #a8844a;border-radius:8px;color:#14213a;font-family:var(--serif)}
+   .rp .rp-plate::before{content:"";position:absolute;inset:-6px;border:3px solid #14213a;border-radius:12px}
+   .rp .rp-vehicle{position:relative;padding-top:12px;margin:12px 0 10px}
+   .rp .rp-vehicle::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+   /* Car name is the one line that reads bold. Case is never forced here —
+      the report shows exactly what was typed. */
+   .rp .rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:700;letter-spacing:.2px}
+   .rp .rp-sum div{border-radius:0;border:1px solid #e2dccd}
+   .rp .s-done, .rp .s-ok{background:#eef4ea;color:#315c40}
+   .rp .s-attn{background:#f9f1e2;color:#8a6a2f}
+   .rp .rp-sum b, .rp .rp-sum span{color:inherit}
+   .rp .rp-sum b{font-family:var(--serif)}
+   .rp .rp-title{color:#14213a;font-family:var(--serif);letter-spacing:2.5px;border-bottom:1px solid #e2dccd}
+   .rp .rp-title::before{content:"";display:inline-block;width:26px;height:2px;background:#a8844a;vertical-align:middle;margin-right:8px}
+   .rp .rp-remarks::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+   .rp .rp-table th{background:#14213a;color:#fff;border-bottom:0;letter-spacing:.8px}
+   .rp .rp-table td{border-bottom:1px solid #efeadf;color:#2b2a26}
+   .rp .rp-table td.muted{color:#6f6552}
+   .rp .rp-table tbody tr:nth-child(even) td{background:#fbf9f5}
+   /* Gold bar on the category rows: a real left border, because the PDF
+      renderer drops inset box-shadows. */
+   .rp .rp-table tr.rp-cat td{background:#f7f4ee;color:#14213a;border-bottom:1px solid #e2dccd;border-left:3px solid #a8844a}
+   /* STATUS column reads as plain text — no badge box, border or fill. */
+   .rp .pill{background:none;border:0;border-radius:0;padding:0;text-transform:uppercase;font-size:10.5px;font-weight:700;letter-spacing:.5px}
+   .rp .pill.done, .rp .pill.ok{background:none;color:#315c40}
+   .rp .pill.attn{background:none;color:#8a6a2f}
+   .rp .pill.na{background:none;color:#6b6459}
+   .rp .rp-sec{background:#fbf9f5;border-color:#e2dccd;border-left:3px solid #a8844a;border-radius:0}
+   .rp .rp-h i{background:#a8844a;color:#fff;border-radius:0}
+   .rp .rp-summary{background:#f7f4ee}
+   .rp .rp-reco{background:#f9f1e2;border-radius:0;color:#172845}
+   .rp .rp-reco span, .rp .rp-kv span{color:#8a7f6a}
+   .rp .thumb{border-color:#e2dccd;border-radius:0}
+
+@media screen{
+  #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
+  #tab-detail .rp{background:transparent}
+}
+
+/* Phone paper view: bigger, easier-to-read report on small screens.
+   Screen media only — the printed A4 sizing from the theme rules above
+   is untouched. */
+@media screen and (max-width:640px){
+  #tab-detail .rp{font-size:14px}
+  #tab-detail .rp .rp-brand b{font-size:24px}
+  #tab-detail .rp .rp-meta>div{min-width:150px;padding:8px 12px}
+  #tab-detail .rp .rp-meta b{font-size:13px}
+  #tab-detail .rp .rp-meta span{font-size:12px}
+  #tab-detail .rp .rp-plate{font-size:30px}
+  #tab-detail .rp .rp-model{font-size:21px}
+  #tab-detail .rp .rp-sum b{font-size:24px}
+  #tab-detail .rp .rp-sum span{font-size:13px}
+  #tab-detail .rp .rp-title{font-size:13px}
+  #tab-detail .rp .rp-h{font-size:14px}
+  #tab-detail .rp .rp-h i{width:24px;height:24px;font-size:13px}
+  #tab-detail .rp .pill{font-size:12px}
+  #tab-detail .rp .rp-reco span{font-size:12px}
+  #tab-detail .rp-table td,#tab-detail .rp-table th{padding:9px 8px}
+}
+@media print{
+  @page{size:A4;margin:12mm}
+  :root{color-scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,nav,.bg-media,.no-print{display:none!important}
+  body,main{background:#fff!important;color:#111!important}
+  main{padding:0;max-width:none}
+  .card,.stat,.rec{background:#fff!important;color:#111!important;border-color:#d4d4d4!important;box-shadow:none!important}
+  .muted,.stat span{color:#555!important}
+  #tab-new,#tab-history,#tab-due{display:none!important}
+  #tab-detail{display:block!important}
+  #tab-detail .card{padding:0;margin:0;border:0}
+  .rp *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .toast,.lightbox{display:none!important}
+  .rp-table tr{break-inside:avoid}
+  .gallery{grid-template-columns:repeat(4,1fr)}
+  .gallery .thumb{height:95px}
+  .rp-top{break-after:avoid}
+}
+</style>
+</head>
+<body>
+<div class="bg-media" aria-hidden="true"><img class="bg-photo" src="assets/hero-car.jpg?v=3" alt=""></div>
+<a class="skip" href="#main">Skip to main content</a>
+<header><span class="logo">AK</span><div class="brand-copy"><h1>AK GARAGE</h1><span class="subtitle">Weekly Report</span></div></header>
+<nav aria-label="Main">
+	<button data-tab="new" class="active" aria-current="true">+ New Weekly Entry</button>
+	<button data-tab="history">History</button>
+	<button data-tab="due">Open Issues</button>
+	<a class="back" href="index.html">BACK TO OVERVIEW</a>
+</nav>
+<main id="main">
+	<section id="tab-new">
+		<div class="editbar hidden no-print" id="editbar"><span id="edit-lbl">Editing record</span><button class="btn ghost sm" id="cancel-edit">Cancel edit</button></div>
+		<div class="card">
+			<h2>Weekly report</h2>
+			<div class="grid">
+				<div><label for="f-plate">Month report</label><input id="f-plate" placeholder="e.g. November 2026"></div>
+				<div><label for="f-model">Week date report</label><input id="f-model" placeholder="e.g. 21 Nov 2026"></div>
+			</div>
+		</div>
+		<div class="card">
+			<h2>Remarks</h2>
+			<textarea id="f-remarks" aria-label="Remarks" placeholder="Work done, parts used, problems found, recommendations..."></textarea>
+			<label style="margin-top:14px">Part Photos (one row per remarks block — e.g. binili / pinalitang parts)</label>
+			<div id="part-photos"></div>
+			<label style="margin-top:14px">Other Photos (receipt, old parts, before / after)</label>
+			<div class="row"><button class="cam no-print" id="gen-add" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>Add photos</button></div>
+			<div class="thumbs" id="gen-thumbs" style="margin-top:8px"></div>
+			<div class="row" style="margin-top:12px">
+				<button class="btn" id="save">Save Weekly Report</button>
+				<button class="btn ghost" id="clear">Clear form</button>
+				<span class="muted" id="save-status" style="font-size:12px"></span>
+			</div>
+		</div>
+	</section>
+	<section id="tab-history" class="hidden">
+		<div class="stats" id="stats"></div>
+		<div class="card no-print">
+			<div class="grid">
+				<div><label for="q">Search</label><input id="q" placeholder="Month report, week date..." title="Filters records by month report, week date, or an imported chassis number"></div>
+				<div><label for="flt">Filter</label><select id="flt"><option value="">All records</option><option value="attn">With items needing attention</option></select></div>
+			</div>
+		</div>
+		<div id="list"></div>
+	</section>
+	<section id="tab-due" class="hidden">
+		<div class="card"><h2>Items Needing Attention</h2><div id="due"></div></div>
+	</section>
+	<section id="tab-detail" class="hidden">
+		<div class="row no-print" style="margin-bottom:10px">
+			<button class="btn ghost sm" id="back">← Back</button>
+			<button class="btn sm" id="edit">Edit</button>
+			<button class="btn ghost sm" id="print">Print</button>
+			<button class="btn ghost sm" id="dl" type="button" title="Download this weekly report directly as a PDF">⬇ Save as PDF</button>
+			<button class="btn ghost sm" id="import-file-btn" type="button" title="Restore records from a JSON backup">⬆ Import file</button>
+			<button class="btn ghost sm danger" id="del">Delete</button>
+			<span class="muted" id="import-status" style="font-size:12px"></span>
+			<input type="file" id="import-file" accept="application/json,.json" class="hidden">
+		</div>
+		<div class="editbar hidden no-print" id="printhelp"><span>Hindi ma-open ang print dito sa preview. Pindutin ang <b>Save as PDF</b> — diretso na bababa ang PDF file nito.</span><button class="btn ghost sm" id="ph-x">OK</button></div>
+		<div class="card" id="detail"></div>
+	</section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="lightbox" id="lb" role="dialog" aria-modal="true" aria-label="Photo preview"><img id="lb-img" alt=""><div id="lb-cap"></div><button class="btn ghost sm" id="lb-x" style="color:#fff;border-color:#fff">Close</button></div>
+<input type="file" id="picker" accept="image/*" multiple class="hidden">
+<script>
+/* This page is standalone: it never talks to Supabase, so every weekly
+   report is kept in this browser (IndexedDB) on this device only. */
+const ITEMS = {
+	"Receiving":["Delivery unloaded","Cartons / items counted","Part number verified","Condition inspected","Damage reported"],
+	"Storage":["Shelved in the right bin","Bin label updated","Fragile items padded","Liquids stored upright","Stock level recorded"],
+	"Issuing":["Request / job card checked","Part picked and counted","Part number verified on issue","Handed to technician","Issue log updated"],
+	"Stock Count":["Cycle count done","Minimum stock checked","Low stock listed","Re-order raised","Shelf cleaned"],
+	"Dispatch & Tools":["Order packed correctly","Label / address checked","Tools returned to store","Tools cleaned","Store locked and secured"],
+	"Safety":["Walkways clear","Racking inspected","Fire extinguisher checked","PPE available","Waste cleared"]
+};
+const LBL = {done:"Done",ok:"OK",attn:"Attn",na:"N/A"};
+const CAM = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>';
+const localISO = d => { const p = n => String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
+const today = () => localISO(new Date());
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = d => d ? new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+const STORE_NAME = 'records';
+const DB_NAME = 'ak-weekly-report';
+let dbPromise = null;
+function db(){
+	if (!dbPromise) dbPromise = new Promise((resolve, reject)=>{
+		const request = indexedDB.open(DB_NAME, 1);
+		request.onupgradeneeded = ()=>{
+			const store = request.result;
+			if (!store.objectStoreNames.contains(STORE_NAME)) store.createObjectStore(STORE_NAME, { keyPath: 'id' });
+		};
+		request.onsuccess = ()=>resolve(request.result);
+		request.onerror = ()=>reject(request.error || new Error('IndexedDB unavailable'));
+	});
+	return dbPromise;
+}
+function idbAll(){
+	return db().then(d => new Promise((resolve, reject)=>{
+		const request = d.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).getAll();
+		request.onsuccess = ()=>resolve(request.result || []);
+		request.onerror = ()=>reject(request.error);
+	}));
+}
+function idbPut(row){
+	return db().then(d => new Promise((resolve, reject)=>{
+		const request = d.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put(row);
+		request.onsuccess = ()=>resolve();
+		request.onerror = ()=>reject(request.error);
+	}));
+}
+function idbDelete(id){
+	return db().then(d => new Promise((resolve, reject)=>{
+		const request = d.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).delete(String(id));
+		request.onsuccess = ()=>resolve();
+		request.onerror = ()=>reject(request.error);
+	}));
+}
+const newId = () => "wr-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+const asText = value => value == null ? '' : String(value);
+const asObject = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+const asNumber = value => {
+	const number = Number(value);
+	return Number.isFinite(number) ? number : 0;
+};
+
+/* ---------- Car identity ----------
+   Plates are typed loosely ("DXB M 8887", "m 8887"), so History counts the
+   Vehicles stat from this normalised key instead of the raw string. */
+const carKey = value => String(value ?? '').toUpperCase().replace(/\b(DXB|RAK|SHJ|AJM|UAQ|FUJ)\b/g, '').replace(/[^A-Z0-9]/g, '');
+const recordKey = record => carKey(record && record.plate);
+
+let state = {}, notes = {}, photos = {}, genPhotos = [], blockPhotos = {};
+// Photo keys of the blocks currently shown, so a heading rename can carry its
+// photos over to the new key.
+let partKeys = [];
+let currentId = null, editingId = null;
+let records = [];
+
+async function loadRecords() {
+	let rows = [];
+	try { rows = await idbAll(); }
+	catch (error) { console.error('Unable to read the saved weekly reports:', error); toast("Local storage unavailable — reports will not be kept."); }
+	records = rows.filter(r => r && typeof r === 'object').map(r => ({
+		id: r.id, plate: asText(r.plate), model: asText(r.model), date: asText(r.date) || today(),
+		km: asNumber(r.km), next: asNumber(r.next), chassis: asText(r.chassis), remarks: asText(r.remarks),
+		items: asObject(r.items), notes: asObject(r.notes), photos: asObject(r.photos),
+		genPhotos: Array.isArray(r.genPhotos) ? r.genPhotos : [], blockPhotos: asObject(r.blockPhotos),
+		updated: asText(r.updated) || null,
+		created: asNumber(r.created)
+	})).sort((a, b) => (b.created || 0) - (a.created || 0));
+}
+
+/* ---------- Photos ---------- */
+function shrink(file){
+	return new Promise((res,rej)=>{
+		const r = new FileReader();
+		r.onload = () => { const img = new Image();
+			img.onload = () => { const m = 1280, s = Math.min(1, m/Math.max(img.width,img.height));
+				const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+				c.getContext("2d").drawImage(img,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",0.75)); };
+			img.onerror = rej; img.src = r.result; };
+		r.onerror = rej; r.readAsDataURL(file);
+	});
+}
+let pickTarget = null;
+function pick(target){ pickTarget = target; $("picker").value = ""; $("picker").click(); }
+$("picker").onchange = async e => {
+	const files = [...e.target.files]; if(!files.length) return;
+	let urls;
+	try { urls = await Promise.all(files.map(shrink)); }
+	catch(error) { console.error('Unable to process selected photos:', error); toast("Could not process photo. Try another image."); return; }
+	if (pickTarget === "__gen") { genPhotos.push(...urls); renderGen(); }
+	else { const key = String(pickTarget).slice(8); (blockPhotos[key] ||= []).push(...urls); renderPartPhotos(); }
+	toast(urls.length + " photo" + (urls.length>1?"s":"") + " added");
+};
+function thumbsHTML(list, caption, removable){
+	return list.map((u,i)=>`<div class="thumb" data-i="${i}"><img src="${u}" alt="${esc(caption||"Photo")}">${caption?`<span class="cap">${esc(caption)}</span>`:""}${removable?`<button class="x" title="Remove" aria-label="Remove photo">×</button>`:""}</div>`).join("");
+}
+function wireThumbs(box, list, caption, onRemove){
+	box.querySelectorAll(".thumb").forEach(t=>{
+		t.onclick = ev => { if (ev.target.classList.contains("x")) { ev.stopPropagation(); onRemove(+t.dataset.i); } else openLB(list[+t.dataset.i], caption); };
+	});
+}
+// One photo row per remark block: the notes are split the same way the
+// report splits them (blank line between blocks), so each block's photo lands
+// right under that block's panel. Photos are keyed by the block's heading line
+// (not its position), so inserting or deleting a block above never moves a
+// car's photos onto another car. Repeated headings get a #2, #3 suffix.
+function remarksBlockHeads(text){
+	const seen = {};
+	return String(text||"").replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean).map((b,i)=>{
+		const first = (b.split("\n").map(l=>l.trim()).filter(Boolean)[0] || "").replace(/^\d+[.)]\s*/,"");
+		const base = first.toLowerCase().replace(/\s+/g," ").trim() || "block";
+		seen[base] = (seen[base]||0) + 1;
+		return { i, key: base+"#"+seen[base], head: first.length > 52 ? first.slice(0,52)+"…" : first };
+	});
+}
+function renderPartPhotos(){
+	const box = $("part-photos"); if(!box) return;
+	const lists = remarksBlockHeads($("f-remarks").value);
+	partKeys = lists.map(b=>b.key);
+	if(!lists.length){
+		box.innerHTML = '<div class="muted" style="font-size:12px">Write the remarks first — one block per car. Every block then gets its own photo row here.</div>';
+		return;
+	}
+	box.innerHTML = lists.map(b=>{
+		const ph = blockPhotos[b.key] || [];
+		return '<div class="part-row" data-key="'+esc(b.key)+'"><div class="part-head"><span>'+(b.head?esc(b.head):"Block "+(b.i+1))+'</span><button class="cam no-print" type="button" data-add="'+esc(b.key)+'">'+CAM+'Add photo</button></div><div class="thumbs">'+thumbsHTML(ph,"",true)+'</div></div>';
+	}).join("");
+	box.querySelectorAll("[data-add]").forEach(btn=>btn.onclick=()=>pick("__block:"+btn.dataset.add));
+	box.querySelectorAll(".part-row").forEach(row=>{
+		const key = row.dataset.key, list = blockPhotos[key] || [];
+		wireThumbs(row.querySelector(".thumbs"), list, "Part photo", k=>{
+			list.splice(k,1);
+			if(!list.length) delete blockPhotos[key];
+			renderPartPhotos();
+		});
+	});
+}
+function renderGen(){
+	const box = $("gen-thumbs"); box.innerHTML = thumbsHTML(genPhotos, "", true);
+	wireThumbs(box, genPhotos, "Other photo", i => { genPhotos.splice(i,1); renderGen(); });
+}
+$("gen-add").onclick = () => pick("__gen");
+$("f-remarks").addEventListener("input", () => {
+	const keys = remarksBlockHeads($("f-remarks").value).map(b=>b.key);
+	// Renaming a heading while typing: exactly one key disappeared and one
+	// appeared, so its photos follow the text instead of being dropped.
+	if (partKeys.length === keys.length){
+		const gone = partKeys.filter(k=>!keys.includes(k));
+		const added = keys.filter(k=>!partKeys.includes(k));
+		if (gone.length === 1 && added.length === 1 && blockPhotos[gone[0]]){
+			blockPhotos[added[0]] = blockPhotos[gone[0]];
+			delete blockPhotos[gone[0]];
+		}
+	}
+	renderPartPhotos();
+});
+let lbReturnFocus = null;
+function openLB(src, cap){
+	lbReturnFocus = document.activeElement;
+	$("lb-img").src = src; $("lb-img").alt = cap || "Photo"; $("lb-cap").textContent = cap||"";
+	$("lb").classList.add("show"); $("lb-x").focus();
+}
+function closeLB(){
+	$("lb").classList.remove("show");
+	if (lbReturnFocus && lbReturnFocus.focus) lbReturnFocus.focus();
+}
+$("lb").onclick = event => { if (event.target === $("lb")) closeLB(); };
+$("lb-x").onclick = closeLB;
+document.addEventListener("keydown", event => { if (event.key === "Escape" && $("lb").classList.contains("show")) closeLB(); });
+
+const FIELDS = {plate:"f-plate",model:"f-model",remarks:"f-remarks"};
+function clearForm(){
+	Object.values(FIELDS).forEach(i=>{const el=$(i); if(el) el.value=""});
+	state={}; notes={}; photos={}; genPhotos=[]; blockPhotos={};
+	editingId = null; $("editbar").classList.add("hidden"); $("save").textContent = "Save Weekly Report";
+	renderGen(); renderPartPhotos();
+}
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200);}
+
+$("save").onclick = async ()=>{
+	const val = id => { const el = $(id); return el ? el.value : ""; };
+	const plate = val("f-plate").trim();
+	const items = {}; Object.entries(state).forEach(([k,v])=>{if(v&&v!=="na")items[k]=v});
+	const remarks = val("f-remarks").trim();
+	const blockKeys = new Set(remarksBlockHeads(remarks).map(b=>b.key));
+	if(!Object.keys(items).length && !remarks){toast("Please write the remarks before saving");$("f-remarks").focus();return;}
+	const previous = editingId ? records.find(x=>String(x.id)===String(editingId)) : null;
+	const row = {
+		id: editingId || newId(),
+		created: previous?.created || Date.now(),
+		plate, model:val("f-model").trim(), date:previous?.date || today(),
+		// These fields no longer have inputs. Keep whatever an older or imported
+		// record already had so an edit never wipes it.
+		km: previous?.km || 0, chassis: previous?.chassis || "", next: previous?.next || 0, remarks,
+		items,
+		notes:Object.fromEntries(Object.entries(notes).filter(([k,v])=>v&&items[k])),
+		photos:Object.fromEntries(Object.entries(photos).filter(([k,v])=>v.length&&items[k]).map(([k,v])=>[k,[...v]])),
+		genPhotos:[...genPhotos],
+		blockPhotos:Object.fromEntries(Object.entries(blockPhotos).filter(([k,v])=>v.length && blockKeys.has(k)).map(([k,v])=>[k,[...v]])),
+		updated: editingId ? new Date().toISOString() : null
+	};
+	$("save").disabled = true; $("save-status").textContent = "Saving...";
+	try {
+		await idbPut(row);
+		await loadRecords();
+		if (editingId){ clearForm(); toast("Changes saved ✓"); openDetail(row.id); }
+		else { toast("Weekly report saved ✓"); clearForm(); show("history"); }
+	} catch (err) {
+		console.error('Unable to save the weekly report:', err);
+		toast("Save failed: " + (err?.message || "local storage unavailable"));
+	} finally {
+		$("save").disabled = false; $("save-status").textContent = "";
+	}
+};
+$("clear").onclick = clearForm;
+$("cancel-edit").onclick = ()=>{ const id = editingId; clearForm(); openDetail(id); };
+
+function startEdit(id){
+	const r = records.find(x=>String(x.id)===String(id)); if(!r) return;
+	const set = (id, v) => { const el = $(id); if (el) el.value = v; };
+	set("f-plate", r.plate); set("f-model", r.model);
+	set("f-remarks", r.remarks||"");
+	state = {...r.items}; notes = {...(r.notes||{})};
+	photos = Object.fromEntries(Object.entries(r.photos||{}).map(([k,v])=>[k,[...v]]));
+	genPhotos = [...(r.genPhotos||[])];
+	blockPhotos = Object.fromEntries(Object.entries(r.blockPhotos||{}).map(([k,v])=>[k,[...v]]));
+	editingId = id; $("edit-lbl").textContent = "Editing: " + (r.plate || fmt(r.date)) + " · " + fmt(r.date);
+	$("editbar").classList.remove("hidden"); $("save").textContent = "Save Changes";
+	renderGen(); renderPartPhotos(); show("new");
+}
+$("edit").onclick = ()=>startEdit(currentId);
+
+/* ---------- History ---------- */
+function photoCount(r){ return Object.values(r.photos||{}).flat().length + (r.genPhotos||[]).length + Object.values(r.blockPhotos||{}).flat().length; }
+function renderHistory(){
+	const q = $("q").value.toLowerCase(), f = $("flt").value;
+	const rs = records.filter(r=>[r.plate,r.model,r.chassis].join(" ").toLowerCase().includes(q))
+				.filter(r=>!f || Object.values(r.items).includes("attn"));
+	const attn = records.reduce((a,r)=>a+Object.values(r.items).filter(v=>v==="attn").length,0);
+	const cars = new Set(records.map(recordKey)).size;
+	const photoTotal = records.reduce((a,r)=>a+photoCount(r),0);
+	$("stats").innerHTML = `
+		<div class="stat"><b>${records.length}</b><span>Weekly reports</span></div>
+		<div class="stat"><b>${cars}</b><span>Vehicles</span></div>
+		<div class="stat"><b style="color:var(--warn)">${attn}</b><span>Items need attention</span></div>
+		<div class="stat"><b>${photoTotal}</b><span>Photos</span></div>`;
+	$("list").innerHTML = (rs.length ? rs.map(r=>{
+		const v = Object.values(r.items), a = v.filter(x=>x==="attn").length, pc = photoCount(r);
+		return `<div class="rec" data-id="${r.id}">
+			<div class="top"><span class="plate">${esc(r.plate || fmt(r.date))}</span><span class="muted">${fmt(r.date)}${r.updated?" · edited":""}</span></div>
+			<div class="muted">${esc([r.model||"—", r.km?r.km.toLocaleString()+" km":"", r.chassis?"CHASSIS "+r.chassis:""].filter(Boolean).join(" · "))}</div>
+			<div class="row" style="margin-top:6px">
+				${v.filter(x=>x==="done").length?`<span class="pill done">${v.filter(x=>x==="done").length} done</span>`:""}
+				${v.filter(x=>x==="ok").length?`<span class="pill ok">${v.filter(x=>x==="ok").length} checked OK</span>`:""}
+				${a?`<span class="pill attn">${a} needs attention</span>`:""}
+				${pc?`<span class="pill na">${pc} photo${pc>1?"s":""}</span>`:""}
+			</div></div>`}).join("") : `<div class="empty-note">No records found — save your first weekly report.</div>`);
+	document.querySelectorAll(".rec").forEach(e=>e.onclick=()=>openDetail(e.dataset.id));
+}
+$("q").oninput = renderHistory; $("flt").onchange = renderHistory;
+
+$("import-file-btn").onclick = () => { $("import-file").value = ""; $("import-file").click(); };
+$("import-file").onchange = async e => {
+	const file = e.target.files[0];
+	if (!file) return;
+	$("import-status").textContent = "Reading file...";
+	try {
+		const parsed = JSON.parse(await file.text());
+		const incoming = Array.isArray(parsed) ? parsed : parsed.records;
+		if (!Array.isArray(incoming) || !incoming.length) throw new Error("no records found in file");
+		let stamp = Date.now();
+		const rows = incoming.filter(r => r && r.plate).map((r, i) => ({
+			id: newId() + "-" + i, created: stamp + i,
+			plate: String(r.plate), model: r.model || "", date: r.date || r.work_date || "",
+			km: +r.km || 0, next: +r.next || +r.next_km || 0, remarks: r.remarks || "",
+			chassis: String(r.chassis || r.chassis_no || ""),
+			items: r.items || {}, notes: r.notes || {}, photos: r.photos || {},
+			genPhotos: r.genPhotos || r.gen_photos || [],
+			// Keep each block's part photos; the report falls back to position for
+			// backups made before the heading keys existed.
+			blockPhotos: Object.fromEntries(Object.entries(asObject(r.blockPhotos)).filter(([,v])=>Array.isArray(v) && v.length).map(([k,v])=>[k,[...v]])),
+			updated: null
+		}));
+		if (!rows.length) throw new Error("every record needs a plate no.");
+		for (const row of rows) await idbPut(row);
+		await loadRecords(); renderHistory();
+		$("import-status").textContent = "";
+		toast("Imported " + rows.length + " record" + (rows.length===1?"":"s") + " ✓");
+	} catch (err) {
+		console.error("Import failed:", err);
+		$("import-status").textContent = "";
+		toast("Import failed: " + (err?.message || "unknown error"));
+	}
+};
+
+/* ---------- Pro report formatting ---------- */
+function formatRemarks(text, blockPhotos){
+	const blocks = text.replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+	// Same keys the form used, so each block shows its own photos. The index
+	// fallback keeps records saved before the keys existed.
+	const blockKeys = remarksBlockHeads(text).map(b=>b.key);
+	return blocks.map((b, bi)=>{
+		const lines = b.split("\n").map(l=>l.trim()).filter(Boolean);
+		let head = "", num = "";
+		// Every block starts with the car line (model + plate), so that first
+		// line always becomes the highlighted heading — whatever its casing.
+		if (lines.length > 1) { const m = lines[0].match(/^(\d+)[.)]\s*(.*)$/); if(m){num=m[1];head=m[2];} else head=lines[0]; lines.shift(); }
+		const body = lines.map(l=>{
+			const kv = l.match(/^([A-Za-z][A-Za-z0-9 \/()&-]{1,28}):\s*(.+)$/);
+			if (kv && /^recommend/i.test(kv[1])) return `<div class="rp-reco"><span>${esc(kv[1])}</span>${esc(kv[2])}</div>`;
+			if (kv) return `<div class="rp-kv"><span>${esc(kv[1])}</span><b>${esc(kv[2])}</b></div>`;
+			return `<p>${esc(l)}</p>`;
+		}).join("");
+		const cls = /^summary$/i.test(head) ? "rp-sec rp-summary" : "rp-sec";
+		const ph = (blockPhotos || {})[blockKeys[bi]] || (blockPhotos || {})[bi] || [];
+		return `<div class="${cls}">${head?`<div class="rp-h">${num?`<i>${num}</i>`:""}${esc(head)}</div>`:""}${body}${ph.length?`<div class="thumbs">${thumbsHTML(ph,"",false)}</div>`:""}</div>`;
+	}).join("");
+}
+
+function openDetail(id){
+	const r = records.find(x=>String(x.id)===String(id)); if(!r) return; currentId=id;
+	const vals = Object.values(r.items);
+	const cnt = k => vals.filter(v=>v===k).length;
+	// Only show the tally chips that actually have items behind them — a record
+	// with an untouched checklist keeps the report free of "0 Serviced" rows.
+	const nDone = cnt("done"), nOk = cnt("ok"), nAttn = cnt("attn");
+	const sum = (nDone||nOk||nAttn) ? `
+		<div class="rp-sum">
+			${nDone?`<div class="s-done"><b>${nDone}</b><span>Serviced</span></div>`:""}
+			${nOk?`<div class="s-ok"><b>${nOk}</b><span>Checked OK</span></div>`:""}
+			${nAttn?`<div class="s-attn"><b>${nAttn}</b><span>Needs Attention</span></div>`:""}
+		</div>` : "";
+	// Items saved under a name that is not in this page's checklist (records
+	// moved over from the VVIP maintenance log) still show up, under "Other".
+	const knownNames = new Set(Object.values(ITEMS).flat());
+	const extraNames = Object.keys(r.items).filter(n=>r.items[n] && !knownNames.has(n));
+	const cats = [...Object.entries(ITEMS), ...(extraNames.length?[["Other items", extraNames]]:[])];
+	const rows = cats.map(([cat,list])=>{
+		const got = list.filter(n=>r.items[n]); if(!got.length) return "";
+		return `<tr class="rp-cat"><td colspan="3">${cat}</td></tr>` +
+			got.map(n=>{ const ph = r.photos?.[n]||[];
+				return `<tr><td>${n}${ph.length?`<div class="thumbs" data-item="${esc(n)}" style="margin-top:6px">${thumbsHTML(ph,"",false)}</div>`:""}</td>
+				<td><span class="pill ${r.items[n]}">${LBL[r.items[n]]}</span></td><td class="muted">${esc(r.notes?.[n]||"")}</td></tr>`}).join("");
+	}).join("");
+	const all = [...Object.entries(r.photos||{}).flatMap(([k,v])=>v.map(u=>({u,k}))), ...(r.genPhotos||[]).map(u=>({u,k:"Other"}))];
+	$("detail").innerHTML = `
+	<div class="rp">
+		<div class="rp-top">
+			<div class="rp-brand"><b>Weekly Report</b></div>
+			<div class="rp-meta"><div><span>Week Date</span><b>${fmt(r.date)}</b></div></div>
+		</div>
+		${(r.plate||r.model)?`<div class="rp-vehicle">
+			<div class="rp-plate">${esc(r.plate)}</div>
+			<div class="rp-model">${esc(r.model||"—")}</div>
+		</div>`:""}
+		${sum}
+		${rows?`<h3 class="rp-title">Inspection Checklist</h3><table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`:""}
+		${r.remarks?`<h3 class="rp-title">Technician Report</h3><div class="rp-remarks">${formatRemarks(r.remarks, r.blockPhotos)}</div>`:""}
+		${all.length?`<h3 class="rp-title">Photos (${all.length})</h3><div class="gallery" id="gal">${all.map((p,i)=>`<div class="thumb" data-i="${i}"><img src="${p.u}" alt=""><span class="cap">${esc(p.k)}</span></div>`).join("")}</div>`:""}
+	</div>`;
+	$("detail").querySelectorAll("td .thumbs").forEach(b=>{ const n = b.dataset.item; wireThumbs(b, r.photos[n], n, ()=>{}); });
+	$("detail").querySelectorAll(".rp-sec .thumbs").forEach(b=>{ const cap = (b.closest(".rp-sec").querySelector(".rp-h")||{}).textContent || "Part photo"; wireThumbs(b, [...b.querySelectorAll("img")].map(img=>img.src), cap, ()=>{}); });
+	const g = $("gal"); if (g) g.querySelectorAll(".thumb").forEach(t=>t.onclick=()=>{const p=all[+t.dataset.i]; openLB(p.u,p.k);});
+	show("detail");
+}
+
+/* ---------- Print / Save ---------- */
+function doPrint(){
+	$("printhelp").classList.add("hidden");
+	const originalTitle = document.title;
+	document.title = " ";
+	const t = performance.now(); let failed = false;
+	try { window.print(); } catch(e){ failed = true; }
+	setTimeout(() => { document.title = originalTitle; }, 800);
+	// If the print dialog was blocked (e.g. inside an app preview), print() returns instantly
+	if (failed || performance.now() - t < 120) $("printhelp").classList.remove("hidden");
+}
+// How far the printed report reaches across the rendered sheet. A collapsed
+// layout (report pinned to the left, the rest blank) comes back far below 1.
+function inkFill(cv){
+	try {
+		const ctx = cv.getContext("2d");
+		const step = Math.max(1, Math.floor(cv.height / 40));
+		let right = 0;
+		for (let y = 0; y < cv.height; y += step){
+			const row = ctx.getImageData(0, y, cv.width, 1).data;
+			for (let x = cv.width - 1; x > right; x--){
+				const i = x * 4;
+				if (row[i] < 245 || row[i+1] < 245 || row[i+2] < 245){ if (x > right) right = x; break; }
+			}
+		}
+		return right / cv.width;
+	} catch (err){
+		console.warn("PDF export: could not measure the sheet", err);
+		return 1;
+	}
+}
+// ---- Deterministic report PDF -------------------------------------------
+// The report is drawn with jsPDF primitives (text, rules, boxes, photos) in
+// millimetres, so the export no longer depends on how the browser lays the
+// page out. That is what made the raster export come back with the report
+// squeezed into the left of the sheet on some desktops.
+const PDF_INK = [43,42,38], PDF_MUTED = [138,127,106], PDF_NAVY = [20,33,58],
+	PDF_GOLD = [168,132,74], PDF_TITLE = [201,169,106], PDF_LINE = [226,220,205],
+	PDF_PANEL = [251,249,245], PDF_WARM = [247,244,238], PDF_OK = [49,92,64],
+	PDF_WARN = [138,106,47], PDF_NA = [107,100,89];
+
+function loadJsPdf(){
+	if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+	return new Promise((resolve, reject)=>{
+		const s = document.createElement("script");
+		s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+		s.onload = ()=> (window.jspdf && window.jspdf.jsPDF) ? resolve() : reject(new Error("jsPDF loaded but not exposed"));
+		s.onerror = ()=>reject(new Error("jsPDF CDN unavailable"));
+		document.head.appendChild(s);
+	});
+}
+
+// Plain-text view of the technician notes, so the PDF can wrap them itself.
+function remarkBlocks(text){
+	return String(text||"").replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean).map(b=>{
+		const lines = b.split("\n").map(l=>l.trim()).filter(Boolean);
+		let num = "", head = "";
+		// Matches formatRemarks: the first line of a block is the car heading.
+		if (lines.length > 1){
+			const m = lines[0].match(/^(\d+)[.)]\s*(.*)$/);
+			if (m){ num = m[1]; head = m[2]; } else head = lines[0];
+			lines.shift();
+		}
+		return { num, head, body: lines.map(l=>{
+			const kv = l.match(/^([A-Za-z][A-Za-z0-9 \/()&-]{1,28}):\s*(.+)$/);
+			return kv ? { label: kv[1], text: kv[2], reco: /^recommend/i.test(kv[1]) } : { text: l };
+		}) };
+	});
+}
+
+const _photoDims = {};
+function photoSize(url){
+	if (_photoDims[url]) return Promise.resolve(_photoDims[url]);
+	return new Promise(resolve=>{
+		const im = new Image();
+		im.onload = ()=>{ _photoDims[url] = { w: im.naturalWidth || 4, h: im.naturalHeight || 3 }; resolve(_photoDims[url]); };
+		im.onerror = ()=>{ _photoDims[url] = { w: 4, h: 3 }; resolve(_photoDims[url]); };
+		im.src = url;
+	});
+}
+
+async function reportPDF(r){
+	const { jsPDF } = window.jspdf;
+	const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+	const L = 12, R = 12, TOP = 10, BOTTOM = 12, W = 210 - L - R, PAGE_H = 297, LIMIT = PAGE_H - BOTTOM;
+	let y = TOP;
+	const fill = c => pdf.setFillColor(c[0], c[1], c[2]);
+	const draw = c => pdf.setDrawColor(c[0], c[1], c[2]);
+	const ink = c => pdf.setTextColor(c[0], c[1], c[2]);
+	const rule = (c, h) => { fill(c); pdf.rect(L, y, W, h, "F"); y += h; };
+	const twoTone = ()=>{ fill(PDF_NAVY); pdf.rect(L, y, W*0.72, 0.8, "F"); fill(PDF_GOLD); pdf.rect(L + W*0.72, y, W*0.28, 0.8, "F"); y += 0.8; };
+	const sectionTitle = t => {
+		if (y + 12 > LIMIT){ pdf.addPage(); y = TOP; }
+		y += 6;
+		fill(PDF_GOLD); pdf.rect(L, y + 0.4, 8, 0.7, "F");
+		draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + 3.4, L + W, y + 3.4);
+		ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(9);
+		pdf.text(String(t).toUpperCase(), L + 10, y + 1.4);
+		y += 5.6;
+	};
+
+	// Header band with the brand title and the service date box.
+	fill(PDF_NAVY); pdf.rect(L, y, W, 27, "F");
+	ink(PDF_TITLE); pdf.setFont("times", "bold"); pdf.setFontSize(16);
+	pdf.text("AK GARAGE WEEKLY REPORT", L + 5, y + 12.5);
+	fill(PDF_GOLD); pdf.rect(L + 5, y + 16.5, 55, 0.8, "F");
+	const boxW = 44, boxH = 15, boxX = L + W - boxW - 5, boxY = y + 6;
+	fill([27,43,73]); pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, "F");
+	draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, "S");
+	ink(PDF_TITLE); pdf.setFont("times", "normal"); pdf.setFontSize(6.5);
+	pdf.text("WEEK DATE", boxX + boxW/2, boxY + 5, { align: "center" });
+	pdf.setTextColor(255,255,255); pdf.setFontSize(10.5);
+	pdf.text(fmt(r.date), boxX + boxW/2, boxY + 10.5, { align: "center" });
+	y += 31;
+
+	// Plate + model line and the two rules that frame it. Skipped when the
+	// record has no plate or model, so the sheet never shows an empty box.
+	twoTone(); y += 4;
+	const plate = String(r.plate || "").toUpperCase();
+	if (plate || r.model){
+		pdf.setFont("times", "bold"); pdf.setFontSize(16);
+		const plateW = Math.max(38, pdf.getTextWidth(plate) + 14), plateH = 12;
+		draw(PDF_NAVY); pdf.setLineWidth(0.9); pdf.roundedRect(L - 1.6, y - 1.6, plateW + 3.2, plateH + 3.2, 2, 2, "S");
+		draw(PDF_GOLD); pdf.setLineWidth(0.3); pdf.roundedRect(L, y, plateW, plateH, 1.5, 1.5, "S");
+		ink(PDF_NAVY); pdf.text(plate, L + plateW/2, y + plateH/2 + 1.6, { align: "center" });
+		ink(PDF_NAVY); pdf.setFont("times", "italic"); pdf.setFontSize(12.5);
+		pdf.text(String(r.model || "—"), L + plateW + 6, y + plateH/2 + 0.8);
+		y += plateH + 5;
+	}
+	fill(PDF_NAVY); pdf.rect(L, y, W*0.72, 0.8, "F"); fill(PDF_GOLD); pdf.rect(L + W*0.72, y, W*0.28, 0.8, "F"); y += 4;
+
+	// Status tiles (only when a checklist was filled in).
+	const items = r.items || {};
+	const counts = { done: 0, ok: 0, attn: 0 };
+	Object.values(items).forEach(s => { if (counts[s] !== undefined) counts[s] += 1; });
+	const tiles = [[counts.done, "Serviced", PDF_OK, [238,244,234]], [counts.ok, "Checked OK", PDF_OK, [238,244,234]], [counts.attn, "Needs Attention", PDF_WARN, [249,241,226]]].filter(t => t[0] > 0);
+	if (tiles.length){
+		const tw = (W - (tiles.length - 1)*2)/tiles.length;
+		tiles.forEach(([n, label, colour, bg], i)=>{
+			const x = L + i*(tw + 2);
+			fill(bg); pdf.rect(x, y, tw, 14, "F");
+			draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.rect(x, y, tw, 14, "S");
+			ink(colour); pdf.setFont("times", "bold"); pdf.setFontSize(13);
+			pdf.text(String(n), x + 4, y + 8.4);
+			pdf.setFontSize(8);
+			pdf.text(label, x + tw - 4, y + 8.4, { align: "right" });
+		});
+		y += 14 + 2;
+	}
+
+	// Checklist table: header repeats on every page, category bars stay with
+	// their rows.
+	const knownNames = new Set(Object.values(ITEMS).flat());
+	const extraNames = Object.keys(items).filter(n => items[n] && !knownNames.has(n));
+	const cats = [...Object.entries(ITEMS), ...(extraNames.length ? [["Other items", extraNames]] : [])];
+	const checked = Object.keys(items).filter(n => items[n]);
+	if (checked.length){
+		sectionTitle("Inspection Checklist");
+		const cw = [70, 26, W - 96];
+		const tableHead = ()=>{
+			fill(PDF_NAVY); pdf.rect(L, y, W, 7, "F");
+			pdf.setTextColor(255,255,255); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+			pdf.text("ITEM", L + 3, y + 4.8);
+			pdf.text("STATUS", L + cw[0] + 3, y + 4.8);
+			pdf.text("NOTE", L + cw[0] + cw[1] + 3, y + 4.8);
+			y += 7;
+		};
+		tableHead();
+		let lastCat = "";
+		const statusInk = { done: PDF_OK, ok: PDF_OK, attn: PDF_WARN, na: PDF_NA };
+		cats.forEach(([cat, list]) => {
+			const got = list.filter(n => items[n]);
+			if (!got.length) return;
+			const drawCat = ()=>{
+				fill(PDF_WARM); pdf.rect(L, y, W, 7.5, "F");
+				fill(PDF_GOLD); pdf.rect(L, y, 1.2, 7.5, "F");
+				ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+				pdf.text(String(cat).toUpperCase(), L + 3.5, y + 5);
+				y += 7.5; lastCat = cat;
+			};
+			if (y + 7.5 + 7 > LIMIT){ pdf.addPage(); y = TOP; tableHead(); lastCat = ""; }
+			drawCat();
+			got.forEach((name, i)=>{
+				pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+				const itemLines = pdf.splitTextToSize(name, cw[0] - 6);
+				ink(PDF_MUTED); pdf.setFontSize(8);
+				const noteLines = pdf.splitTextToSize(String(r.notes?.[name] || ""), cw[2] - 6);
+				const rowH = Math.max(7, itemLines.length*4.2 + 2.6, noteLines.length*3.9 + 2.6);
+				if (y + rowH > LIMIT){
+					pdf.addPage(); y = TOP; tableHead();
+					if (lastCat !== cat) drawCat();
+				}
+				if (i % 2 === 1){ fill(PDF_PANEL); pdf.rect(L, y, W, rowH, "F"); }
+				ink(PDF_INK); pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+				itemLines.forEach((line, k) => pdf.text(line, L + 3, y + 4 + k*4.2));
+				ink(statusInk[items[name]] || PDF_NA); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+				pdf.text(String(LBL[items[name]] || "").toUpperCase(), L + cw[0] + 3, y + 4.4);
+				ink(PDF_MUTED); pdf.setFont("times", "normal"); pdf.setFontSize(8);
+				noteLines.forEach((line, k) => pdf.text(line, L + cw[0] + cw[1] + 3, y + 4 + k*3.9));
+				draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.line(L, y + rowH, L + W, y + rowH);
+				y += rowH;
+			});
+		});
+		y += 2;
+	}
+
+	// Technician report: one panel per note, never split across pages.
+	const blocks = remarkBlocks(r.remarks);
+		const blockPhotoMap = r.blockPhotos || {};
+		const blockPhotoKeys = remarksBlockHeads(r.remarks).map(b=>b.key);
+		if (blocks.length){
+			sectionTitle("Technician Report");
+			for (let bi = 0; bi < blocks.length; bi++){
+				const b = blocks[bi];
+			pdf.setFont("times", "normal"); pdf.setFontSize(8.5);
+			const body = [];
+			b.body.forEach(p=>{
+				if (p.label){
+					pdf.setFont("times", "bold");
+					const lines = pdf.splitTextToSize(`${p.label}: ${p.text}`, W - 16);
+					body.push({ lines, kind: p.reco ? "reco" : "kv" });
+				} else {
+					pdf.setFont("times", "normal");
+					body.push({ lines: pdf.splitTextToSize(p.text, W - 16), kind: "p" });
+				}
+			});
+			const bodyH = body.reduce((s, p) => s + p.lines.length*4.2 + (p.kind === "p" ? 0.8 : 2), 0);
+			const panelH = (b.head ? 9 : 3) + bodyH + 4;
+			if (y + panelH > LIMIT && panelH < PAGE_H - TOP - BOTTOM){ pdf.addPage(); y = TOP; }
+			fill(PDF_PANEL); pdf.rect(L, y, W, panelH, "F");
+			fill(PDF_GOLD); pdf.rect(L, y, 1.2, panelH, "F");
+			let by = y + 5.4;
+			if (b.head){
+				if (b.num){
+					fill(PDF_GOLD); pdf.rect(L + 4, by - 4, 5, 5, "F");
+					pdf.setTextColor(255,255,255); pdf.setFont("times", "bold"); pdf.setFontSize(7.5);
+					pdf.text(String(b.num), L + 6.5, by - 0.2, { align: "center" });
+				}
+				ink(PDF_NAVY); pdf.setFont("times", "bold"); pdf.setFontSize(9);
+				pdf.text(String(b.head).toUpperCase(), L + (b.num ? 11 : 4), by);
+				by += 3.4;
+			}
+			body.forEach(p=>{
+				if (p.kind === "reco"){ fill(PDF_WARM); pdf.rect(L + 4, by - 0.6, W - 8, p.lines.length*4.2 + 1.4, "F"); }
+				ink(p.kind === "p" ? PDF_INK : PDF_NAVY);
+				pdf.setFont("times", p.kind === "p" ? "normal" : "bold"); pdf.setFontSize(8.5);
+				p.lines.forEach((line, k) => pdf.text(line, L + 4, by + 3 + k*4.2));
+				by += p.lines.length*4.2 + (p.kind === "p" ? 0.8 : 2);
+			});
+			y += panelH + 2.5;
+			// Part photos for this block, right under its panel.
+			const bPhotos = blockPhotoMap[blockPhotoKeys[bi]] || blockPhotoMap[bi] || [];
+			if (bPhotos.length){
+				const cols = 4, gap = 3, cell = (W - (cols - 1)*gap)/cols, imgH = 26;
+				for (let i = 0; i < bPhotos.length; i += cols){
+					if (y + imgH + 3 > LIMIT){ pdf.addPage(); y = TOP; }
+					const rowPhotos = bPhotos.slice(i, i + cols);
+					for (let c = 0; c < rowPhotos.length; c++){
+						const x = L + c*(cell + gap);
+						const { w, h } = await photoSize(rowPhotos[c]);
+						const scaled = Math.min(cell / w, imgH / h);
+						const dw = w*scaled, dh = h*scaled;
+						try { pdf.addImage(rowPhotos[c], "JPEG", x + (cell - dw)/2, y + (imgH - dh)/2, dw, dh); }
+						catch(err){ console.warn("PDF export: part photo skipped", err); }
+						draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.rect(x, y, cell, imgH, "S");
+					}
+					y += imgH + 3;
+				}
+			}
+		}
+	}
+
+	// Photos: item photos first (labelled), then the general ones.
+	const gallery = [];
+	Object.entries(r.photos || {}).forEach(([name, list]) => (list || []).forEach(u => gallery.push({ u, cap: name })));
+	(r.genPhotos || []).forEach(u => gallery.push({ u, cap: "Other" }));
+	if (gallery.length){
+		sectionTitle("Photos (" + gallery.length + ")");
+		const cols = 4, gap = 3, cell = (W - (cols - 1)*gap)/cols, imgH = 30;
+		for (let i = 0; i < gallery.length; i += cols){
+			if (y + imgH + 6 > LIMIT){ pdf.addPage(); y = TOP; }
+			const row = gallery.slice(i, i + cols);
+			for (let c = 0; c < row.length; c++){
+				const p = row[c], x = L + c*(cell + gap);
+				const { w, h } = await photoSize(p.u);
+				const scaled = Math.min(cell / w, imgH / h);
+				const dw = w*scaled, dh = h*scaled;
+				try { pdf.addImage(p.u, "JPEG", x + (cell - dw)/2, y + (imgH - dh)/2, dw, dh); }
+				catch(err){ console.warn("PDF export: photo skipped", err); }
+				draw(PDF_LINE); pdf.setLineWidth(0.2); pdf.rect(x, y, cell, imgH, "S");
+				ink(PDF_MUTED); pdf.setFont("times", "normal"); pdf.setFontSize(6.5);
+				pdf.text(pdf.splitTextToSize(p.cap || "", cell)[0], x, y + imgH + 3.4);
+			}
+			y += imgH + 6;
+		}
+	}
+
+	return pdf.output("blob");
+}
+
+function downloadBlob(blob, name){
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = name;
+	document.body.appendChild(a); a.click(); a.remove();
+	setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+
+function loadHtml2pdf(){
+	if (window.html2pdf) return Promise.resolve();
+	return new Promise((resolve, reject)=>{
+		const s = document.createElement("script");
+		s.src = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
+		s.onload = ()=>resolve();
+		s.onerror = ()=>reject(new Error("html2pdf CDN unavailable"));
+		document.head.appendChild(s);
+	});
+}
+function downloadReportHTML(r, fname){
+	// Fallback used when the PDF library cannot load: the original
+	// auto-printing HTML report.
+	const css = document.querySelector("style").textContent;
+	const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Weekly Report ${esc(r.plate)} ${r.date}</title><style>${css}
+body{background:#fff}main{padding:24px}.card{border:0}</style></head>
+<body><main><div class="card">${$("detail").innerHTML}</div></main>
+<script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`;
+	const blob = new Blob([html], {type:"text/html"});
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = fname + ".html";
+	document.body.appendChild(a); a.click(); a.remove();
+	setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+async function saveReport(){
+	const r = records.find(x=>String(x.id)===String(currentId)); if(!r) return;
+	const rpEl = $("detail").querySelector(".rp"); if(!rpEl) return;
+	const fname = `AK-Weekly-Report_${r.plate.replace(/\s+/g,"-")}_${r.date}`;
+	const btn = $("dl");
+	if (btn) btn.disabled = true;
+	toast("Preparing PDF…");
+	// First choice: draw the report as real PDF text, which cannot be affected
+	// by the page layout.
+	try {
+		await loadJsPdf();
+		downloadBlob(await reportPDF(r), fname + ".pdf");
+		toast("PDF saved ✓");
+		if (btn) btn.disabled = false;
+		return;
+	} catch(err){
+		console.error("Text PDF failed — falling back to the page renderer:", err);
+	}
+	// Fallback: render the on-screen report through the html2pdf library.
+	try { await loadHtml2pdf(); }
+	catch(err){
+		console.error("PDF library failed to load:", err);
+		downloadReportHTML(r, fname);
+		toast("PDF unavailable — HTML report downloaded instead");
+		if (btn) btn.disabled = false;
+		return;
+	}
+	// Off-screen copy at A4 content width (703px = 186mm beside 12mm page
+	// margins). The navy/gold theme is scoped to .rp itself, so it still
+	// applies after the PDF worker moves this copy into its own container.
+	const host = document.createElement("div");
+	host.style.cssText = "position:fixed;left:-10000px;top:0;width:703px;background:#fff";
+	const card = document.createElement("div");
+	card.style.cssText = "width:703px;max-width:703px;margin:0;padding:0;border:0;box-shadow:none;background:#fff";
+	// The report is pinned to the A4 content width on the copy itself, not just
+	// on its parent: when the export runs on a narrow (phone) screen the copy
+	// could otherwise be laid out at the device width, which squeezes the whole
+	// sheet into the left of the page and leaves the rest blank.
+	const report = rpEl.cloneNode(true);
+	report.style.width = "703px";
+	report.style.maxWidth = "703px";
+	card.appendChild(report);
+	host.appendChild(card);
+	document.getElementById("tab-detail").appendChild(host);
+	try {
+		const opts = {
+			margin: [10, 12, 10, 12],
+			image: { type: "jpeg", quality: 0.97 },
+			html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 703,
+				// Last line of defence inside the render clone: whatever width the
+				// browser laid the copy out at, the report is A4 wide again here.
+				onclone: (doc) => { doc.querySelectorAll(".rp").forEach((el) => { el.style.width = "703px"; el.style.maxWidth = "703px"; }); } },
+			pagebreak: { mode: ["css","legacy"], avoid: ["tr",".rp-top",".rp-vehicle",".rp-sum",".rp-title",".rp-sec",".gallery",".thumb"] },
+			jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+		};
+		let worker = html2pdf().set(opts).from(card);
+		// toPdf() reuses the canvas we ask for here, so the sheet is only rendered
+		// once — and we get to look at it before the PDF is built. If the report
+		// only covers the left of it, the browser laid the copy out at the page
+		// width instead of the A4 width; the SVG renderer then paints the copy
+		// where it actually sits, which fills the sheet again.
+		const sheet = await worker.toCanvas().get("canvas");
+		const fill = sheet ? inkFill(sheet) : 1;
+		let narrow = false;
+		if (fill < 0.92){
+			console.warn(`PDF export: sheet came back ${Math.round(fill*100)}% wide — redrawing with the SVG renderer`);
+			worker = html2pdf().set({ ...opts, html2canvas: { ...opts.html2canvas, foreignObjectRendering: true } }).from(card);
+			const redraw = await worker.toCanvas().get("canvas");
+			const redrawFill = redraw ? inkFill(redraw) : 1;
+			narrow = redrawFill < 0.92;
+			if (narrow) console.error(`PDF export: sheet still ${Math.round(redrawFill*100)}% wide after the SVG renderer`);
+		}
+		const pdf = await worker.toPdf().get("pdf");
+		downloadBlob(pdf.output("blob"), fname + ".pdf");
+		toast(narrow ? "PDF saved — makitid pa ang layout, i-report ito" : "PDF saved ✓");
+	} catch(err){
+		console.error("PDF export failed:", err);
+		downloadReportHTML(r, fname);
+		toast("PDF failed — HTML report downloaded instead");
+	} finally {
+		setTimeout(()=>host.remove(), 1500);
+		if (btn) btn.disabled = false;
+	}
+}
+$("print").onclick = doPrint;
+$("dl") && ($("dl").onclick = saveReport);
+$("ph-x").onclick = ()=>$("printhelp").classList.add("hidden");
+$("back").onclick = ()=>show("history");
+$("del").onclick = async ()=>{
+	if (!confirm("Delete this weekly report?")) return;
+	try {
+		await idbDelete(currentId);
+		await loadRecords(); toast("Deleted"); show("history");
+	} catch (error) {
+		console.error('Unable to delete the weekly report:', error);
+		toast("Delete failed: " + (error?.message || 'local storage unavailable'));
+	}
+};
+
+function renderDue(){
+	const rows = records.filter(r=>Object.values(r.items).includes("attn"));
+	$("due").innerHTML = rows.length ? `<table><thead><tr><th>Plate</th><th>Date</th><th>Odometer</th><th>Items needing attention</th></tr></thead><tbody>${
+		rows.map(r=>{const a=Object.entries(r.items).filter(([k,v])=>v==="attn").map(([k])=>k);
+			return `<tr><td class="plate">${esc(r.plate)}</td><td>${fmt(r.date)}</td><td>${r.km?r.km.toLocaleString()+" km":"—"}</td><td>${a.map(x=>`<span class="pill attn">${esc(x)}</span>`).join(" ")}</td></tr>`}).join("")
+	}</tbody></table>` : `<div class="muted">No open issues.</div>`;
+}
+
+function show(tab){
+	["new","history","due","detail"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==tab));
+	document.querySelectorAll("nav button").forEach(b=>{
+		const active = b.dataset.tab===tab || (tab==="detail" && b.dataset.tab==="history");
+		b.classList.toggle("active", active);
+		if (active) b.setAttribute("aria-current", "true");
+		else b.removeAttribute("aria-current");
+	});
+	if(tab==="history") renderHistory(); if(tab==="due") renderDue();
+	window.scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="new" && editingId) clearForm(); show(b.dataset.tab); });
+
+renderGen(); renderPartPhotos();
+
+(async function initialize(){
+	await loadRecords();
+	renderHistory();
+})();
+</script>
+</body>
+</html>
