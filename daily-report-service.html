@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Garage | Daily Report Service</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#070807;--card:#101210;--ink:#f0f3ec;--muted:#8b9388;--line:#292d29;
+  --brand:#c4f04e;--brand-ink:#070807;--ok:#4ade80;--ok-bg:#12301d;--warn:#fbbf24;--warn-bg:#3a2c0b;
+  --bad:#f87171;--bad-bg:#3b1414;--na:#9aa1ad;--na-bg:#23272f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#090a09;color:var(--ink);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header .logo{background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:4px 8px;font-weight:800;letter-spacing:.5px}
+header .brand-copy{display:flex;flex-direction:column;gap:2px}
+header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.08em}
+header .subtitle{color:var(--muted);font-size:11px;letter-spacing:.04em}
+nav{display:flex;gap:6px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit}
+nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+nav a.back{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted);background:transparent;text-decoration:none;white-space:nowrap;font-size:13px}
+nav a.back:hover{color:var(--ink);border-color:#697163;background:#1d221d}
+main{max-width:960px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:0;background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.danger{background:transparent;border:1px solid var(--line);color:var(--bad)}
+.muted{color:var(--muted);font-size:13px}
+.hidden{display:none}
+.empty-note{padding:26px 20px;text-align:center;color:var(--muted)}
+.empty-note b{color:var(--ink);display:block;margin-bottom:6px;font-size:15px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.done,.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.attn{background:var(--warn-bg);color:var(--warn)}
+.pill.na{background:var(--na-bg);color:var(--na)}
+.rec{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;background:var(--card)}
+.rec:hover{border-color:var(--brand)}
+.rec .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.plate{font-weight:800;letter-spacing:.5px}
+.day-head{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:16px 0 8px}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:8px}
+.gallery .thumb{width:auto;height:110px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:20;padding:16px;flex-direction:column;gap:10px;color:#fff}
+.lightbox.show{display:flex}
+.lightbox img{max-width:100%;max-height:82vh;border-radius:8px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#090a09;color:var(--ink);padding:10px 16px;border:1px solid var(--line);border-radius:8px;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.skip{position:absolute;left:-9999px;top:8px;z-index:40}
+.skip:focus{left:8px;background:var(--card);color:var(--ink);padding:8px 12px;border-radius:8px;border:2px solid var(--brand)}
+
+/* ---- The sent report, in the same navy / gold paper style as the
+     Mr AK Car Service print-out. ---- */
+.rp{font-size:14px;--serif:Georgia,'Times New Roman',serif;--bg:#f7f4ee;--card:#fbf9f5;--ink:#2b2a26;--muted:#8a7f6a;--line:#e2dccd;--ok:#315c40;--ok-bg:#eef4ea;--warn:#8a6a2f;--warn-bg:#f9f1e2;--na:#6b6459;--na-bg:#f4f1ea;border-top:3px solid #a8844a;background:#fff;color:#2b2a26;font-size:12px}
+.rp-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#14213a;padding:16px 18px;border-bottom:2px solid #a8844a;margin-bottom:8px}
+.rp-brand{flex:1}
+.rp-brand b{display:block;color:#c9a96a;font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.rp-brand b::after{content:"";display:block;height:3px;margin-top:8px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+.rp-meta{display:flex;gap:8px;text-align:right}
+.rp-meta>div{min-width:166px;padding:10px 16px;text-align:center;background:#1b2b49;border:1px solid #a8844a;border-radius:10px}
+.rp-meta span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;color:#c9a96a}
+.rp-meta b{color:#fff;font-family:var(--serif);font-size:15px}
+.rp-vehicle{position:relative;padding-top:12px;margin:12px 0 10px}
+.rp-vehicle::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,#14213a 0 72%,#a8844a 72% 100%)}
+.rp-vehicle{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.rp-plate{position:relative;font-size:24px;font-weight:800;letter-spacing:1.5px;border:1px solid #a8844a;border-radius:8px;padding:2px 12px;color:#14213a;font-family:var(--serif)}
+.rp-plate::before{content:"";position:absolute;inset:-6px;border:3px solid #14213a;border-radius:12px}
+.rp-model{color:#14213a;font-family:"Baskerville","Palatino Linotype","Book Antiqua",Georgia,serif;font-size:19px;font-style:italic;font-weight:700}
+.rp-info{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);overflow:hidden;margin-top:12px}
+.rp-info>div{background:var(--card);padding:10px 12px}
+.rp-info span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.rp-info b{font-size:14.5px}
+.rp-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
+.rp-sum div{padding:10px 12px;display:flex;align-items:center;gap:10px;border:1px solid #e2dccd}
+.rp-sum b{font-size:22px;font-family:var(--serif)}
+.rp-sum span{font-size:12px;font-weight:600}
+.s-done,.s-ok{background:#eef4ea;color:#315c40}
+.s-attn{background:#f9f1e2;color:#8a6a2f}
+.rp-title{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.rp-table th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)}
+.rp-table tr.rp-cat td{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#14213a;padding-top:12px;background:#f7f4ee;border-bottom:1px solid #e2dccd;border-left:3px solid #a8844a}
+.rp .pill{background:none;border:0;padding:0;text-transform:uppercase;font-size:10.5px;font-weight:700;letter-spacing:.5px}
+.rp .pill.done,.rp .pill.ok{background:none;color:#315c40}
+.rp .pill.attn{background:none;color:#8a6a2f}
+.rp .pill.na{background:none;color:#6b6459}
+.rp-remarks{white-space:pre-wrap;word-wrap:break-word;line-height:1.6;border:1px solid var(--line);border-left:4px solid #a8844a;background:#fbf9f5;padding:12px 14px}
+.rp .thumb{border-color:#e2dccd;border-radius:0}
+.rp-sent{margin-top:18px;padding-top:10px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+@media screen{
+  #tab-detail .card{max-width:860px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 16px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
+}
+@media (max-width:520px){.rp-meta{text-align:left}.rp-sum b{font-size:18px}.rp-info{grid-template-columns:repeat(2,1fr)}}
+@media print{
+  @page{size:A4;margin:12mm}
+  :root{color-scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,nav,.no-print{display:none!important}
+  body,main{background:#fff!important;color:#111!important}
+  main{padding:0;max-width:none}
+  #tab-list{display:none!important}
+  #tab-detail{display:block!important}
+  #tab-detail .card{padding:0;margin:0;border:0;box-shadow:none!important;max-width:none}
+  .gallery{grid-template-columns:repeat(4,1fr)}
+  .gallery .thumb{height:95px}
+  .toast,.lightbox{display:none!important}
+  .rp-table tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header><span class="logo">AK</span><div class="brand-copy"><h1>AK GARAGE</h1><span class="subtitle">Daily Report Service</span></div></header>
+<nav aria-label="Main">
+	<button id="tab-btn-list" class="active" aria-current="true">Sent reports</button>
+	<a class="back" href="index.html">← Back to AK Garage</a>
+</nav>
+<main id="main">
+	<section id="tab-list">
+		<div class="card no-print">
+			<h2>Daily Report Service</h2>
+			<div class="muted">Reports sent from <b>Mr AK Car Service → History</b> land here. They are kept in this browser, so print or save the PDF before clearing its site data.</div>
+		</div>
+		<div id="list"></div>
+	</section>
+	<section id="tab-detail" class="hidden">
+		<div class="row no-print" style="margin-bottom:10px">
+			<button class="btn ghost sm" id="back">← Back</button>
+			<button class="btn sm" id="print">Print</button>
+			<button class="btn ghost sm danger" id="remove">Remove from Daily</button>
+		</div>
+		<div class="card" id="detail"></div>
+	</section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="lightbox" id="lb" role="dialog" aria-modal="true" aria-label="Photo preview"><img id="lb-img" alt=""><div id="lb-cap"></div><button class="btn ghost sm" id="lb-x" style="color:#fff;border-color:#fff">Close</button></div>
+<script>
+/* ---------- Data: same browser, its own database ----------
+   Mr AK Car Service writes a copy of a saved record here (see "Send to Daily
+   Report Service"), so this page keeps working even for viewers and without a
+   network round-trip. */
+const DB_NAME = "ak-daily-report", STORE = "reports", VERSION = 1;
+const ITEMS = {
+	"Receiving":["Delivery unloaded","Cartons / items counted","Part number verified","Condition inspected","Damage reported"],
+	"Storage":["Shelved in the right bin","Bin label updated","Fragile items padded","Liquids stored upright","Stock level recorded"],
+	"Issuing":["Request / job card checked","Part picked and counted","Part number verified on issue","Handed to technician","Issue log updated"],
+	"Stock Count":["Cycle count done","Minimum stock checked","Low stock listed","Re-order raised","Shelf cleaned"],
+	"Dispatch & Tools":["Order packed correctly","Label / address checked","Tools returned to store","Tools cleaned","Store locked and secured"],
+	"Safety":["Walkways clear","Racking inspected","Fire extinguisher checked","PPE available","Waste cleared"]
+};
+const LBL = {done:"Done",ok:"OK",attn:"Attn",na:"N/A"};
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = d => d ? new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+const asObject = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+
+let entries = [], currentId = null;
+
+function openDB(){
+	return new Promise((resolve, reject)=>{
+		const req = indexedDB.open(DB_NAME, VERSION);
+		req.onupgradeneeded = () => {
+			const db = req.result;
+			if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "id" });
+		};
+		req.onerror = () => reject(req.error);
+		req.onsuccess = () => resolve(req.result);
+	});
+}
+async function idbAll(){
+	const db = await openDB();
+	return new Promise((resolve, reject)=>{
+		const tx = db.transaction(STORE, "readonly");
+		const req = tx.objectStore(STORE).getAll();
+		req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+		req.onerror = () => reject(req.error);
+		tx.oncomplete = () => db.close();
+	});
+}
+async function idbDelete(id){
+	const db = await openDB();
+	return new Promise((resolve, reject)=>{
+		const tx = db.transaction(STORE, "readwrite");
+		tx.objectStore(STORE).delete(id);
+		tx.oncomplete = () => { db.close(); resolve(); };
+		tx.onerror = () => { const e = tx.error; db.close(); reject(e); };
+	});
+}
+
+/* ---------- Toast / photo viewer ---------- */
+let toastTimer = null;
+function toast(msg){
+	const el = $("toast"); el.textContent = msg; el.classList.add("show");
+	clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove("show"), 2600);
+}
+function openLB(src, cap){ $("lb-img").src = src; $("lb-cap").textContent = cap || ""; $("lb").classList.add("show"); }
+$("lb-x").onclick = () => $("lb").classList.remove("show");
+$("lb").onclick = e => { if (e.target === $("lb")) $("lb").classList.remove("show"); };
+
+/* ---------- Views ---------- */
+function show(view){
+	$("tab-list").classList.toggle("hidden", view !== "list");
+	$("tab-detail").classList.toggle("hidden", view !== "detail");
+	$("tab-btn-list").classList.toggle("active", view === "list");
+	$("tab-btn-list").setAttribute("aria-current", view === "list" ? "true" : "false");
+	if (view === "list"){
+		currentId = null;
+		// Drop ?id= so a refresh lands on the list. Guarded: some browsers (and
+		// file:// pages) reject replaceState, and the list still has to render.
+		if (location.search){ try { history.replaceState(null, "", location.pathname); } catch (err) {} }
+	}
+}
+
+function photoCount(r){
+	const itemPhotos = Object.values(asObject(r.photos)).reduce((a,v)=>a + (Array.isArray(v) ? v.length : 0), 0);
+	return itemPhotos + (Array.isArray(r.genPhotos) ? r.genPhotos.length : 0);
+}
+
+function renderList(){
+	if (!entries.length){
+		$("list").innerHTML = `<div class="card"><div class="empty-note"><b>No reports sent yet</b>Open <a href="warehouse.html" style="color:var(--brand)">Mr AK Car Service</a> → History → a saved record → <b style="display:inline">Send to Daily Report Service</b>.</div></div>`;
+		return;
+	}
+	let lastDay = "";
+	$("list").innerHTML = entries.map(r=>{
+		const day = r.date || "";
+		const head = day !== lastDay ? `<div class="day-head">${esc(fmt(day))}</div>` : "";
+		lastDay = day;
+		const vals = Object.values(asObject(r.items));
+		const a = vals.filter(v=>v==="attn").length, pc = photoCount(r);
+		return head + `<div class="rec" data-id="${esc(r.id)}">
+			<div class="top"><span class="plate">${esc(r.plate || "—")}</span><span class="muted">sent ${esc(sentLabel(r.sentAt))}</span></div>
+			<div class="muted">${esc([r.model||"—", r.km?Number(r.km).toLocaleString()+" km":"", r.chassis?"CHASSIS "+r.chassis:""].filter(Boolean).join(" · "))}</div>
+			<div class="row" style="margin-top:6px">
+				${vals.length?`<span class="pill ok">${vals.length} item${vals.length>1?"s":""} marked</span>`:""}
+				${a?`<span class="pill attn">${a} needs attention</span>`:""}
+				${pc?`<span class="pill na">${pc} photo${pc>1?"s":""}</span>`:""}
+			</div></div>`;
+	}).join("");
+	document.querySelectorAll("#list .rec").forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
+}
+
+function sentLabel(iso){
+	if (!iso) return "—";
+	const d = new Date(iso);
+	return isNaN(d) ? "—" : d.toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+
+function openDetail(id){
+	const r = entries.find(x=>String(x.id)===String(id)); if (!r) return;
+	currentId = id;
+	const vals = Object.values(asObject(r.items));
+	const cnt = k => vals.filter(v=>v===k).length;
+	const nDone = cnt("done"), nOk = cnt("ok"), nAttn = cnt("attn");
+	const sum = (nDone||nOk||nAttn) ? `
+		<div class="rp-sum">
+			${nDone?`<div class="s-done"><b>${nDone}</b><span>Serviced</span></div>`:""}
+			${nOk?`<div class="s-ok"><b>${nOk}</b><span>Checked OK</span></div>`:""}
+			${nAttn?`<div class="s-attn"><b>${nAttn}</b><span>Needs Attention</span></div>`:""}
+		</div>` : "";
+	const knownNames = new Set(Object.values(ITEMS).flat());
+	const extraNames = Object.keys(asObject(r.items)).filter(n=>r.items[n] && !knownNames.has(n));
+	const cats = [...Object.entries(ITEMS), ...(extraNames.length?[["Other items", extraNames]]:[])];
+	const rows = cats.map(([cat,list])=>{
+		const got = list.filter(n=>r.items[n]); if (!got.length) return "";
+		return `<tr class="rp-cat"><td colspan="3">${esc(cat)}</td></tr>` + got.map(n=>{
+			const ph = Array.isArray(asObject(r.photos)[n]) ? r.photos[n] : [];
+			return `<tr><td>${esc(n)}${ph.length?`<div class="thumbs">${ph.map(u=>`<div class="thumb" data-u="${u}" data-cap="${esc(n)}"><img src="${u}" alt=""></div>`).join("")}</div>`:""}</td>
+				<td><span class="pill ${esc(r.items[n])}">${esc(LBL[r.items[n]]||r.items[n])}</span></td><td class="muted">${esc(asObject(r.notes)[n]||"")}</td></tr>`;
+		}).join("");
+	}).join("");
+	const all = [...Object.entries(asObject(r.photos)).flatMap(([k,v])=>Array.isArray(v) ? v.map(u=>({u,k})) : []),
+		...(Array.isArray(r.genPhotos) ? r.genPhotos.map(u=>({u,k:"Other"})) : [])];
+	$("detail").innerHTML = `
+	<div class="rp">
+		<div class="rp-top">
+			<div class="rp-brand"><b>Daily Report Service</b></div>
+			<div class="rp-meta"><div><span>Service Date</span><b>${esc(fmt(r.date))}</b></div></div>
+		</div>
+		<div class="rp-vehicle">
+			<div class="rp-plate">${esc(r.plate || "—")}</div>
+			<div class="rp-model">${esc(r.model||"—")}</div>
+		</div>
+		<div class="rp-info">
+			<div><span>Odometer</span><b>${r.km?Number(r.km).toLocaleString()+" km":"—"}</b></div>
+			<div><span>Chassis No.</span><b>${esc(r.chassis||"—")}</b></div>
+		</div>
+		${sum}
+		${rows?`<h3 class="rp-title">Inspection Checklist</h3><table class="rp-table"><thead><tr><th>Item</th><th style="width:90px">Status</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`:""}
+		${r.remarks?`<h3 class="rp-title">Technician Report</h3><div class="rp-remarks">${esc(r.remarks)}</div>`:""}
+		${all.length?`<h3 class="rp-title">Photos (${all.length})</h3><div class="gallery">${all.map(p=>`<div class="thumb" data-u="${p.u}" data-cap="${esc(p.k)}"><img src="${p.u}" alt=""></div>`).join("")}</div>`:""}
+		<div class="rp-sent">Sent to Daily Report Service · ${esc(sentLabel(r.sentAt))}</div>
+	</div>`;
+	$("detail").querySelectorAll(".thumb").forEach(t=>t.onclick=()=>openLB(t.dataset.u, t.dataset.cap));
+	show("detail");
+	window.scrollTo({top:0,behavior:"instant"});
+}
+
+/* ---------- Actions ---------- */
+$("tab-btn-list").onclick = () => { show("list"); renderList(); };
+$("back").onclick = () => { show("list"); renderList(); };
+$("print").onclick = () => window.print();
+$("remove").onclick = async () => {
+	if (!currentId) return;
+	if (!confirm("Remove this report from the Daily Report Service? The original stays in Mr AK Car Service.")) return;
+	try {
+		await idbDelete(currentId);
+		entries = entries.filter(e=>String(e.id)!==String(currentId));
+		toast("Removed from Daily ✓");
+		show("list"); renderList();
+	} catch (err) {
+		console.error("Unable to remove the daily report:", err);
+		toast("Could not remove this report");
+	}
+};
+
+(async function boot(){
+	try { entries = await idbAll(); }
+	catch (err) { console.error("Unable to read the sent daily reports:", err); toast("Local storage unavailable — nothing to show."); }
+	// Newest service date first, then the most recently sent one, so the day
+	// groups read in the same order as the work was done.
+	entries.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")) || String(b.sentAt||"").localeCompare(String(a.sentAt||"")));
+	const wanted = new URLSearchParams(location.search).get("id");
+	const hit = wanted ? entries.find(e=>String(e.id)===String(wanted)) : null;
+	if (hit) openDetail(hit.id);
+	else { show("list"); renderList(); }
+})();
+</script>
+</body>
+</html>

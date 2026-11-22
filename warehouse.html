@@ -46,6 +46,9 @@ td.muted{white-space:pre-wrap}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .btn.sm{padding:6px 10px;font-size:13px}
 .btn.danger{background:transparent;border:1px solid var(--line);color:var(--bad)}
+/* Hands the open record to the Daily Report Service page. Brand-tinted so it
+   reads as the one action that leaves this page. */
+.btn.daily{background:transparent;border:1px solid var(--brand);color:var(--brand);font-weight:600;white-space:nowrap}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .cat{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:14px 0 6px;letter-spacing:.4px}
 .item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
@@ -318,6 +321,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 			<button class="btn ghost sm" id="print">Print</button>
 			<button class="btn ghost sm" id="dl" type="button" title="Download this service report directly as a PDF">⬇ Save as PDF</button>
 			<button class="btn ghost sm" id="import-file-btn" type="button" title="Restore records from a JSON backup">⬆ Import file</button>
+			<button class="btn daily sm" id="send-daily" type="button" title="Send this saved record to the Daily Report Service page">Send to Daily Report Service →</button>
 			<button class="btn ghost sm danger" id="del">Delete</button>
 			<span class="muted" id="import-status" style="font-size:12px"></span>
 			<input type="file" id="import-file" accept="application/json,.json" class="hidden">
@@ -622,6 +626,50 @@ $("import-file").onchange = async e => {
 	}
 };
 
+/* ---------- Send to Daily Report Service ----------
+   The Daily Report Service page owns its own database (ak-daily-report), so a
+   "send" is a copy of this saved record written there and the page opens on
+   that copy. The copy keeps the warehouse record id, so sending the same
+   record again updates it instead of piling up duplicates. */
+const DAILY_DB = "ak-daily-report", DAILY_STORE = "reports";
+function dailyPut(entry){
+	return new Promise((resolve, reject)=>{
+		const req = indexedDB.open(DAILY_DB, 1);
+		req.onupgradeneeded = () => {
+			const db = req.result;
+			if (!db.objectStoreNames.contains(DAILY_STORE)) db.createObjectStore(DAILY_STORE, { keyPath: "id" });
+		};
+		req.onerror = () => reject(req.error);
+		req.onsuccess = () => {
+			const db = req.result;
+			const tx = db.transaction(DAILY_STORE, "readwrite");
+			tx.objectStore(DAILY_STORE).put(entry);
+			tx.oncomplete = () => { db.close(); resolve(); };
+			tx.onerror = () => { const err = tx.error; db.close(); reject(err); };
+		};
+	});
+}
+$("send-daily").onclick = async ()=>{
+	const r = records.find(x=>String(x.id)===String(currentId));
+	if (!r){ toast("Open a saved record first"); return; }
+	const btn = $("send-daily"); btn.disabled = true;
+	try {
+		await dailyPut({
+			id: String(r.id), sentAt: new Date().toISOString(),
+			plate: r.plate, model: r.model, date: r.date, km: r.km, next: r.next,
+			chassis: r.chassis, remarks: r.remarks,
+			items: {...r.items}, notes: {...r.notes},
+			photos: Object.fromEntries(Object.entries(r.photos||{}).map(([k,v])=>[k,[...v]])),
+			genPhotos: [...(r.genPhotos||[])]
+		});
+		location.href = "daily-report-service.html?id=" + encodeURIComponent(String(r.id));
+	} catch (err) {
+		console.error("Unable to send the record to the Daily Report Service:", err);
+		toast("Could not send to Daily Report Service");
+		btn.disabled = false;
+	}
+};
+
 /* ---------- Pro report formatting ---------- */
 function formatRemarks(text){
 	const blocks = text.replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
@@ -670,7 +718,7 @@ function openDetail(id){
 	$("detail").innerHTML = `
 	<div class="rp">
 		<div class="rp-top">
-			<div class="rp-brand"><b>Mr AK Car Service Report</b></div>
+			<div class="rp-brand"><b>Service Report</b></div>
 			<div class="rp-meta"><div><span>Service Date</span><b>${fmt(r.date)}</b></div></div>
 		</div>
 		<div class="rp-vehicle">
@@ -795,7 +843,7 @@ async function reportPDF(r){
 	// Header band with the brand title and the service date box.
 	fill(PDF_NAVY); pdf.rect(L, y, W, 27, "F");
 	ink(PDF_TITLE); pdf.setFont("times", "bold"); pdf.setFontSize(16);
-	pdf.text("MR AK CAR SERVICE REPORT", L + 5, y + 12.5);
+	pdf.text("SERVICE REPORT", L + 5, y + 12.5);
 	fill(PDF_GOLD); pdf.rect(L + 5, y + 16.5, 55, 0.8, "F");
 	const boxW = 44, boxH = 15, boxX = L + W - boxW - 5, boxY = y + 6;
 	fill([27,43,73]); pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, "F");
