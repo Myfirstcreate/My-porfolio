@@ -114,7 +114,17 @@ td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertic
   .gallery{grid-template-columns:repeat(4,1fr)}
   .gallery .thumb{height:95px}
   .toast,.lightbox{display:none!important}
+  /* Keep the paper blocks whole: the navy header, the vehicle row, the tally
+     chips and each photo stay on one page instead of being cut in half. */
+  .rp-top,.rp-vehicle,.rp-info,.rp-sum,.gallery,.gallery .thumb{break-inside:avoid}
+  /* A checklist row must not be split, and a category header must not be left
+     stranded at the foot of a page away from its rows. */
   .rp-table tr{break-inside:avoid}
+  .rp-table tr.rp-cat{break-after:avoid}
+  /* "Inspection Checklist" / "Technician Report" / "Photos" stay with what
+     follows them instead of ending up alone at the bottom of a page. */
+  .rp-title{break-after:avoid}
+  .rp-remarks{orphans:3;widows:3}
 }
 </style>
 </head>
