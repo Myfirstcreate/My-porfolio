@@ -630,7 +630,9 @@ $("import-file").onchange = async e => {
    The Daily Report Service page owns its own database (ak-daily-report), so a
    "send" is a copy of this saved record written there and the page opens on
    that copy. The copy keeps the warehouse record id, so sending the same
-   record again updates it instead of piling up duplicates. */
+   record again updates it instead of piling up duplicates. A second send is
+   still confirmed first, and the button locks while a send is in flight, so a
+   stray double click cannot fire two writes. */
 const DAILY_DB = "ak-daily-report", DAILY_STORE = "reports";
 function dailyPut(entry){
 	return new Promise((resolve, reject)=>{
@@ -649,11 +651,43 @@ function dailyPut(entry){
 		};
 	});
 }
+function dailyGet(id){
+	return new Promise((resolve, reject)=>{
+		const req = indexedDB.open(DAILY_DB, 1);
+		req.onupgradeneeded = () => {
+			const db = req.result;
+			if (!db.objectStoreNames.contains(DAILY_STORE)) db.createObjectStore(DAILY_STORE, { keyPath: "id" });
+		};
+		req.onerror = () => reject(req.error);
+		req.onsuccess = () => {
+			const db = req.result;
+			if (!db.objectStoreNames.contains(DAILY_STORE)){ db.close(); resolve(null); return; }
+			const tx = db.transaction(DAILY_STORE, "readonly");
+			const get = tx.objectStore(DAILY_STORE).get(String(id));
+			get.onsuccess = () => { const entry = get.result || null; db.close(); resolve(entry); };
+			get.onerror = () => { const err = get.error; db.close(); reject(err); };
+		};
+	});
+}
+let sendingDaily = false;
 $("send-daily").onclick = async ()=>{
+	if (sendingDaily) return;
 	const r = records.find(x=>String(x.id)===String(currentId));
 	if (!r){ toast("Open a saved record first"); return; }
-	const btn = $("send-daily"); btn.disabled = true;
+	const btn = $("send-daily");
+	const label = btn.textContent;
+	sendingDaily = true; btn.disabled = true;
 	try {
+		const already = await dailyGet(r.id);
+		if (already){
+			const when = new Date(already.sentAt || "");
+			const stamp = isNaN(when) ? "" : ` on ${when.toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}`;
+			if (!confirm(`This record was already sent to the Daily Report Service${stamp}. Sending it again only updates that same copy — there will still be one report. Send it again?`)){
+				sendingDaily = false; btn.disabled = false;
+				return;
+			}
+		}
+		btn.textContent = "Sending…";
 		await dailyPut({
 			id: String(r.id), sentAt: new Date().toISOString(),
 			plate: r.plate, model: r.model, date: r.date, km: r.km, next: r.next,
@@ -666,7 +700,7 @@ $("send-daily").onclick = async ()=>{
 	} catch (err) {
 		console.error("Unable to send the record to the Daily Report Service:", err);
 		toast("Could not send to Daily Report Service");
-		btn.disabled = false;
+		sendingDaily = false; btn.disabled = false; btn.textContent = label;
 	}
 };
 
