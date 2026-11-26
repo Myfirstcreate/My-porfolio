@@ -108,8 +108,18 @@ td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertic
   header,nav,.no-print{display:none!important}
   body,main{background:#fff!important;color:#111!important}
   main{padding:0;max-width:none}
-  #tab-list{display:none!important}
-  #tab-detail{display:block!important}
+  /* Whichever view is open is the one that prints. Printing from the list used
+     to hide it and show an empty (or the previously opened) report sheet. */
+  body[data-view="list"] #tab-list{display:block!important}
+  body[data-view="list"] #tab-detail{display:none!important}
+  body[data-view="detail"] #tab-list{display:none!important}
+  body[data-view="detail"] #tab-detail{display:block!important}
+  /* The list is a dark screen surface; on paper it becomes plain text. */
+  #tab-list .day-head{color:#111;margin:14px 0 6px}
+  #tab-list .rec{background:#fff;color:#111;border:1px solid #b9b9b9;break-inside:avoid}
+  #tab-list .rec .muted{color:#555}
+  #tab-list .pill{background:none;border:1px solid #b9b9b9;color:#111}
+  #tab-list .empty-note{color:#333}
   #tab-detail .card{padding:0;margin:0;border:0;box-shadow:none!important;max-width:none}
   .gallery{grid-template-columns:repeat(4,1fr)}
   .gallery .thumb{height:95px}
@@ -219,6 +229,7 @@ $("lb").onclick = e => { if (e.target === $("lb")) $("lb").classList.remove("sho
 
 /* ---------- Views ---------- */
 function show(view){
+	document.body.dataset.view = view;
 	$("tab-list").classList.toggle("hidden", view !== "list");
 	$("tab-detail").classList.toggle("hidden", view !== "detail");
 	$("tab-btn-list").classList.toggle("active", view === "list");
