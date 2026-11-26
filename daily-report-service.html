@@ -23,6 +23,8 @@ nav button{border:1px solid var(--line);background:transparent;color:var(--ink);
 nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
 nav a.back{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted);background:transparent;text-decoration:none;white-space:nowrap;font-size:13px}
 nav a.back:hover{color:var(--ink);border-color:#697163;background:#1d221d}
+/* Back and Back to overview sit together on the right. */
+nav a.back + a.back{margin-left:0}
 main{max-width:960px;margin:0 auto;padding:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
 .card h2{margin:0 0 4px;font-size:16px}
@@ -143,6 +145,7 @@ td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertic
 <header><span class="logo">AK</span><div class="brand-copy"><h1>AK GARAGE</h1><span class="subtitle">Daily Report Service</span></div></header>
 <nav aria-label="Main">
 	<button id="tab-btn-list" class="active" aria-current="true">Sent reports</button>
+	<a class="back" href="index.html" onclick="if(history.length>1){history.back();return false}">← Back</a>
 	<a class="back" href="index.html">← Back to AK Garage</a>
 </nav>
 <main id="main">
