@@ -535,3 +535,56 @@ create policy "admin can update warehouse_work" on public.warehouse_work
 drop policy if exists "admin can delete warehouse_work" on public.warehouse_work;
 create policy "admin can delete warehouse_work" on public.warehouse_work
 	for delete to anon using (public.is_ak_admin());
+
+-- =============================================================================
+-- 11. DAILY REPORT SERVICE, SHARED (run once — makes the sent reports visible
+--     to the whole team on every device). Safe to re-run.
+--
+--     "Send to Daily Report Service" used to copy the record into the browser's
+--     own IndexedDB, so each phone/PC saw only what it had sent itself. This
+--     table is the shared list: the team reads, only the admin writes.
+--
+--     The row keeps the warehouse_work id of the record it came from, so
+--     sending the same record again updates that one row instead of adding a
+--     duplicate (the page upserts on id).
+-- =============================================================================
+
+create table if not exists public.daily_reports (
+	id uuid primary key,
+	created_at timestamptz not null default now(),
+	sent_at timestamptz not null default now(),
+	plate text not null default '',
+	model text not null default '',
+	chassis_no text not null default '',
+	service_date text not null default '',
+	km bigint not null default 0,
+	next_km bigint not null default 0,
+	remarks text not null default '',
+	items jsonb not null default '{}'::jsonb,
+	notes jsonb not null default '{}'::jsonb,
+	photos jsonb not null default '{}'::jsonb,
+	gen_photos jsonb not null default '[]'::jsonb,
+	sent_by text not null default ''
+);
+
+create index if not exists daily_reports_sent_at_idx on public.daily_reports (sent_at desc);
+
+alter table public.daily_reports enable row level security;
+
+-- Same role split as every other page (section 3): the team reads, writes need
+-- the admin token. The upsert therefore needs both the insert and update policy.
+drop policy if exists "team can read daily_reports" on public.daily_reports;
+create policy "team can read daily_reports" on public.daily_reports
+	for select to anon using (true);
+
+drop policy if exists "admin can insert daily_reports" on public.daily_reports;
+create policy "admin can insert daily_reports" on public.daily_reports
+	for insert to anon with check (public.is_ak_admin());
+
+drop policy if exists "admin can update daily_reports" on public.daily_reports;
+create policy "admin can update daily_reports" on public.daily_reports
+	for update to anon using (public.is_ak_admin()) with check (public.is_ak_admin());
+
+drop policy if exists "admin can delete daily_reports" on public.daily_reports;
+create policy "admin can delete daily_reports" on public.daily_reports
+	for delete to anon using (public.is_ak_admin());

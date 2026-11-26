@@ -631,47 +631,34 @@ $("import-file").onchange = async e => {
 };
 
 /* ---------- Send to Daily Report Service ----------
-   The Daily Report Service page owns its own database (ak-daily-report), so a
-   "send" is a copy of this saved record written there and the page opens on
-   that copy. The copy keeps the warehouse record id, so sending the same
-   record again updates it instead of piling up duplicates. A second send is
-   still confirmed first, and the button locks while a send is in flight, so a
-   stray double click cannot fire two writes. */
-const DAILY_DB = "ak-daily-report", DAILY_STORE = "reports";
-function dailyPut(entry){
-	return new Promise((resolve, reject)=>{
-		const req = indexedDB.open(DAILY_DB, 1);
-		req.onupgradeneeded = () => {
-			const db = req.result;
-			if (!db.objectStoreNames.contains(DAILY_STORE)) db.createObjectStore(DAILY_STORE, { keyPath: "id" });
-		};
-		req.onerror = () => reject(req.error);
-		req.onsuccess = () => {
-			const db = req.result;
-			const tx = db.transaction(DAILY_STORE, "readwrite");
-			tx.objectStore(DAILY_STORE).put(entry);
-			tx.oncomplete = () => { db.close(); resolve(); };
-			tx.onerror = () => { const err = tx.error; db.close(); reject(err); };
-		};
-	});
+   The Daily Report Service list lives in Supabase (table daily_reports), so a
+   report sent from one phone or PC shows up on every device. The row keeps
+   this record's id, so sending the same record again updates that row instead
+   of piling up duplicates. A second send is still confirmed first, and the
+   button locks while a send is in flight, so a stray double click cannot fire
+   two writes. */
+const DAILY_TABLE = "daily_reports";
+function dailyRow(r){
+	return {
+		id: String(r.id), sent_at: new Date().toISOString(),
+		plate: r.plate || "", model: r.model || "", chassis_no: r.chassis || "",
+		service_date: r.date || "", km: Number(r.km) || 0, next_km: Number(r.next) || 0,
+		remarks: r.remarks || "",
+		items: {...r.items}, notes: {...r.notes},
+		photos: Object.fromEntries(Object.entries(r.photos||{}).map(([k,v])=>[k,[...v]])),
+		gen_photos: [...(r.genPhotos||[])]
+	};
 }
-function dailyGet(id){
-	return new Promise((resolve, reject)=>{
-		const req = indexedDB.open(DAILY_DB, 1);
-		req.onupgradeneeded = () => {
-			const db = req.result;
-			if (!db.objectStoreNames.contains(DAILY_STORE)) db.createObjectStore(DAILY_STORE, { keyPath: "id" });
-		};
-		req.onerror = () => reject(req.error);
-		req.onsuccess = () => {
-			const db = req.result;
-			if (!db.objectStoreNames.contains(DAILY_STORE)){ db.close(); resolve(null); return; }
-			const tx = db.transaction(DAILY_STORE, "readonly");
-			const get = tx.objectStore(DAILY_STORE).get(String(id));
-			get.onsuccess = () => { const entry = get.result || null; db.close(); resolve(entry); };
-			get.onerror = () => { const err = get.error; db.close(); reject(err); };
-		};
-	});
+async function dailyGet(id){
+	const sb = ensureSupabase();
+	const { data, error } = await sb.from(DAILY_TABLE).select("id, sent_at").eq("id", String(id)).limit(1);
+	if (error) throw error;
+	return Array.isArray(data) && data.length ? data[0] : null;
+}
+async function dailyPut(r){
+	const sb = ensureSupabase();
+	const { error } = await sb.from(DAILY_TABLE).upsert(dailyRow(r), { onConflict: "id" });
+	if (error) throw error;
 }
 let sendingDaily = false;
 $("send-daily").onclick = async ()=>{
@@ -684,7 +671,7 @@ $("send-daily").onclick = async ()=>{
 	try {
 		const already = await dailyGet(r.id);
 		if (already){
-			const when = new Date(already.sentAt || "");
+			const when = new Date(already.sent_at || "");
 			const stamp = isNaN(when) ? "" : ` on ${when.toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}`;
 			if (!confirm(`This record was already sent to the Daily Report Service${stamp}. Sending it again only updates that same copy — there will still be one report. Send it again?`)){
 				sendingDaily = false; btn.disabled = false;
@@ -692,18 +679,11 @@ $("send-daily").onclick = async ()=>{
 			}
 		}
 		btn.textContent = "Sending…";
-		await dailyPut({
-			id: String(r.id), sentAt: new Date().toISOString(),
-			plate: r.plate, model: r.model, date: r.date, km: r.km, next: r.next,
-			chassis: r.chassis, remarks: r.remarks,
-			items: {...r.items}, notes: {...r.notes},
-			photos: Object.fromEntries(Object.entries(r.photos||{}).map(([k,v])=>[k,[...v]])),
-			genPhotos: [...(r.genPhotos||[])]
-		});
+		await dailyPut(r);
 		location.href = "daily-report-service.html?id=" + encodeURIComponent(String(r.id));
 	} catch (err) {
 		console.error("Unable to send the record to the Daily Report Service:", err);
-		toast("Could not send to Daily Report Service");
+		toast(/row-level security|permission/i.test(String(err && err.message || "")) ? "Only the admin can send reports" : "Could not send to Daily Report Service");
 		sendingDaily = false; btn.disabled = false; btn.textContent = label;
 	}
 };
@@ -1297,7 +1277,7 @@ $("f-date").value = today(); buildChecklist(); renderGen();
 	if (typeof window.akgarageIsAdmin !== 'function' || !window.akgarageIsAdmin()) {
 		const viewerNote = document.querySelector('.viewer-note');
 		if (viewerNote) viewerNote.hidden = false;
-		["save","edit","del","gen-add","import-file-btn"].forEach(id => { const el = $(id); if (el) el.classList.add("hidden"); });
+		["save","edit","del","gen-add","import-file-btn","send-daily"].forEach(id => { const el = $(id); if (el) el.classList.add("hidden"); });
 	}
 })();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRecords().then(renderHistory).catch(()=>{}); });
