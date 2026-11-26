@@ -1194,7 +1194,7 @@ async function saveReport(){
 $("print").onclick = doPrint;
 $("dl") && ($("dl").onclick = saveReport);
 $("ph-x").onclick = ()=>$("printhelp").classList.add("hidden");
-$("back").onclick = ()=>show("history");
+$("back").onclick = ()=>show(detailFrom);
 $("del").onclick = async ()=>{
 	if (!confirm("Delete this service entry?")) return;
 	try {
