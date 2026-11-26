@@ -29,9 +29,6 @@ nav button{border:1px solid var(--line);background:transparent;color:var(--ink);
 nav button.active{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
 nav .back{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:var(--muted);background:transparent;text-decoration:none;white-space:nowrap;font-size:13px;transition:color .15s,border-color .15s,background .15s}
 nav .back:hover{color:var(--ink);border-color:#697163;background:#1d221d}
-/* Back and Back to overview sit together on the right. */
-nav .back + .back{margin-left:0}
-@media(max-width:520px){nav{flex-wrap:wrap}}
 main{max-width:960px;margin:0 auto;padding:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
 .card h2{margin:0 0 12px;font-size:16px}
@@ -239,7 +236,6 @@ td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertic
 	<button data-tab="new" class="active" aria-current="true">+ New Weekly Entry</button>
 	<button data-tab="history">History</button>
 	<button data-tab="due">Open Issues</button>
-	<a class="back" href="index.html" onclick="if(history.length>1){history.back();return false}">← BACK</a>
 	<a class="back" href="index.html">BACK TO OVERVIEW</a>
 </nav>
 <main id="main">
