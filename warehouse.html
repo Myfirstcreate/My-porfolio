@@ -265,7 +265,7 @@ button.name{background:none;border:0;padding:0;text-align:left;font:inherit;colo
 	<button data-tab="new" class="active" aria-current="true">+ New Service Entry</button>
 	<button data-tab="history">History</button>
 	<button data-tab="due">Open Issues</button>
-	<a class="back" href="index.html" onclick="if(history.length>1){history.back();return false}">← BACK</a>
+	<a class="back" href="index.html" onclick="return goBack()">← BACK</a>
 	<a class="back" href="index.html">BACK TO OVERVIEW</a>
 </nav>
 <main id="main">
@@ -727,8 +727,12 @@ function formatRemarks(text){
 	}).join("");
 }
 
+let detailFrom = "history";
 function openDetail(id){
 	const r = records.find(x=>String(x.id)===String(id)); if(!r) return; currentId=id;
+	// Remember the tab the report was opened from, so Back can return to it.
+	const openTab = ["new","history","due"].find(t=>!$("tab-"+t).classList.contains("hidden"));
+	if (openTab) detailFrom = openTab;
 	const vals = Object.values(r.items);
 	const cnt = k => vals.filter(v=>v===k).length;
 	// Only show the tally chips that actually have items behind them — a record
@@ -1235,6 +1239,15 @@ function show(tab){
 	});
 	if(tab==="history") renderHistory(); if(tab==="due") renderDue();
 	window.scrollTo(0,0);
+}
+
+// A service report is a step inside this page, not a new page. Back closes it
+// and returns to the tab it was opened from; a second Back leaves for the page
+// the reader came from.
+function goBack(){
+	if (!$("tab-detail").classList.contains("hidden")){ show(detailFrom); return false; }
+	if (history.length > 1){ history.back(); return false; }
+	return true;
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="new" && editingId) clearForm(); show(b.dataset.tab); });
 

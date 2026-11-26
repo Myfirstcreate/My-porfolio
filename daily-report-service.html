@@ -145,7 +145,7 @@ td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertic
 <header><span class="logo">AK</span><div class="brand-copy"><h1>AK GARAGE</h1><span class="subtitle">Daily Report Service</span></div></header>
 <nav aria-label="Main">
 	<button id="tab-btn-list" class="active" aria-current="true">Sent reports</button>
-	<a class="back" href="index.html" onclick="if(history.length>1){history.back();return false}">← Back</a>
+	<a class="back" href="index.html" onclick="return goBack()">← Back</a>
 	<a class="back" href="index.html">← Back to AK Garage</a>
 </nav>
 <main id="main">
@@ -243,6 +243,14 @@ function show(view){
 		// file:// pages) reject replaceState, and the list still has to render.
 		if (location.search){ try { history.replaceState(null, "", location.pathname); } catch (err) {} }
 	}
+}
+
+// A sent report is a view inside this page, so Back returns to the list before
+// it leaves for the page the reader came from.
+function goBack(){
+	if (document.body.dataset.view === "detail"){ show("list"); renderList(); return false; }
+	if (history.length > 1){ history.back(); return false; }
+	return true;
 }
 
 function photoCount(r){
