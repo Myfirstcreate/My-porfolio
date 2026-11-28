@@ -563,9 +563,11 @@ create table if not exists public.daily_reports (
 	items jsonb not null default '{}'::jsonb,
 	notes jsonb not null default '{}'::jsonb,
 	photos jsonb not null default '{}'::jsonb,
-	gen_photos jsonb not null default '[]'::jsonb,
-	sent_by text not null default ''
+	gen_photos jsonb not null default '[]'::jsonb
 );
+
+-- An earlier copy of this section added a sent_by column that nothing fills in.
+alter table public.daily_reports drop column if exists sent_by;
 
 create index if not exists daily_reports_sent_at_idx on public.daily_reports (sent_at desc);
 

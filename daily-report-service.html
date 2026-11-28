@@ -338,7 +338,23 @@ function openDetail(id){
 	window.scrollTo({top:0,behavior:"instant"});
 }
 
-/* ---------- Actions ---------- */
+/* ---------- Actions ----------
+   A report sent from another phone or PC is only in the database, so the page
+   reads it again when the reader comes back to this tab instead of leaving a
+   stale list (or a report that was removed) on screen. */
+async function refresh(){
+	try { await loadEntries(); }
+	catch (err) {
+		console.error("Unable to refresh the sent daily reports:", err);
+		toast("Could not refresh the reports");
+		return;
+	}
+	const open = currentId ? entries.find(e=>String(e.id)===String(currentId)) : null;
+	if (open) openDetail(open.id);
+	else { show("list"); renderList(); }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+
 $("tab-btn-list").onclick = () => { show("list"); renderList(); };
 $("back").onclick = () => { show("list"); renderList(); };
 $("print").onclick = () => window.print();
